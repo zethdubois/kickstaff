@@ -10,4 +10,12 @@ declare global {
 	}
 }
 
+declare module '$env/dynamic/public' {
+	export const env: {
+		PUBLIC_VANITY_HOST_CDA?: string;
+		PUBLIC_VANITY_HOST_MOS?: string;
+		PUBLIC_VANITY_HOST_SPT?: string;
+	};
+}
+
 export {};
