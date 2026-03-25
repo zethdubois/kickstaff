@@ -11,7 +11,8 @@
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"env:vanity": "node scripts/print-vanity-env.mjs"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "^5.0.0",
