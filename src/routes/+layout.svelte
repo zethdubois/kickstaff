@@ -5,7 +5,6 @@
 	import { env } from '$env/dynamic/public';
 	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
-	import kamHomeIcon from '$lib/assets/kam-home.svg';
 	import { cities } from '$lib/cities';
 	import { vanityPathForRootHost } from '$lib/vanityHosts';
 
@@ -101,8 +100,14 @@
 {#if showInternalNav}
 	<header class="site-header">
 		<nav class="nav" aria-label="Main">
-			<a class="nav__home" href="/" aria-label="Home">
-				<img class="nav__homeIcon" src={kamHomeIcon} alt="" width="24" height="24" />
+			<a class="nav__home" href="/" aria-label="KAM home">
+				<img
+					class="nav__homeLogo"
+					src="/kam_logo.png"
+					alt=""
+					loading="eager"
+					decoding="async"
+				/>
 			</a>
 
 			<div class="nav__title" aria-label="Site section">Rental Sites:</div>
@@ -180,13 +185,13 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 2rem;
-		height: 2rem;
+		padding: 0.2rem 0.45rem;
 		border-radius: 10px;
 		border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
 		background: color-mix(in srgb, currentColor 2%, transparent);
 		color: inherit;
 		text-decoration: none;
+		line-height: 0;
 	}
 
 	.nav__home:hover {
@@ -198,8 +203,12 @@
 		outline-offset: 2px;
 	}
 
-	.nav__homeIcon {
+	.nav__homeLogo {
 		display: block;
+		height: 1.75rem;
+		width: auto;
+		max-width: 7.5rem;
+		object-fit: contain;
 	}
 
 	.nav__title {
