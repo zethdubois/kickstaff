@@ -1,8 +1,11 @@
 <script lang="ts">
+	import RentalLandingGrid from '$lib/RentalLandingGrid.svelte';
+	import { cityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import { cityBySlug } from '$lib/cities';
 
 	const label = cityBySlug.spt;
 	const tagline = 'Mountains & Schweitzer';
+	const links = cityAppfolioLinks('spt');
 </script>
 
 <svelte:head>
@@ -12,12 +15,7 @@
 <div class="spt">
 	<div class="spt__bg" aria-hidden="true"></div>
 	<div class="spt__content">
-		<h1 class="spt__title">{label}</h1>
-		<p class="spt__tagline">{tagline}</p>
-		<p class="spt__body">
-			Discover cabins and homes between the lake and the peaks. More content and search tools are on
-			the way.
-		</p>
+		<RentalLandingGrid {links} title={label} {tagline} theme="spt" />
 	</div>
 </div>
 
@@ -43,32 +41,7 @@
 	.spt__content {
 		position: relative;
 		z-index: 1;
-		max-width: 34rem;
+		max-width: 36rem;
 		padding: clamp(2.75rem, 9vw, 4.5rem) clamp(1.5rem, 5vw, 2.5rem) 4rem;
-	}
-
-	.spt__title {
-		margin: 0 0 0.5rem;
-		font-size: clamp(1.85rem, 4.5vw, 2.5rem);
-		font-weight: 300;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		line-height: 1.15;
-	}
-
-	.spt__tagline {
-		margin: 0 0 1.5rem;
-		font-size: 0.95rem;
-		font-weight: 500;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: rgb(167 243 208 / 0.9);
-	}
-
-	.spt__body {
-		margin: 0;
-		font-size: 1rem;
-		line-height: 1.7;
-		color: rgb(209 250 229 / 0.88);
 	}
 </style>
