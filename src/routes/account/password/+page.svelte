@@ -1,49 +1,68 @@
 <script lang="ts">
 	import { page } from '$app/state';
+
+	let { data, form } = $props();
 </script>
 
 <svelte:head>
-	<title>Login</title>
+	<title>{data.mustChangePassword ? 'Set your password' : 'Change password'}</title>
 </svelte:head>
 
 <div class="wrap">
-	<dialog open class="dlg" aria-label="Login">
+	<dialog open class="dlg" aria-label="Password">
 		<header class="dlg__header">
-			<div class="dlg__title">Login</div>
+			<div class="dlg__title">
+				{data.mustChangePassword ? 'Set your password' : 'Change password'}
+			</div>
 		</header>
 
-		<p class="dlg__hint">
-			Sign in to access the internal ops dashboard. Sessions last 7 days on this device. Accounts are
-			created by an administrator.
-		</p>
-
-		{#if page.form?.message}
-			<p class="dlg__err" role="alert">{page.form.message}</p>
+		{#if data.mustChangePassword}
+			<p class="dlg__hint">
+				Your account was created by an administrator. Choose a new password to continue.
+			</p>
 		{/if}
 
-		<form method="POST" action="?/login" class="dlg__form" autocomplete="on">
+		{#if form?.message}
+			<p class="dlg__err" role="alert">{form.message}</p>
+		{/if}
+
+		<form method="POST" class="dlg__form" autocomplete="on">
+			{#if !data.mustChangePassword}
+				<label class="field">
+					<span class="field__label">Current password</span>
+					<input
+						class="field__input"
+						name="current"
+						type="password"
+						required
+						autocomplete="current-password"
+					/>
+				</label>
+			{/if}
 			<label class="field">
-				<span class="field__label">Email</span>
-				<input
-					class="field__input"
-					name="email"
-					type="email"
-					required
-					autocomplete="username"
-				/>
-			</label>
-			<label class="field">
-				<span class="field__label">Password</span>
+				<span class="field__label">New password</span>
 				<input
 					class="field__input"
 					name="password"
 					type="password"
 					required
-					autocomplete="current-password"
+					minlength="8"
+					autocomplete="new-password"
+				/>
+			</label>
+			<label class="field">
+				<span class="field__label">Confirm new password</span>
+				<input
+					class="field__input"
+					name="password2"
+					type="password"
+					required
+					minlength="8"
+					autocomplete="new-password"
 				/>
 			</label>
 			<div class="dlg__actions">
-				<button class="btn btn--primary" type="submit">Sign in</button>
+				<button class="btn btn--primary" type="submit">Save</button>
 			</div>
 		</form>
 	</dialog>
@@ -64,10 +83,6 @@
 		padding: 1.1rem 1.1rem 1rem;
 		background: color-mix(in srgb, currentColor 3%, white);
 		color: inherit;
-	}
-
-	.dlg::backdrop {
-		background: color-mix(in srgb, black 45%, transparent);
 	}
 
 	.dlg__header {
@@ -140,10 +155,6 @@
 		padding: 0.55rem 0.85rem;
 		font-weight: 650;
 		cursor: pointer;
-	}
-
-	.btn:hover {
-		background: color-mix(in srgb, currentColor 12%, transparent);
 	}
 
 	.btn--primary {

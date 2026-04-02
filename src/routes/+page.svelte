@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+
 	const resources = [
 		{
 			title: 'AppFolio',
@@ -24,8 +26,20 @@
 
 <div class="dash">
 	<header class="dash__header">
-		<h1 class="dash__title">Internal Ops Dashboard</h1>
-		<p class="dash__subtitle">Quick links for day-to-day operations (auth will be added later).</p>
+		<div class="dash__headingRow">
+			<div>
+				<h1 class="dash__title">Internal Ops Dashboard</h1>
+				<p class="dash__subtitle">
+					Quick links for day-to-day operations.
+					{#if page.data.user}
+						Signed in as <strong>{page.data.user.email}</strong>.
+					{/if}
+				</p>
+			</div>
+			<form method="POST" action="/logout" class="dash__signOut">
+				<button class="dash__signOutBtn" type="submit">Sign out</button>
+			</form>
+		</div>
 	</header>
 
 	<section class="dash__section" aria-label="Resources">
@@ -40,20 +54,40 @@
 		</div>
 	</section>
 
-	<section class="dash__section" aria-label="Status">
-		<div class="notice" role="note">
-			<div class="notice__title">Dummy login mode</div>
-			<p class="notice__body">
-				This dashboard is currently protected by a temporary cookie set by the “LOGIN” OK button. Real
-				authentication/roles will be built later.
-			</p>
-		</div>
-	</section>
 </div>
 
 <style>
 	.dash__header {
 		margin-bottom: 1.25rem;
+	}
+
+	.dash__headingRow {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem 1rem;
+	}
+
+	.dash__signOut {
+		margin: 0;
+	}
+
+	.dash__signOutBtn {
+		appearance: none;
+		font: inherit;
+		color: inherit;
+		padding: 0.4rem 0.65rem;
+		border-radius: 10px;
+		border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+		background: color-mix(in srgb, currentColor 3%, transparent);
+		cursor: pointer;
+		font-size: 0.9rem;
+		font-weight: 600;
+	}
+
+	.dash__signOutBtn:hover {
+		background: color-mix(in srgb, currentColor 7%, transparent);
 	}
 
 	.dash__title {
@@ -66,10 +100,6 @@
 	.dash__subtitle {
 		margin: 0;
 		color: color-mix(in srgb, currentColor 70%, transparent);
-	}
-
-	.dash__section + .dash__section {
-		margin-top: 1.25rem;
 	}
 
 	.cards {
@@ -114,20 +144,4 @@
 		color: color-mix(in srgb, currentColor 60%, transparent);
 	}
 
-	.notice {
-		border-radius: 12px;
-		padding: 0.9rem 1rem;
-		border: 1px dashed color-mix(in srgb, currentColor 22%, transparent);
-		background: color-mix(in srgb, currentColor 2%, transparent);
-	}
-
-	.notice__title {
-		font-weight: 650;
-		margin-bottom: 0.25rem;
-	}
-
-	.notice__body {
-		margin: 0;
-		color: color-mix(in srgb, currentColor 74%, transparent);
-	}
 </style>

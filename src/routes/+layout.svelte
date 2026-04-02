@@ -12,6 +12,7 @@
 
 	const isHub = $derived(page.route.id === '/');
 	const isLogin = $derived(page.route.id === '/login');
+	const isAdmin = $derived(page.data.user?.role === 'admin');
 
 	/**
 	 * Vanity domains render a city route at `/` (URL stays `/`).
@@ -110,6 +111,10 @@
 				/>
 			</a>
 
+			{#if isAdmin}
+				<a class="nav__admin" href="/admin/users">Users</a>
+			{/if}
+
 			<div class="nav__title" aria-label="Site section">Rental Sites:</div>
 
 			<div class="rentalMenu">
@@ -192,6 +197,21 @@
 		color: inherit;
 		text-decoration: none;
 		line-height: 0;
+	}
+
+	.nav__admin {
+		font: inherit;
+		font-weight: 650;
+		color: inherit;
+		text-decoration: none;
+		padding: 0.35rem 0.65rem;
+		border-radius: 10px;
+		border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+		background: color-mix(in srgb, currentColor 2%, transparent);
+	}
+
+	.nav__admin:hover {
+		background: color-mix(in srgb, currentColor 6%, transparent);
 	}
 
 	.nav__home:hover {

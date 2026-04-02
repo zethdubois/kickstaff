@@ -12,15 +12,30 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"env:vanity": "node scripts/print-vanity-env.mjs"
+		"env:vanity": "node scripts/print-vanity-env.mjs",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
+		"seed:admin": "tsx scripts/seed-admin.ts",
+		"list:users": "tsx scripts/list-users.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "^5.0.0",
 		"@sveltejs/kit": "^2.50.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@types/pg": "^8.20.0",
+		"dotenv": "^17.4.0",
+		"drizzle-kit": "^0.31.10",
 		"svelte": "^5.54.0",
 		"svelte-check": "^4.4.2",
+		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1"
+	},
+	"dependencies": {
+		"@node-rs/argon2": "^2.0.2",
+		"drizzle-orm": "^0.45.2",
+		"pg": "^8.20.0"
 	}
 }
