@@ -1,47 +1,45 @@
 import { env } from '$env/dynamic/public';
 import type { CitySlug } from '$lib/cities';
 
-const DEFAULT_LISTINGS = 'https://kickasset.appfolio.com/listings';
-const DEFAULT_HOME = 'https://kickasset.appfolio.com/';
-/** AppFolio property_list filter for Coeur d'Alene long-term rentals (default when env unset). */
-const DEFAULT_CDA_LONG_TERM =
-	'https://kickasset.appfolio.com/listings?filters%5Bproperty_list%5D=CDA';
-
 export type CityAppfolioLinks = {
-	shortTerm: string;
-	longTerm: string;
-	apply: string;
-	contact: string;
+	shortTerm: string | null;
+	longTerm: string | null;
+	apply: string | null;
+	contact: string | null;
 };
 
-function pick(v: string | undefined, fallback: string): string {
+/** Non-empty trimmed string, or null if unset (tile should be disabled). */
+function optional(v: string | undefined): string | null {
 	const t = v?.trim();
-	return t || fallback;
+	return t || null;
 }
 
-/** Resolved AppFolio URLs for a city; uses PUBLIC_APPFOLIO_* env vars with kickasset fallbacks. */
+/**
+ * AppFolio URLs from PUBLIC_APPFOLIO_* env vars only.
+ * Missing keys → null; UI disables that tile (no default URLs).
+ */
 export function cityAppfolioLinks(slug: CitySlug): CityAppfolioLinks {
 	switch (slug) {
 		case 'cda':
 			return {
-				shortTerm: pick(env.PUBLIC_APPFOLIO_CDA_SHORT_TERM_URL, DEFAULT_LISTINGS),
-				longTerm: pick(env.PUBLIC_APPFOLIO_CDA_LONG_TERM_URL, DEFAULT_CDA_LONG_TERM),
-				apply: pick(env.PUBLIC_APPFOLIO_CDA_APPLY_URL, DEFAULT_LISTINGS),
-				contact: pick(env.PUBLIC_APPFOLIO_CDA_CONTACT_URL, DEFAULT_HOME)
+				shortTerm: optional(env.PUBLIC_APPFOLIO_CDA_SHORT_TERM_URL),
+				longTerm: optional(env.PUBLIC_APPFOLIO_CDA_LONG_TERM_URL),
+				apply: optional(env.PUBLIC_APPFOLIO_CDA_APPLY_URL),
+				contact: optional(env.PUBLIC_APPFOLIO_CDA_CONTACT_URL)
 			};
 		case 'mos':
 			return {
-				shortTerm: pick(env.PUBLIC_APPFOLIO_MOS_SHORT_TERM_URL, DEFAULT_LISTINGS),
-				longTerm: pick(env.PUBLIC_APPFOLIO_MOS_LONG_TERM_URL, DEFAULT_LISTINGS),
-				apply: pick(env.PUBLIC_APPFOLIO_MOS_APPLY_URL, DEFAULT_LISTINGS),
-				contact: pick(env.PUBLIC_APPFOLIO_MOS_CONTACT_URL, DEFAULT_HOME)
+				shortTerm: optional(env.PUBLIC_APPFOLIO_MOS_SHORT_TERM_URL),
+				longTerm: optional(env.PUBLIC_APPFOLIO_MOS_LONG_TERM_URL),
+				apply: optional(env.PUBLIC_APPFOLIO_MOS_APPLY_URL),
+				contact: optional(env.PUBLIC_APPFOLIO_MOS_CONTACT_URL)
 			};
 		case 'spt':
 			return {
-				shortTerm: pick(env.PUBLIC_APPFOLIO_SPT_SHORT_TERM_URL, DEFAULT_LISTINGS),
-				longTerm: pick(env.PUBLIC_APPFOLIO_SPT_LONG_TERM_URL, DEFAULT_LISTINGS),
-				apply: pick(env.PUBLIC_APPFOLIO_SPT_APPLY_URL, DEFAULT_LISTINGS),
-				contact: pick(env.PUBLIC_APPFOLIO_SPT_CONTACT_URL, DEFAULT_HOME)
+				shortTerm: optional(env.PUBLIC_APPFOLIO_SPT_SHORT_TERM_URL),
+				longTerm: optional(env.PUBLIC_APPFOLIO_SPT_LONG_TERM_URL),
+				apply: optional(env.PUBLIC_APPFOLIO_SPT_APPLY_URL),
+				contact: optional(env.PUBLIC_APPFOLIO_SPT_CONTACT_URL)
 			};
 	}
 }

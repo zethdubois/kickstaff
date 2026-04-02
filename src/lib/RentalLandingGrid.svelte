@@ -2,6 +2,8 @@
 	import type { CityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import type { CitySlug } from '$lib/cities';
 
+	type TileKey = 'short' | 'long' | 'apply' | 'contact';
+
 	let {
 		links,
 		title,
@@ -14,7 +16,42 @@
 		theme: CitySlug;
 	} = $props();
 
+	const tiles = $derived([
+		{ key: 'short' as const, href: links.shortTerm, label: 'Short-term rentals' },
+		{ key: 'long' as const, href: links.longTerm, label: 'Long-term rentals' },
+		{ key: 'apply' as const, href: links.apply, label: 'Apply today' },
+		{ key: 'contact' as const, href: links.contact, label: 'Contact us' }
+	]);
 </script>
+
+{#snippet tileIcon(key: TileKey)}
+	{#if key === 'short'}
+		<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
+			<path
+				fill="currentColor"
+				d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
+			/>
+		</svg>
+	{:else if key === 'long'}
+		<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
+			<path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z" />
+		</svg>
+	{:else if key === 'apply'}
+		<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
+			<path
+				fill="currentColor"
+				d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.01l1.41 1.41L11 14.83V22h2v-7.17l1.59 1.59L16 15.01 12.01 11 8 15.01z"
+			/>
+		</svg>
+	{:else}
+		<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
+			<path
+				fill="currentColor"
+				d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"
+			/>
+		</svg>
+	{/if}
+{/snippet}
 
 <div class="rentalLanding rentalLanding--{theme}">
 	<header class="rentalLanding__header">
@@ -26,71 +63,34 @@
 	</header>
 
 	<nav class="rentalLanding__grid" aria-label="Rental links">
-		<a
-			class="rentalLanding__tile"
-			href={links.shortTerm}
-			target="_blank"
-			rel="noopener noreferrer"
-			aria-label="Short-term rentals (opens in new tab)"
-		>
-			<span class="rentalLanding__icon" aria-hidden="true">
-				<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
-					<path
-						fill="currentColor"
-						d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
-					/>
-				</svg>
-			</span>
-			<span class="rentalLanding__label">Short-term rentals</span>
-		</a>
-		<a
-			class="rentalLanding__tile"
-			href={links.longTerm}
-			target="_blank"
-			rel="noopener noreferrer"
-			aria-label="Long-term rentals (opens in new tab)"
-		>
-			<span class="rentalLanding__icon" aria-hidden="true">
-				<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
-					<path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z" />
-				</svg>
-			</span>
-			<span class="rentalLanding__label">Long-term rentals</span>
-		</a>
-		<a
-			class="rentalLanding__tile"
-			href={links.apply}
-			target="_blank"
-			rel="noopener noreferrer"
-			aria-label="Apply today (opens in new tab)"
-		>
-			<span class="rentalLanding__icon" aria-hidden="true">
-				<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
-					<path
-						fill="currentColor"
-						d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.01l1.41 1.41L11 14.83V22h2v-7.17l1.59 1.59L16 15.01 12.01 11 8 15.01z"
-					/>
-				</svg>
-			</span>
-			<span class="rentalLanding__label">Apply today</span>
-		</a>
-		<a
-			class="rentalLanding__tile"
-			href={links.contact}
-			target="_blank"
-			rel="noopener noreferrer"
-			aria-label="Contact us (opens in new tab)"
-		>
-			<span class="rentalLanding__icon" aria-hidden="true">
-				<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
-					<path
-						fill="currentColor"
-						d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5L4 8V6l8 5 8-5v2z"
-					/>
-				</svg>
-			</span>
-			<span class="rentalLanding__label">Contact us</span>
-		</a>
+		{#each tiles as { key, href, label } (key)}
+			{#if href}
+				<a
+					class="rentalLanding__tile"
+					{href}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label="{label} (opens in new tab)"
+				>
+					<span class="rentalLanding__icon" aria-hidden="true">
+						{@render tileIcon(key)}
+					</span>
+					<span class="rentalLanding__label">{label}</span>
+				</a>
+			{:else}
+				<span
+					class="rentalLanding__tile rentalLanding__tile--disabled"
+					aria-disabled="true"
+					aria-label="{label} — link not configured"
+					title="Link not configured"
+				>
+					<span class="rentalLanding__icon" aria-hidden="true">
+						{@render tileIcon(key)}
+					</span>
+					<span class="rentalLanding__label">{label}</span>
+				</span>
+			{/if}
+		{/each}
 	</nav>
 </div>
 
@@ -146,6 +146,7 @@
 		font-size: 0.9rem;
 		text-align: center;
 		line-height: 1.25;
+		box-sizing: border-box;
 		transition:
 			background 0.15s ease,
 			border-color 0.15s ease,
@@ -160,6 +161,12 @@
 	.rentalLanding__tile:focus-visible {
 		outline: 2px solid currentColor;
 		outline-offset: 3px;
+	}
+
+	.rentalLanding__tile--disabled {
+		opacity: 0.48;
+		cursor: not-allowed;
+		pointer-events: none;
 	}
 
 	.rentalLanding__icon {
@@ -195,17 +202,23 @@
 		font-weight: 300;
 	}
 
-	.rentalLanding--cda .rentalLanding__tile {
+	.rentalLanding--cda .rentalLanding__tile:not(.rentalLanding__tile--disabled) {
 		color: #ecfeff;
 		background: rgb(255 255 255 / 0.09);
 		border: 1px solid rgb(186 230 253 / 0.35);
 	}
 
-	.rentalLanding--cda .rentalLanding__tile:hover {
+	.rentalLanding--cda .rentalLanding__tile:not(.rentalLanding__tile--disabled):hover {
 		background: rgb(255 255 255 / 0.14);
 		border-color: rgb(186 230 253 / 0.55);
 		box-shadow: 0 4px 20px rgb(0 0 0 / 0.12);
 		transform: translateY(-1px);
+	}
+
+	.rentalLanding--cda .rentalLanding__tile--disabled {
+		color: #ecfeff;
+		background: rgb(255 255 255 / 0.05);
+		border: 1px dashed rgb(186 230 253 / 0.28);
 	}
 
 	/* Sandpoint — green / dark */
@@ -225,17 +238,23 @@
 		color: rgb(167 243 208 / 0.9);
 	}
 
-	.rentalLanding--spt .rentalLanding__tile {
+	.rentalLanding--spt .rentalLanding__tile:not(.rentalLanding__tile--disabled) {
 		color: #ecfdf5;
 		background: rgb(255 255 255 / 0.06);
 		border: 1px solid rgb(167 243 208 / 0.28);
 	}
 
-	.rentalLanding--spt .rentalLanding__tile:hover {
+	.rentalLanding--spt .rentalLanding__tile:not(.rentalLanding__tile--disabled):hover {
 		background: rgb(255 255 255 / 0.1);
 		border-color: rgb(167 243 208 / 0.45);
 		box-shadow: 0 4px 24px rgb(0 0 0 / 0.2);
 		transform: translateY(-1px);
+	}
+
+	.rentalLanding--spt .rentalLanding__tile--disabled {
+		color: #ecfdf5;
+		background: rgb(255 255 255 / 0.03);
+		border: 1px dashed rgb(167 243 208 / 0.22);
 	}
 
 	/* Moscow — light warm */
@@ -252,20 +271,27 @@
 		color: #57534e;
 	}
 
-	.rentalLanding--mos .rentalLanding__tile {
+	.rentalLanding--mos .rentalLanding__tile:not(.rentalLanding__tile--disabled) {
 		color: #292524;
 		background: #fff;
 		border: 1px solid #d6d3d1;
 		box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
 	}
 
-	.rentalLanding--mos .rentalLanding__tile:hover {
+	.rentalLanding--mos .rentalLanding__tile:not(.rentalLanding__tile--disabled):hover {
 		border-color: #c2410c;
 		box-shadow: 0 4px 14px rgb(154 52 18 / 0.12);
 		transform: translateY(-1px);
 	}
 
-	.rentalLanding--mos .rentalLanding__tile:focus-visible {
+	.rentalLanding--mos .rentalLanding__tile--disabled {
+		color: #78716c;
+		background: rgb(255 255 255 / 0.65);
+		border: 1px dashed #d6d3d1;
+		box-shadow: none;
+	}
+
+	.rentalLanding--mos .rentalLanding__tile:not(.rentalLanding__tile--disabled):focus-visible {
 		outline-color: #c2410c;
 	}
 </style>
