@@ -185,17 +185,17 @@
   },
   "active": "e36b0dcd44e89347",
   "lastOpenFiles": [
+    "src/lib/server/mail.ts",
+    "_tmp_195505_1935bcb01060a8bfbb371d7fd66002de",
+    "node_modules/@node-rs",
+    "node_modules/@types",
+    "node_modules/@sveltejs",
+    "_tmp_194820_2e2c6a479862d9bc31525533acc43ce3",
+    "_tmp_194532_3871b970a4bbeb3a4bf8575e4b4e0d6a",
+    "_tmp_194345_d220afe57ee7299a58bc4441a8ca8137",
+    "_tmp_194000_a900e847c11009c7639d96ff4e2136f3",
     "drizzle/0005_bright_lethal_legion.sql",
     "drizzle/meta/0005_snapshot.json",
-    "src/lib/RentalLandingFrame.svelte",
-    "drizzle/0004_heavy_black_panther.sql",
-    "drizzle/meta/0004_snapshot.json",
-    "drizzle/0003_panoramic_donald_blake.sql",
-    "drizzle/meta/0003_snapshot.json",
-    "src/routes/test/appfolio-embed/+page.svelte",
-    "src/routes/test/appfolio-embed/+page.ts",
-    "src/routes/test/appfolio-embed",
-    "src/routes/test",
     "docs/Dev Guide.md"
   ]
 }
