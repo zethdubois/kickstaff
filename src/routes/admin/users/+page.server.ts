@@ -21,7 +21,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 		})
 		.from(users)
 		.orderBy(asc(users.email));
-	return { users: list };
+
+	const seedEmail = env.ADMIN_EMAIL?.trim().toLowerCase();
+	let protectedDeleteUserId: string | null = null;
+	if (seedEmail) {
+		const row = await db
+			.select({ id: users.id })
+			.from(users)
+			.where(eq(users.email, seedEmail))
+			.limit(1);
+		protectedDeleteUserId = row[0]?.id ?? null;
+	}
+
+	return { users: list, protectedDeleteUserId };
 };
 
 export const actions: Actions = {

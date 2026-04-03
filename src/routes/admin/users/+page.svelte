@@ -115,23 +115,25 @@
                 Reset password
               </button>
             </form>
-            <form method="POST" action="?/delete" class="row__form">
-              <input type="hidden" name="user_id" value={u.id} />
-              <button
-                type={pendingDeleteId === u.id ? 'submit' : 'button'}
-                class="btn btn--compact btn--danger"
-                class:btn--confirm={pendingDeleteId === u.id}
-                aria-pressed={pendingDeleteId === u.id ? true : undefined}
-                onclick={(e) => {
-                  if (pendingDeleteId !== u.id) {
-                    e.preventDefault();
-                    armDeleteConfirm(u.id);
-                  }
-                }}
-              >
-                {pendingDeleteId === u.id ? 'CONFIRM' : 'Delete'}
-              </button>
-            </form>
+            {#if data.protectedDeleteUserId !== u.id}
+              <form method="POST" action="?/delete" class="row__form">
+                <input type="hidden" name="user_id" value={u.id} />
+                <button
+                  type={pendingDeleteId === u.id ? 'submit' : 'button'}
+                  class="btn btn--compact btn--danger"
+                  class:btn--confirm={pendingDeleteId === u.id}
+                  aria-pressed={pendingDeleteId === u.id ? true : undefined}
+                  onclick={(e) => {
+                    if (pendingDeleteId !== u.id) {
+                      e.preventDefault();
+                      armDeleteConfirm(u.id);
+                    }
+                  }}
+                >
+                  {pendingDeleteId === u.id ? 'CONFIRM' : 'Delete'}
+                </button>
+              </form>
+            {/if}
           </div>
         </li>
       {/each}
