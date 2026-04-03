@@ -9,6 +9,8 @@ import { rentalLandingLinks } from '$lib/server/schema';
 const MAX_URL_LEN = 2048;
 const MAX_PROPERTY_GROUP_LEN = 256;
 const MAX_ORDER_BY_LEN = 64;
+const MAX_LANDING_HEADLINE_LEN = 512;
+const MAX_LANDING_BODY_LEN = 32768;
 
 function parseOptionalPropertyGroup(raw: unknown): { ok: true; value: string | null } | { ok: false; message: string } {
 	const s = String(raw ?? '').trim();
@@ -63,6 +65,28 @@ function parseOptionalHttpsUrl(
 	return { ok: true, value: s };
 }
 
+function parseOptionalLandingHeadline(
+	raw: unknown
+): { ok: true; value: string | null } | { ok: false; message: string } {
+	const s = String(raw ?? '').trim();
+	if (!s) return { ok: true, value: null };
+	if (s.length > MAX_LANDING_HEADLINE_LEN) {
+		return { ok: false, message: 'Landing headline is too long.' };
+	}
+	return { ok: true, value: s };
+}
+
+function parseOptionalLandingBody(
+	raw: unknown
+): { ok: true; value: string | null } | { ok: false; message: string } {
+	const s = String(raw ?? '');
+	if (!s.trim()) return { ok: true, value: null };
+	if (s.length > MAX_LANDING_BODY_LEN) {
+		return { ok: false, message: 'Landing body is too long.' };
+	}
+	return { ok: true, value: s };
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals.user);
 	const db = getDb();
@@ -81,7 +105,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 				contactUrl: row?.contactUrl ?? '',
 				listingPropertyGroup: row?.listingPropertyGroup ?? '',
 				listingThemeColor: row?.listingThemeColor ?? '',
-				listingOrderBy: row?.listingOrderBy ?? ''
+				listingOrderBy: row?.listingOrderBy ?? '',
+				landingHeroImageUrl: row?.landingHeroImageUrl ?? '',
+				landingHeadline: row?.landingHeadline ?? '',
+				landingBody: row?.landingBody ?? ''
 			};
 		})
 	};
@@ -104,6 +131,9 @@ export const actions: Actions = {
 		const pg = parseOptionalPropertyGroup(form.get('listing_property_group'));
 		const tc = parseOptionalThemeColor(form.get('listing_theme_color'));
 		const ob = parseOptionalOrderBy(form.get('listing_order_by'));
+		const hero = parseOptionalHttpsUrl(form.get('landing_hero_image_url'));
+		const lh = parseOptionalLandingHeadline(form.get('landing_headline'));
+		const lb = parseOptionalLandingBody(form.get('landing_body'));
 
 		if (!st.ok) return fail(400, { message: st.message, city: cityRaw });
 		if (!lt.ok) return fail(400, { message: lt.message, city: cityRaw });
@@ -112,6 +142,9 @@ export const actions: Actions = {
 		if (!pg.ok) return fail(400, { message: pg.message, city: cityRaw });
 		if (!tc.ok) return fail(400, { message: tc.message, city: cityRaw });
 		if (!ob.ok) return fail(400, { message: ob.message, city: cityRaw });
+		if (!hero.ok) return fail(400, { message: hero.message, city: cityRaw });
+		if (!lh.ok) return fail(400, { message: lh.message, city: cityRaw });
+		if (!lb.ok) return fail(400, { message: lb.message, city: cityRaw });
 
 		const db = getDb();
 		await db
@@ -124,7 +157,10 @@ export const actions: Actions = {
 				contactUrl: ct.value,
 				listingPropertyGroup: pg.value,
 				listingThemeColor: tc.value,
-				listingOrderBy: ob.value
+				listingOrderBy: ob.value,
+				landingHeroImageUrl: hero.value,
+				landingHeadline: lh.value,
+				landingBody: lb.value
 			})
 			.onConflictDoUpdate({
 				target: rentalLandingLinks.citySlug,
@@ -136,6 +172,9 @@ export const actions: Actions = {
 					listingPropertyGroup: pg.value,
 					listingThemeColor: tc.value,
 					listingOrderBy: ob.value,
+					landingHeroImageUrl: hero.value,
+					landingHeadline: lh.value,
+					landingBody: lb.value,
 					updatedAt: sql`now()`
 				}
 			});

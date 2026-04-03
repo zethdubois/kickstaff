@@ -20,6 +20,9 @@
 			{tagline}
 			theme="cda"
 			listingEmbedUrl={data.listingEmbedUrl}
+			landingHeroImageUrl={data.links.landingHeroImageUrl}
+			landingHeadline={data.links.landingHeadline}
+			landingBody={data.links.landingBody}
 		/>
 	</div>
 </div>

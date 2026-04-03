@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { CityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import type { CitySlug } from '$lib/cities';
+	import RentalLandingFrame from '$lib/RentalLandingFrame.svelte';
 
 	type TileKey = 'short' | 'long' | 'apply' | 'contact';
 
@@ -9,7 +10,10 @@
 		title,
 		tagline,
 		theme,
-		listingEmbedUrl
+		listingEmbedUrl,
+		landingHeroImageUrl = null,
+		landingHeadline = null,
+		landingBody = null
 	}: {
 		links: CityAppfolioLinks;
 		title: string;
@@ -17,6 +21,9 @@
 		theme: CitySlug;
 		/** AppFolio /listings URL (same query as Appfolio.Listing + listing.js). */
 		listingEmbedUrl: string | null;
+		landingHeroImageUrl?: string | null;
+		landingHeadline?: string | null;
+		landingBody?: string | null;
 	} = $props();
 
 	const tiles = $derived([
@@ -26,17 +33,13 @@
 		{ key: 'contact' as const, href: links.contact, label: 'Contact us' }
 	]);
 
-	/** Iframe shows the property-group embed first, then tile URLs load in-app (no full-page navigation). */
+	/** Iframe loads only after a nav tile click; null shows the landing frame in the main column. */
 	let iframeSrc = $state<string | null>(null);
 
 	$effect(() => {
-		iframeSrc =
-			listingEmbedUrl ??
-			links.shortTerm ??
-			links.longTerm ??
-			links.apply ??
-			links.contact ??
-			null;
+		theme;
+		listingEmbedUrl;
+		iframeSrc = null;
 	});
 
 	function onTileClick(e: MouseEvent, href: string) {
@@ -121,12 +124,12 @@
 			{#if iframeSrc}
 				<iframe class="rentalLanding__frame" title="AppFolio" src={iframeSrc}></iframe>
 			{:else}
-				<div class="rentalLanding__embedEmpty">
-					<p class="rentalLanding__embedEmptyText">
-						No listings or links configured for this city yet. Add a property group and/or tile URLs under
-						<a class="rentalLanding__embedAdmin" href="/admin/rental-links">Admin → Rental links</a>.
-					</p>
-				</div>
+				<RentalLandingFrame
+					{theme}
+					heroImageUrl={landingHeroImageUrl}
+					headline={landingHeadline}
+					body={landingBody}
+				/>
 			{/if}
 		</section>
 	</div>
@@ -257,30 +260,6 @@
 		border: 0;
 	}
 
-	.rentalLanding__embedEmpty {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 1.5rem;
-		min-height: 12rem;
-	}
-
-	.rentalLanding__embedEmptyText {
-		margin: 0;
-		max-width: 28rem;
-		font-size: 0.95rem;
-		line-height: 1.5;
-		text-align: center;
-	}
-
-	.rentalLanding__embedAdmin {
-		color: inherit;
-		font-weight: 650;
-		text-decoration: underline;
-		text-underline-offset: 0.15em;
-	}
-
 	@media (max-width: 52rem) {
 		.rentalLanding__layout {
 			grid-template-columns: 1fr;
@@ -334,14 +313,6 @@
 		border: 1px dashed rgb(186 230 253 / 0.28);
 	}
 
-	.rentalLanding--cda .rentalLanding__embedEmpty {
-		background: rgb(15 23 42 / 0.25);
-	}
-
-	.rentalLanding--cda .rentalLanding__embedEmptyText {
-		color: rgb(224 242 254 / 0.88);
-	}
-
 	@media (max-width: 52rem) {
 		.rentalLanding--cda .rentalLanding__sidebar {
 			border-bottom-color: rgb(186 230 253 / 0.22);
@@ -386,14 +357,6 @@
 		color: #ecfdf5;
 		background: rgb(255 255 255 / 0.03);
 		border: 1px dashed rgb(167 243 208 / 0.22);
-	}
-
-	.rentalLanding--spt .rentalLanding__embedEmpty {
-		background: rgb(15 23 42 / 0.35);
-	}
-
-	.rentalLanding--spt .rentalLanding__embedEmptyText {
-		color: rgb(236 253 245 / 0.88);
 	}
 
 	@media (max-width: 52rem) {
@@ -442,14 +405,6 @@
 
 	.rentalLanding--mos .rentalLanding__tile:not(.rentalLanding__tile--disabled):focus-visible {
 		outline-color: #c2410c;
-	}
-
-	.rentalLanding--mos .rentalLanding__embedEmpty {
-		background: #faf7f2;
-	}
-
-	.rentalLanding--mos .rentalLanding__embedEmptyText {
-		color: #57534e;
 	}
 
 	@media (max-width: 52rem) {

@@ -37,6 +37,10 @@ export const rentalLandingLinks = pgTable('rental_landing_links', {
 	listingThemeColor: text('listing_theme_color'),
 	/** Same as Appfolio.Listing `defaultOrder` → `filters[order_by]` (e.g. date_posted). */
 	listingOrderBy: text('listing_order_by'),
+	/** Hero image for the rental landing main column (HTTPS URL). */
+	landingHeroImageUrl: text('landing_hero_image_url'),
+	landingHeadline: text('landing_headline'),
+	landingBody: text('landing_body'),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
 

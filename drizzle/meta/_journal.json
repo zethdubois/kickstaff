@@ -36,6 +36,13 @@
       "when": 1775198690313,
       "tag": "0004_heavy_black_panther",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775200716059,
+      "tag": "0005_bright_lethal_legion",
+      "breakpoints": true
     }
   ]
 }

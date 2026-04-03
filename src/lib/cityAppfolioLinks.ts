@@ -11,6 +11,11 @@ export type CityAppfolioLinks = {
 	listingThemeColor: string | null;
 	/** AppFolio.Listing `defaultOrder` / `filters[order_by]`; null = date_posted. */
 	listingOrderBy: string | null;
+	/** HTTPS URL for the main-column hero image; null = none. */
+	landingHeroImageUrl: string | null;
+	landingHeadline: string | null;
+	/** Plain text; line breaks preserved in the frame. */
+	landingBody: string | null;
 };
 
 /** Non-empty trimmed string, or null if unset (tile should be disabled). */
@@ -32,6 +37,9 @@ export function cityAppfolioLinksFromRow(
 		listingPropertyGroup: string | null;
 		listingThemeColor: string | null;
 		listingOrderBy: string | null;
+		landingHeroImageUrl: string | null;
+		landingHeadline: string | null;
+		landingBody: string | null;
 	} | null
 ): CityAppfolioLinks {
 	if (!row) {
@@ -42,7 +50,10 @@ export function cityAppfolioLinksFromRow(
 			contact: null,
 			listingPropertyGroup: null,
 			listingThemeColor: null,
-			listingOrderBy: null
+			listingOrderBy: null,
+			landingHeroImageUrl: null,
+			landingHeadline: null,
+			landingBody: null
 		};
 	}
 	return {
@@ -52,6 +63,9 @@ export function cityAppfolioLinksFromRow(
 		contact: optional(row.contactUrl),
 		listingPropertyGroup: optional(row.listingPropertyGroup),
 		listingThemeColor: optional(row.listingThemeColor),
-		listingOrderBy: optional(row.listingOrderBy)
+		listingOrderBy: optional(row.listingOrderBy),
+		landingHeroImageUrl: optional(row.landingHeroImageUrl),
+		landingHeadline: optional(row.landingHeadline),
+		landingBody: optional(row.landingBody)
 	};
 }

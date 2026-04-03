@@ -19,7 +19,10 @@ export async function loadCityAppfolioLinks(slug: CitySlug) {
 			contactUrl: rentalLandingLinks.contactUrl,
 			listingPropertyGroup: rentalLandingLinks.listingPropertyGroup,
 			listingThemeColor: rentalLandingLinks.listingThemeColor,
-			listingOrderBy: rentalLandingLinks.listingOrderBy
+			listingOrderBy: rentalLandingLinks.listingOrderBy,
+			landingHeroImageUrl: rentalLandingLinks.landingHeroImageUrl,
+			landingHeadline: rentalLandingLinks.landingHeadline,
+			landingBody: rentalLandingLinks.landingBody
 		})
 		.from(rentalLandingLinks)
 		.where(eq(rentalLandingLinks.citySlug, slug))
