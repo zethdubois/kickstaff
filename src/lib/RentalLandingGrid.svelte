@@ -8,12 +8,15 @@
 		links,
 		title,
 		tagline,
-		theme
+		theme,
+		listingEmbedUrl
 	}: {
 		links: CityAppfolioLinks;
 		title: string;
 		tagline: string;
 		theme: CitySlug;
+		/** AppFolio /listings URL (same query as Appfolio.Listing + listing.js). */
+		listingEmbedUrl: string | null;
 	} = $props();
 
 	const tiles = $derived([
@@ -22,6 +25,25 @@
 		{ key: 'apply' as const, href: links.apply, label: 'Apply today' },
 		{ key: 'contact' as const, href: links.contact, label: 'Contact us' }
 	]);
+
+	/** Iframe shows the property-group embed first, then tile URLs load in-app (no full-page navigation). */
+	let iframeSrc = $state<string | null>(null);
+
+	$effect(() => {
+		iframeSrc =
+			listingEmbedUrl ??
+			links.shortTerm ??
+			links.longTerm ??
+			links.apply ??
+			links.contact ??
+			null;
+	});
+
+	function onTileClick(e: MouseEvent, href: string) {
+		if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+		e.preventDefault();
+		iframeSrc = href;
+	}
 </script>
 
 {#snippet tileIcon(key: TileKey)}
@@ -54,54 +76,86 @@
 {/snippet}
 
 <div class="rentalLanding rentalLanding--{theme}">
-	<header class="rentalLanding__header">
-		{#if theme === 'cda'}
-			<p class="rentalLanding__eyebrow">Rentals</p>
-		{/if}
-		<h1 class="rentalLanding__title">{title}</h1>
-		<p class="rentalLanding__tagline">{tagline}</p>
-	</header>
+	<div class="rentalLanding__layout">
+		<aside class="rentalLanding__sidebar">
+			<header class="rentalLanding__header">
+				{#if theme === 'cda'}
+					<p class="rentalLanding__eyebrow">Rentals</p>
+				{/if}
+				<h1 class="rentalLanding__title">{title}</h1>
+				<p class="rentalLanding__tagline">{tagline}</p>
+			</header>
 
-	<nav class="rentalLanding__grid" aria-label="Rental links">
-		{#each tiles as { key, href, label } (key)}
-			{#if href}
-				<a
-					class="rentalLanding__tile"
-					{href}
-					target="_blank"
-					rel="noopener noreferrer"
-					aria-label="{label} (opens in new tab)"
-				>
-					<span class="rentalLanding__icon" aria-hidden="true">
-						{@render tileIcon(key)}
-					</span>
-					<span class="rentalLanding__label">{label}</span>
-				</a>
+			<nav class="rentalLanding__nav" aria-label="Rental links">
+				{#each tiles as { key, href, label } (key)}
+					{#if href}
+						<a
+							class="rentalLanding__tile"
+							{href}
+							aria-label={label}
+							onclick={(e) => onTileClick(e, href)}
+						>
+							<span class="rentalLanding__icon" aria-hidden="true">
+								{@render tileIcon(key)}
+							</span>
+							<span class="rentalLanding__label">{label}</span>
+						</a>
+					{:else}
+						<span
+							class="rentalLanding__tile rentalLanding__tile--disabled"
+							aria-disabled="true"
+							aria-label="{label} — link not configured"
+							title="Link not configured"
+						>
+							<span class="rentalLanding__icon" aria-hidden="true">
+								{@render tileIcon(key)}
+							</span>
+							<span class="rentalLanding__label">{label}</span>
+						</span>
+					{/if}
+				{/each}
+			</nav>
+		</aside>
+
+		<section class="rentalLanding__embed" aria-label="AppFolio content">
+			{#if iframeSrc}
+				<iframe class="rentalLanding__frame" title="AppFolio" src={iframeSrc}></iframe>
 			{:else}
-				<span
-					class="rentalLanding__tile rentalLanding__tile--disabled"
-					aria-disabled="true"
-					aria-label="{label} — link not configured"
-					title="Link not configured"
-				>
-					<span class="rentalLanding__icon" aria-hidden="true">
-						{@render tileIcon(key)}
-					</span>
-					<span class="rentalLanding__label">{label}</span>
-				</span>
+				<div class="rentalLanding__embedEmpty">
+					<p class="rentalLanding__embedEmptyText">
+						No listings or links configured for this city yet. Add a property group and/or tile URLs under
+						<a class="rentalLanding__embedAdmin" href="/admin/rental-links">Admin → Rental links</a>.
+					</p>
+				</div>
 			{/if}
-		{/each}
-	</nav>
+		</section>
+	</div>
 </div>
 
 <style>
 	.rentalLanding {
 		width: 100%;
-		max-width: 28rem;
+	}
+
+	.rentalLanding__layout {
+		display: grid;
+		grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+		grid-template-rows: 1fr;
+		align-items: stretch;
+		min-height: calc(100dvh - 3.75rem);
+	}
+
+	.rentalLanding__sidebar {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.5rem) 1.5rem;
+		min-height: 0;
+		border-right: 1px solid transparent;
 	}
 
 	.rentalLanding__header {
-		margin-bottom: 1.75rem;
+		flex-shrink: 0;
 	}
 
 	.rentalLanding__eyebrow {
@@ -114,7 +168,7 @@
 
 	.rentalLanding__title {
 		margin: 0 0 0.5rem;
-		font-size: clamp(1.75rem, 5vw, 2.5rem);
+		font-size: clamp(1.5rem, 3.5vw, 2.25rem);
 		font-weight: 600;
 		line-height: 1.12;
 		letter-spacing: -0.02em;
@@ -122,29 +176,30 @@
 
 	.rentalLanding__tagline {
 		margin: 0;
-		font-size: 1.05rem;
+		font-size: 1rem;
 		line-height: 1.45;
 	}
 
-	.rentalLanding__grid {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0.85rem;
+	.rentalLanding__nav {
+		display: flex;
+		flex-direction: column;
+		gap: 0.65rem;
+		min-height: 0;
 	}
 
 	.rentalLanding__tile {
 		display: flex;
-		flex-direction: column;
+		flex-direction: row;
 		align-items: center;
-		justify-content: center;
-		gap: 0.65rem;
-		min-height: 7.25rem;
-		padding: 1rem 0.75rem;
+		justify-content: flex-start;
+		gap: 0.75rem;
+		min-height: 3.25rem;
+		padding: 0.65rem 0.85rem;
 		border-radius: 0.5rem;
 		text-decoration: none;
 		font-weight: 600;
-		font-size: 0.9rem;
-		text-align: center;
+		font-size: 0.88rem;
+		text-align: left;
 		line-height: 1.25;
 		box-sizing: border-box;
 		transition:
@@ -173,19 +228,77 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		flex-shrink: 0;
 	}
 
 	.rentalLanding__iconSvg {
-		width: 2rem;
-		height: 2rem;
+		width: 1.65rem;
+		height: 1.65rem;
 		display: block;
 	}
 
 	.rentalLanding__label {
-		max-width: 11rem;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.rentalLanding__embed {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+		background: #fff;
+	}
+
+	.rentalLanding__frame {
+		flex: 1 1 auto;
+		width: 100%;
+		min-height: 0;
+		border: 0;
+	}
+
+	.rentalLanding__embedEmpty {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1.5rem;
+		min-height: 12rem;
+	}
+
+	.rentalLanding__embedEmptyText {
+		margin: 0;
+		max-width: 28rem;
+		font-size: 0.95rem;
+		line-height: 1.5;
+		text-align: center;
+	}
+
+	.rentalLanding__embedAdmin {
+		color: inherit;
+		font-weight: 650;
+		text-decoration: underline;
+		text-underline-offset: 0.15em;
+	}
+
+	@media (max-width: 52rem) {
+		.rentalLanding__layout {
+			grid-template-columns: 1fr;
+			grid-template-rows: auto minmax(22rem, 55vh);
+			min-height: unset;
+		}
+
+		.rentalLanding__sidebar {
+			border-right: none;
+			border-bottom: 1px solid transparent;
+		}
 	}
 
 	/* CDA — cool blue hero */
+	.rentalLanding--cda .rentalLanding__sidebar {
+		border-right-color: rgb(186 230 253 / 0.22);
+	}
+
 	.rentalLanding--cda .rentalLanding__eyebrow {
 		color: rgb(224 242 254 / 0.85);
 	}
@@ -221,17 +334,35 @@
 		border: 1px dashed rgb(186 230 253 / 0.28);
 	}
 
+	.rentalLanding--cda .rentalLanding__embedEmpty {
+		background: rgb(15 23 42 / 0.25);
+	}
+
+	.rentalLanding--cda .rentalLanding__embedEmptyText {
+		color: rgb(224 242 254 / 0.88);
+	}
+
+	@media (max-width: 52rem) {
+		.rentalLanding--cda .rentalLanding__sidebar {
+			border-bottom-color: rgb(186 230 253 / 0.22);
+		}
+	}
+
 	/* Sandpoint — green / dark */
+	.rentalLanding--spt .rentalLanding__sidebar {
+		border-right-color: rgb(167 243 208 / 0.18);
+	}
+
 	.rentalLanding--spt .rentalLanding__title {
 		font-weight: 300;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: #ecfdf5;
-		font-size: clamp(1.65rem, 4.5vw, 2.35rem);
+		font-size: clamp(1.45rem, 3.2vw, 2.1rem);
 	}
 
 	.rentalLanding--spt .rentalLanding__tagline {
-		font-size: 0.95rem;
+		font-size: 0.9rem;
 		font-weight: 500;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
@@ -257,13 +388,31 @@
 		border: 1px dashed rgb(167 243 208 / 0.22);
 	}
 
+	.rentalLanding--spt .rentalLanding__embedEmpty {
+		background: rgb(15 23 42 / 0.35);
+	}
+
+	.rentalLanding--spt .rentalLanding__embedEmptyText {
+		color: rgb(236 253 245 / 0.88);
+	}
+
+	@media (max-width: 52rem) {
+		.rentalLanding--spt .rentalLanding__sidebar {
+			border-bottom-color: rgb(167 243 208 / 0.18);
+		}
+	}
+
 	/* Moscow — light warm */
+	.rentalLanding--mos .rentalLanding__sidebar {
+		border-right-color: #d6d3d1;
+	}
+
 	.rentalLanding--mos .rentalLanding__title {
 		font-weight: 800;
 		letter-spacing: -0.04em;
 		text-transform: uppercase;
 		color: #292524;
-		font-size: clamp(2rem, 5vw, 2.65rem);
+		font-size: clamp(1.65rem, 3.8vw, 2.35rem);
 	}
 
 	.rentalLanding--mos .rentalLanding__tagline {
@@ -293,5 +442,19 @@
 
 	.rentalLanding--mos .rentalLanding__tile:not(.rentalLanding__tile--disabled):focus-visible {
 		outline-color: #c2410c;
+	}
+
+	.rentalLanding--mos .rentalLanding__embedEmpty {
+		background: #faf7f2;
+	}
+
+	.rentalLanding--mos .rentalLanding__embedEmptyText {
+		color: #57534e;
+	}
+
+	@media (max-width: 52rem) {
+		.rentalLanding--mos .rentalLanding__sidebar {
+			border-bottom-color: #d6d3d1;
+		}
 	}
 </style>

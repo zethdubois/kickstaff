@@ -1,4 +1,3 @@
-import { env } from '$env/dynamic/public';
 import type { CitySlug } from '$lib/cities';
 
 export type CityAppfolioLinks = {
@@ -6,40 +5,53 @@ export type CityAppfolioLinks = {
 	longTerm: string | null;
 	apply: string | null;
 	contact: string | null;
+	/** AppFolio property group for embedded listings; null disables iframe. */
+	listingPropertyGroup: string | null;
+	/** AppFolio.Listing `themeColor`; null = use app default when building embed URL. */
+	listingThemeColor: string | null;
+	/** AppFolio.Listing `defaultOrder` / `filters[order_by]`; null = date_posted. */
+	listingOrderBy: string | null;
 };
 
 /** Non-empty trimmed string, or null if unset (tile should be disabled). */
-function optional(v: string | undefined): string | null {
+function optional(v: string | undefined | null): string | null {
 	const t = v?.trim();
 	return t || null;
 }
 
 /**
- * AppFolio URLs from PUBLIC_APPFOLIO_* env vars only.
- * Missing keys → null; UI disables that tile (no default URLs).
+ * Maps a DB row (or no row) to the shape used by rental landing pages.
+ * Missing row → all nulls; empty columns → null.
  */
-export function cityAppfolioLinks(slug: CitySlug): CityAppfolioLinks {
-	switch (slug) {
-		case 'cda':
-			return {
-				shortTerm: optional(env.PUBLIC_APPFOLIO_CDA_SHORT_TERM_URL),
-				longTerm: optional(env.PUBLIC_APPFOLIO_CDA_LONG_TERM_URL),
-				apply: optional(env.PUBLIC_APPFOLIO_CDA_APPLY_URL),
-				contact: optional(env.PUBLIC_APPFOLIO_CDA_CONTACT_URL)
-			};
-		case 'mos':
-			return {
-				shortTerm: optional(env.PUBLIC_APPFOLIO_MOS_SHORT_TERM_URL),
-				longTerm: optional(env.PUBLIC_APPFOLIO_MOS_LONG_TERM_URL),
-				apply: optional(env.PUBLIC_APPFOLIO_MOS_APPLY_URL),
-				contact: optional(env.PUBLIC_APPFOLIO_MOS_CONTACT_URL)
-			};
-		case 'spt':
-			return {
-				shortTerm: optional(env.PUBLIC_APPFOLIO_SPT_SHORT_TERM_URL),
-				longTerm: optional(env.PUBLIC_APPFOLIO_SPT_LONG_TERM_URL),
-				apply: optional(env.PUBLIC_APPFOLIO_SPT_APPLY_URL),
-				contact: optional(env.PUBLIC_APPFOLIO_SPT_CONTACT_URL)
-			};
+export function cityAppfolioLinksFromRow(
+	row: {
+		shortTermUrl: string | null;
+		longTermUrl: string | null;
+		applyUrl: string | null;
+		contactUrl: string | null;
+		listingPropertyGroup: string | null;
+		listingThemeColor: string | null;
+		listingOrderBy: string | null;
+	} | null
+): CityAppfolioLinks {
+	if (!row) {
+		return {
+			shortTerm: null,
+			longTerm: null,
+			apply: null,
+			contact: null,
+			listingPropertyGroup: null,
+			listingThemeColor: null,
+			listingOrderBy: null
+		};
 	}
+	return {
+		shortTerm: optional(row.shortTermUrl),
+		longTerm: optional(row.longTermUrl),
+		apply: optional(row.applyUrl),
+		contact: optional(row.contactUrl),
+		listingPropertyGroup: optional(row.listingPropertyGroup),
+		listingThemeColor: optional(row.listingThemeColor),
+		listingOrderBy: optional(row.listingOrderBy)
+	};
 }

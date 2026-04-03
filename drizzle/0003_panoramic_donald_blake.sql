@@ -1,0 +1,1 @@
+ALTER TABLE "rental_landing_links" ADD COLUMN "listing_property_group" text;

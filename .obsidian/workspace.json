@@ -185,7 +185,17 @@
   },
   "active": "e36b0dcd44e89347",
   "lastOpenFiles": [
-    "docs/Dev Guide.md",
-    "docs"
+    "drizzle/0004_heavy_black_panther.sql",
+    "drizzle/meta/0004_snapshot.json",
+    "drizzle/0003_panoramic_donald_blake.sql",
+    "drizzle/meta/0003_snapshot.json",
+    "src/routes/test/appfolio-embed/+page.svelte",
+    "src/routes/test/appfolio-embed/+page.ts",
+    "src/routes/test/appfolio-embed",
+    "src/routes/test",
+    "src/lib/appfolioListingEmbedUrl.ts",
+    "src/routes/spt/+page.server.ts",
+    "src/routes/mos/+page.server.ts",
+    "docs/Dev Guide.md"
   ]
 }

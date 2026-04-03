@@ -1,11 +1,11 @@
 <script lang="ts">
 	import RentalLandingGrid from '$lib/RentalLandingGrid.svelte';
-	import { cityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import { cityBySlug } from '$lib/cities';
+
+	let { data } = $props();
 
 	const label = cityBySlug.spt;
 	const tagline = 'Mountains & Schweitzer';
-	const links = cityAppfolioLinks('spt');
 </script>
 
 <svelte:head>
@@ -15,13 +15,19 @@
 <div class="spt">
 	<div class="spt__bg" aria-hidden="true"></div>
 	<div class="spt__content">
-		<RentalLandingGrid {links} title={label} {tagline} theme="spt" />
+		<RentalLandingGrid
+			links={data.links}
+			title={label}
+			{tagline}
+			theme="spt"
+			listingEmbedUrl={data.listingEmbedUrl}
+		/>
 	</div>
 </div>
 
 <style>
 	.spt {
-		min-height: min(100vh, 52rem);
+		min-height: 100dvh;
 		background: #1c2e28;
 		color: #ecfdf5;
 		position: relative;
@@ -41,7 +47,7 @@
 	.spt__content {
 		position: relative;
 		z-index: 1;
-		max-width: 36rem;
-		padding: clamp(2.75rem, 9vw, 4.5rem) clamp(1.5rem, 5vw, 2.5rem) 4rem;
+		width: 100%;
+		padding: 0;
 	}
 </style>
