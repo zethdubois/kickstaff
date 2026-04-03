@@ -111,6 +111,9 @@
         />
       </a>
 
+      {#if page.data.user}
+        <a class="nav__settings" href="/settings/dashboard">Settings</a>
+      {/if}
       {#if isAdmin}
         <a class="nav__admin" href="/admin/rental-links">Admin</a>
       {/if}
@@ -207,7 +210,8 @@
     line-height: 0;
   }
 
-  .nav__admin {
+  .nav__admin,
+  .nav__settings {
     font: inherit;
     font-weight: 650;
     color: inherit;
@@ -218,7 +222,8 @@
     background: color-mix(in srgb, currentColor 2%, transparent);
   }
 
-  .nav__admin:hover {
+  .nav__admin:hover,
+  .nav__settings:hover {
     background: color-mix(in srgb, currentColor 6%, transparent);
   }
 

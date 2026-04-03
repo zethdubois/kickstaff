@@ -43,6 +43,13 @@
       "when": 1775200716059,
       "tag": "0005_bright_lethal_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775210364045,
+      "tag": "0006_deep_gargoyle",
+      "breakpoints": true
     }
   ]
 }

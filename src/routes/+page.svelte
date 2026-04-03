@@ -1,23 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
-	const resources = [
-		{
-			title: 'AppFolio',
-			description: 'Property management system (ops access).',
-			href: 'https://kickasset.appfolio.com/'
-		},
-		{
-			title: 'Kickass Office Notes',
-			description: 'Google Sheet: office notes + tech stack notes.',
-			href: 'https://docs.google.com/spreadsheets/d/1eF6Imoj7fl2hrvIJVq_qeMBOHWr-Ur1k7zCHgJPZxqA/edit?usp=sharing'
-		},
-		{
-			title: 'Property Expenses',
-			description: 'Google Sheet: property expense category map.',
-			href: 'https://docs.google.com/spreadsheets/d/1r3LntyoKA1efd7ijw4C7e7tkjkEDZ6Pa/edit?usp=sharing&ouid=109307632736242833065&rtpof=true&sd=true'
-		}
-	] as const;
+	let { data } = $props();
 </script>
 
 <svelte:head>
@@ -43,17 +27,35 @@
 	</header>
 
 	<section class="dash__section" aria-label="Resources">
-		<div class="cards">
-			{#each resources as item (item.href)}
-				<a class="card" href={item.href} target="_blank" rel="noreferrer">
-					<div class="card__title">{item.title}</div>
-					<div class="card__desc">{item.description}</div>
-					<div class="card__meta">Open in new tab</div>
-				</a>
-			{/each}
-		</div>
+		{#if data.dashboardColumns.length === 0}
+			<p class="dash__empty">
+				No dashboard links yet. Add some under
+				<a href="/settings/dashboard">Settings → Dashboard</a>.
+			</p>
+		{:else}
+			<div class="dash__columns">
+				{#each data.dashboardColumns as col (col.category)}
+					<div class="dash__column">
+						<h2 class="dash__cat">{col.category}</h2>
+						<div class="cards">
+							{#each col.links as item (item.id)}
+								<a
+									class="card"
+									href={item.hyperlink}
+									target="_blank"
+									rel="noreferrer"
+								>
+									<div class="card__title">{item.label}</div>
+									<div class="card__desc">{item.description}</div>
+									<div class="card__meta">Open in new tab</div>
+								</a>
+							{/each}
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</section>
-
 </div>
 
 <style>
@@ -102,9 +104,39 @@
 		color: color-mix(in srgb, currentColor 70%, transparent);
 	}
 
-	.cards {
+	.dash__empty {
+		margin: 0;
+		color: color-mix(in srgb, currentColor 72%, transparent);
+	}
+
+	.dash__empty a {
+		color: inherit;
+		font-weight: 600;
+	}
+
+	.dash__columns {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		gap: 1.25rem 1.5rem;
+		align-items: start;
+	}
+
+	.dash__column {
+		min-width: 0;
+	}
+
+	.dash__cat {
+		margin: 0 0 0.5rem;
+		font-size: 0.82rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: color-mix(in srgb, currentColor 58%, transparent);
+	}
+
+	.cards {
+		display: flex;
+		flex-direction: column;
 		gap: 0.9rem;
 	}
 
@@ -143,5 +175,4 @@
 		font-size: 0.85rem;
 		color: color-mix(in srgb, currentColor 60%, transparent);
 	}
-
 </style>
