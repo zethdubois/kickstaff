@@ -1,5 +1,11 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import {
+		categoryBorder,
+		categoryForeground,
+		categoryTintBackground,
+		hashCategoryHue
+	} from '$lib/categoryColor';
 
 	let { data } = $props();
 </script>
@@ -30,25 +36,41 @@
 		{#if data.dashboardColumns.length === 0}
 			<p class="dash__empty">
 				No dashboard links yet. Add some under
-				<a href="/settings/dashboard">Settings → Dashboard</a>.
+				<a href="/settings/add-link">Settings → Add link</a>.
 			</p>
 		{:else}
 			<div class="dash__columns">
 				{#each data.dashboardColumns as col (col.category)}
+					{@const hue = hashCategoryHue(col.category)}
 					<div class="dash__column">
-						<h2 class="dash__cat">{col.category}</h2>
+						<h2
+							class="dash__cat"
+							style="color: {categoryForeground(hue)}; border-left: 3px solid {categoryBorder(hue)}; padding-left: 0.5rem;"
+						>
+							{col.category}
+						</h2>
 						<div class="cards">
 							{#each col.links as item (item.id)}
-								<a
-									class="card"
-									href={item.hyperlink}
-									target="_blank"
-									rel="noreferrer"
+								<details
+									class="card card--dash"
+									style="background-color: {categoryTintBackground(hue)}; border: 1px solid {categoryBorder(hue)};"
 								>
-									<div class="card__title">{item.label}</div>
-									<div class="card__desc">{item.description}</div>
-									<div class="card__meta">Open in new tab</div>
-								</a>
+									<summary class="card__summary">
+										<span class="card__title">{item.label}</span>
+										<span class="card__chev" aria-hidden="true"></span>
+									</summary>
+									<div class="card__expand">
+										<p class="card__desc">{item.description}</p>
+										<a
+											class="card__open"
+											href={item.hyperlink}
+											target="_blank"
+											rel="noreferrer"
+										>
+											Open in new tab
+										</a>
+									</div>
+								</details>
 							{/each}
 						</div>
 					</div>
@@ -131,7 +153,6 @@
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
-		color: color-mix(in srgb, currentColor 58%, transparent);
 	}
 
 	.cards {
@@ -140,39 +161,72 @@
 		gap: 0.9rem;
 	}
 
-	.card {
-		display: block;
-		padding: 1rem;
+	.card--dash {
 		border-radius: 12px;
-		border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-		background: color-mix(in srgb, currentColor 3%, transparent);
-		color: inherit;
-		text-decoration: none;
-		transition:
-			transform 120ms ease,
-			border-color 120ms ease,
-			background-color 120ms ease;
+		overflow: hidden;
 	}
 
-	.card:hover {
-		transform: translateY(-1px);
-		border-color: color-mix(in srgb, currentColor 22%, transparent);
-		background: color-mix(in srgb, currentColor 5%, transparent);
+	.card__summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		padding: 0.75rem 1rem;
+		cursor: pointer;
+		list-style: none;
+		font: inherit;
+		color: inherit;
+	}
+
+	.card__summary::-webkit-details-marker {
+		display: none;
 	}
 
 	.card__title {
 		font-weight: 650;
 		letter-spacing: -0.01em;
+		text-align: left;
+	}
+
+	.card__chev {
+		flex-shrink: 0;
+		width: 0.45rem;
+		height: 0.45rem;
+		border-right: 2px solid color-mix(in srgb, currentColor 45%, transparent);
+		border-bottom: 2px solid color-mix(in srgb, currentColor 45%, transparent);
+		transform: rotate(45deg);
+		transition: transform 0.15s ease;
+		margin-top: -0.15rem;
+	}
+
+	.card--dash[open] .card__chev {
+		transform: rotate(225deg);
+		margin-top: 0.1rem;
+	}
+
+	.card__expand {
+		padding: 0 1rem 1rem;
+		margin: 0;
+		border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
 	}
 
 	.card__desc {
-		margin-top: 0.35rem;
-		color: color-mix(in srgb, currentColor 72%, transparent);
+		margin: 0.65rem 0 0.5rem;
+		color: color-mix(in srgb, currentColor 76%, transparent);
+		font-size: 0.95rem;
+		line-height: 1.4;
 	}
 
-	.card__meta {
-		margin-top: 0.65rem;
-		font-size: 0.85rem;
-		color: color-mix(in srgb, currentColor 60%, transparent);
+	.card__open {
+		display: inline-block;
+		font-size: 0.88rem;
+		font-weight: 600;
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 0.15em;
+	}
+
+	.card__open:hover {
+		opacity: 0.9;
 	}
 </style>

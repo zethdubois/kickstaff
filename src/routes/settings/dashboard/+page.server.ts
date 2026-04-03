@@ -8,7 +8,6 @@ import { dashboardLinks, userDashboardLinkPreferences } from '$lib/server/schema
 const MAX_LABEL = 512;
 const MAX_DESC = 4096;
 const MAX_CAT = 128;
-const MAX_URL = 2048;
 
 function parseHttpUrl(raw: unknown, required: boolean): { ok: true; value: string } | { ok: false; message: string } {
 	const s = String(raw ?? '').trim();
@@ -16,7 +15,7 @@ function parseHttpUrl(raw: unknown, required: boolean): { ok: true; value: strin
 		if (required) return { ok: false, message: 'URL is required.' };
 		return { ok: true, value: '' };
 	}
-	if (s.length > MAX_URL) return { ok: false, message: 'URL is too long.' };
+	if (s.length > 2048) return { ok: false, message: 'URL is too long.' };
 	let u: URL;
 	try {
 		u = new URL(s);
@@ -56,46 +55,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 		showOnMyDashboard: !hidden.has(l.id)
 	}));
 
-	return { links };
+	const selectedLinks = links.filter((l) => l.showOnMyDashboard);
+	const hiddenLinks = links.filter((l) => !l.showOnMyDashboard);
+
+	return { selectedLinks, hiddenLinks };
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals }) => {
-		requireUser(locals.user);
-
-		const form = await request.formData();
-		const label = String(form.get('label') ?? '').trim();
-		const description = String(form.get('description') ?? '').trim();
-		const category = String(form.get('category') ?? '').trim();
-		const sortRaw = String(form.get('sort_order') ?? '').trim();
-		const sort_order = sortRaw === '' ? 0 : Number.parseInt(sortRaw, 10);
-
-		if (!label) return fail(400, { message: 'Label is required.' });
-		if (label.length > MAX_LABEL) return fail(400, { message: 'Label is too long.' });
-		if (description.length > MAX_DESC) return fail(400, { message: 'Description is too long.' });
-		if (!category) return fail(400, { message: 'Category is required.' });
-		if (category.length > MAX_CAT) return fail(400, { message: 'Category is too long.' });
-		if (!Number.isFinite(sort_order) || sort_order < -1000000 || sort_order > 1000000) {
-			return fail(400, { message: 'Sort order must be a reasonable number.' });
-		}
-
-		const href = parseHttpUrl(form.get('hyperlink'), true);
-		if (!href.ok) return fail(400, { message: href.message });
-
-		const db = getDb();
-		const now = new Date();
-		await db.insert(dashboardLinks).values({
-			hyperlink: href.value,
-			label,
-			description,
-			category,
-			sortOrder: sort_order,
-			updatedAt: now
-		});
-
-		return { ok: true as const };
-	},
-
 	update: async ({ request, locals }) => {
 		requireUser(locals.user);
 

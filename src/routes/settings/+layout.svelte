@@ -16,6 +16,12 @@
       aria-current={page.url.pathname === "/settings/dashboard" ? "page" : undefined}
       >Dashboard</a
     >
+    <a
+      class="settings__tab"
+      href="/settings/add-link"
+      aria-current={page.url.pathname === "/settings/add-link" ? "page" : undefined}
+      >Add link</a
+    >
   </nav>
 
   {@render children()}
@@ -23,7 +29,7 @@
 
 <style>
   .settings {
-    max-width: 44rem;
+    max-width: 60rem;
     margin: 0 auto;
     padding: 1.5rem 1.25rem 3rem;
   }
