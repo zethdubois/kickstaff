@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import nodemailer from 'nodemailer';
 
 type MailPayload = {
 	to: string;
@@ -6,27 +7,83 @@ type MailPayload = {
 	text: string;
 };
 
-const hasSmtpConfig =
-	Boolean(env.SMTP_HOST) &&
-	Boolean(env.SMTP_PORT) &&
-	Boolean(env.SMTP_USER) &&
-	Boolean(env.SMTP_PASSWORD);
-
-async function sendMail(payload: MailPayload) {
-	const from = env.ADMIN_EMAIL || 'no-reply@example.com';
-
-	// Placeholder implementation: log to server console so devs can see the email.
-	// A future task can wire this up to real SMTP (e.g. nodemailer) using the same payload shape.
-	console.info('[MAIL] Sending email', {
-		from,
-		to: payload.to,
-		subject: payload.subject,
-		text: payload.text,
-		smtpConfigured: hasSmtpConfig
-	});
+function smtpConfigured(): boolean {
+	return Boolean(
+		env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASSWORD
+	);
 }
 
-export async function sendUserCreatedEmail(email: string, plainPassword: string) {
+let transporter: nodemailer.Transporter | null = null;
+
+function smtpSecure(): boolean {
+	const s = env.SMTP_SECURE?.trim().toLowerCase();
+	if (s === 'true' || s === '1') return true;
+	if (s === 'false' || s === '0') return false;
+	const port = Number(env.SMTP_PORT);
+	return port === 465;
+}
+
+function getTransporter(): nodemailer.Transporter | null {
+	if (!smtpConfigured()) return null;
+	if (!transporter) {
+		transporter = nodemailer.createTransport({
+			host: env.SMTP_HOST,
+			port: Number(env.SMTP_PORT),
+			secure: smtpSecure(),
+			auth: {
+				user: env.SMTP_USER,
+				pass: env.SMTP_PASSWORD
+			}
+		});
+	}
+	return transporter;
+}
+
+async function sendMail(payload: MailPayload): Promise<boolean> {
+	const devOnly = env.MAIL_DEV_ONLY?.trim().toLowerCase() === 'true';
+	const from = env.ADMIN_EMAIL?.trim() || 'no-reply@example.com';
+
+	if (devOnly) {
+		console.info('[MAIL] MAIL_DEV_ONLY=true — skipping SMTP and logging only', {
+			from,
+			to: payload.to,
+			subject: payload.subject,
+			text: payload.text
+		});
+		return false;
+	}
+
+	const t = getTransporter();
+
+	if (t) {
+		if (!env.ADMIN_EMAIL?.trim()) {
+			console.warn(
+				'[MAIL] ADMIN_EMAIL is not set; using default From. Many SMTP providers require a verified sender address.'
+			);
+		}
+		await t.sendMail({
+			from,
+			to: payload.to,
+			subject: payload.subject,
+			text: payload.text
+		});
+		console.info('[MAIL] Sent via SMTP', { from, to: payload.to, subject: payload.subject });
+		return true;
+	}
+
+	console.info(
+		'[MAIL] No SMTP configured — logging only (set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD)',
+		{
+			from,
+			to: payload.to,
+			subject: payload.subject,
+			text: payload.text
+		}
+	);
+	return false;
+}
+
+export async function sendUserCreatedEmail(email: string, plainPassword: string): Promise<boolean> {
 	const loginUrl =
 		env.PUBLIC_BASE_URL && typeof env.PUBLIC_BASE_URL === 'string'
 			? `${env.PUBLIC_BASE_URL}/login`
@@ -45,14 +102,17 @@ export async function sendUserCreatedEmail(email: string, plainPassword: string)
 		'For security, you will be asked to change this password after you first log in.'
 	].join('\n');
 
-	await sendMail({
+	return sendMail({
 		to: email,
 		subject,
 		text
 	});
 }
 
-export async function sendPasswordResetEmail(email: string, temporaryPassword: string) {
+export async function sendPasswordResetEmail(
+	email: string,
+	temporaryPassword: string
+): Promise<boolean> {
 	const loginUrl =
 		env.PUBLIC_BASE_URL && typeof env.PUBLIC_BASE_URL === 'string'
 			? `${env.PUBLIC_BASE_URL}/login`
@@ -70,7 +130,7 @@ export async function sendPasswordResetEmail(email: string, temporaryPassword: s
 		'For security, you will be asked to choose a new password after you log in.'
 	].join('\n');
 
-	await sendMail({
+	return sendMail({
 		to: email,
 		subject,
 		text

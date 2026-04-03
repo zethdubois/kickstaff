@@ -122,9 +122,9 @@ export const actions: Actions = {
 			})
 			.where(eq(users.id, userId));
 
-		let emailSent = true;
+		let emailSent = false;
 		try {
-			await sendPasswordResetEmail(target.email, plain);
+			emailSent = await sendPasswordResetEmail(target.email, plain);
 		} catch (error) {
 			console.error('Failed to send password reset email', error);
 			emailSent = false;

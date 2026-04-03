@@ -58,9 +58,9 @@
         {#if form.emailSent}
           Reset email sent to <strong>{form.email}</strong>.
         {:else}
-          Password was updated for <strong>{form.email}</strong>, but the email
-          could not be sent. Share the new temporary password with them
-          manually if needed.
+          Password was updated for <strong>{form.email}</strong>, but email
+          delivery is disabled (dev mode / SMTP not configured). Share the new
+          temporary password with them manually.
         {/if}
       </p>
     </div>
@@ -106,7 +106,14 @@
       {#each data.users as u (u.id)}
         <li class="row">
           <span class="row__email">{u.email}</span>
-          <span class="row__role">{u.role}</span>
+          <span class="row__roleCell">
+            <span class="row__role">{u.role}</span>
+            {#if data.protectedDeleteUserId === u.id}
+              <span class="row__badge" title="Matches ADMIN_EMAIL; this account cannot be deleted">
+                super
+              </span>
+            {/if}
+          </span>
           <span class="row__date">{u.createdAt.toLocaleDateString()}</span>
           <div class="row__actions">
             <form method="POST" action="?/reset" class="row__form">
@@ -326,11 +333,32 @@
     overflow-wrap: anywhere;
   }
 
+  .row__roleCell {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
   .row__role {
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: color-mix(in srgb, currentColor 60%, transparent);
+  }
+
+  .row__badge {
+    font-size: 0.65rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.4rem;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+    background: color-mix(in srgb, currentColor 9%, transparent);
+    color: color-mix(in srgb, currentColor 78%, transparent);
+    white-space: nowrap;
   }
 
   .row__date {
