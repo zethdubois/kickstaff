@@ -174,7 +174,7 @@
 		grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
 		grid-template-rows: 1fr;
 		align-items: stretch;
-		min-height: calc(100dvh - 3.75rem);
+		min-height: calc(100dvh - var(--rental-viewport-offset, 0px));
 	}
 
 	.rentalLanding__sidebar {

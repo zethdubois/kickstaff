@@ -30,7 +30,7 @@
 
 <style>
 	.spt {
-		min-height: 100dvh;
+		min-height: calc(100dvh - var(--rental-viewport-offset, 0px));
 		background: #1c2e28;
 		color: #ecfdf5;
 		position: relative;

@@ -29,7 +29,7 @@
 
 <style>
 	.cda {
-		min-height: 100dvh;
+		min-height: calc(100dvh - var(--rental-viewport-offset, 0px));
 		background:
 			radial-gradient(ellipse 120% 80% at 50% -20%, rgb(186 230 253 / 0.45), transparent 55%),
 			linear-gradient(165deg, #0c4a6e 0%, #075985 38%, #0369a1 100%);

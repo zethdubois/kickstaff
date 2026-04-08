@@ -30,7 +30,7 @@
 
 <style>
 	.mos {
-		min-height: 100dvh;
+		min-height: calc(100dvh - var(--rental-viewport-offset, 0px));
 		background: #f5f0e8;
 		color: #292524;
 		position: relative;

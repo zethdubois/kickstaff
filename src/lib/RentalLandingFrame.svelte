@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { page } from '$app/state';
 	import type { CitySlug } from '$lib/cities';
 
 	let {
@@ -15,37 +17,254 @@
 		body?: string | null;
 	} = $props();
 
+	const canEditLanding = $derived(page.data.user?.role === 'admin');
+
 	const hasHero = $derived(Boolean(heroImageUrl?.trim()));
 	const heroUrl = $derived(heroImageUrl?.trim() ?? '');
 	const hasHeadline = $derived(Boolean(headline?.trim()));
 	const hasBody = $derived(Boolean(body?.trim()));
 	const hasEditorial = $derived(hasHero || hasHeadline || hasBody);
+
+	type EditTarget = 'hero' | 'headline' | 'body';
+	let editing = $state<EditTarget | null>(null);
+	let draftHero = $state('');
+	let draftHeadline = $state('');
+	let draftBody = $state('');
+	let saving = $state(false);
+	let saveError = $state<string | null>(null);
+
+	function startEdit(target: EditTarget) {
+		saveError = null;
+		editing = target;
+		if (target === 'hero') draftHero = heroImageUrl?.trim() ?? '';
+		if (target === 'headline') draftHeadline = headline?.trim() ?? '';
+		if (target === 'body') draftBody = body ?? '';
+	}
+
+	function cancelEdit() {
+		editing = null;
+		saveError = null;
+	}
+
+	async function saveEdit() {
+		if (!editing) return;
+		saving = true;
+		saveError = null;
+		const landingHeroImageUrl =
+			editing === 'hero' ? draftHero : (heroImageUrl?.trim() ?? '');
+		const landingHeadline =
+			editing === 'headline' ? draftHeadline : (headline?.trim() ?? '');
+		const landingBody = editing === 'body' ? draftBody : (body ?? '');
+
+		try {
+			const res = await fetch('/api/admin/rental-landing', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({
+					citySlug: theme,
+					landingHeroImageUrl,
+					landingHeadline,
+					landingBody
+				})
+			});
+			const data = (await res.json().catch(() => ({}))) as { message?: string };
+			if (!res.ok) {
+				saveError = data.message ?? 'Save failed.';
+				return;
+			}
+			editing = null;
+			await invalidateAll();
+		} catch {
+			saveError = 'Network error.';
+		} finally {
+			saving = false;
+		}
+	}
 </script>
 
 <div class="rentalLandingFrame">
-	{#if hasHero}
-		<div
-			class="rentalLandingFrame__hero"
-			style:background-image={`url(${JSON.stringify(heroUrl)})`}
-			aria-hidden="true"
-		></div>
+	{#if canEditLanding}
+		<div class="rentalLandingFrame__heroSection">
+			{#if editing === 'hero'}
+				<div class="rentalLandingFrame__editor">
+					<label class="rentalLandingFrame__label" for="landing-hero-url">Hero image URL (https)</label>
+					<input
+						id="landing-hero-url"
+						class="rentalLandingFrame__input"
+						type="url"
+						autocomplete="off"
+						placeholder="https://…"
+						bind:value={draftHero}
+						disabled={saving}
+					/>
+					{#if saveError}
+						<p class="rentalLandingFrame__err" role="alert">{saveError}</p>
+					{/if}
+					<div class="rentalLandingFrame__editorActions">
+						<button
+							class="rentalLandingFrame__btn"
+							type="button"
+							disabled={saving}
+							onclick={saveEdit}
+						>
+							{saving ? 'Saving…' : 'Save'}
+						</button>
+						<button
+							class="rentalLandingFrame__btn rentalLandingFrame__btn--ghost"
+							type="button"
+							disabled={saving}
+							onclick={cancelEdit}
+						>
+							Cancel
+						</button>
+					</div>
+				</div>
+			{:else}
+				<div class="rentalLandingFrame__editWrap">
+					{#if hasHero}
+						<div
+							class="rentalLandingFrame__hero"
+							style:background-image={`url(${JSON.stringify(heroUrl)})`}
+							aria-hidden="true"
+						></div>
+					{:else}
+						<div class="rentalLandingFrame__heroPlaceholder">No hero image URL</div>
+					{/if}
+					<button
+						class="rentalLandingFrame__editBtn"
+						type="button"
+						onclick={() => startEdit('hero')}
+					>
+						Edit
+					</button>
+				</div>
+			{/if}
+		</div>
+
+		<div class="rentalLandingFrame__main">
+			{#if editing === 'headline'}
+				<div class="rentalLandingFrame__editor">
+					<label class="rentalLandingFrame__label" for="landing-headline">Headline</label>
+					<input
+						id="landing-headline"
+						class="rentalLandingFrame__input"
+						type="text"
+						autocomplete="off"
+						bind:value={draftHeadline}
+						disabled={saving}
+					/>
+					{#if saveError}
+						<p class="rentalLandingFrame__err" role="alert">{saveError}</p>
+					{/if}
+					<div class="rentalLandingFrame__editorActions">
+						<button class="rentalLandingFrame__btn" type="button" disabled={saving} onclick={saveEdit}>
+							{saving ? 'Saving…' : 'Save'}
+						</button>
+						<button
+							class="rentalLandingFrame__btn rentalLandingFrame__btn--ghost"
+							type="button"
+							disabled={saving}
+							onclick={cancelEdit}
+						>
+							Cancel
+						</button>
+					</div>
+				</div>
+			{:else}
+				<div class="rentalLandingFrame__editWrap rentalLandingFrame__editWrap--text">
+					{#if hasHeadline}
+						<h2 class="rentalLandingFrame__headline">{headline!.trim()}</h2>
+					{:else}
+						<p class="rentalLandingFrame__emptyHint">No headline</p>
+					{/if}
+					<button
+						class="rentalLandingFrame__editBtn"
+						type="button"
+						onclick={() => startEdit('headline')}
+					>
+						Edit
+					</button>
+				</div>
+			{/if}
+
+			{#if editing === 'body'}
+				<div class="rentalLandingFrame__editor">
+					<label class="rentalLandingFrame__label" for="landing-body">Body</label>
+					<textarea
+						id="landing-body"
+						class="rentalLandingFrame__textarea"
+						rows="8"
+						bind:value={draftBody}
+						disabled={saving}
+					></textarea>
+					{#if saveError}
+						<p class="rentalLandingFrame__err" role="alert">{saveError}</p>
+					{/if}
+					<div class="rentalLandingFrame__editorActions">
+						<button class="rentalLandingFrame__btn" type="button" disabled={saving} onclick={saveEdit}>
+							{saving ? 'Saving…' : 'Save'}
+						</button>
+						<button
+							class="rentalLandingFrame__btn rentalLandingFrame__btn--ghost"
+							type="button"
+							disabled={saving}
+							onclick={cancelEdit}
+						>
+							Cancel
+						</button>
+					</div>
+				</div>
+			{:else}
+				<div class="rentalLandingFrame__editWrap rentalLandingFrame__editWrap--text">
+					{#if hasBody}
+						<div class="rentalLandingFrame__body">{body!.trim()}</div>
+					{:else}
+						<p class="rentalLandingFrame__emptyHint">No body text</p>
+					{/if}
+					<button
+						class="rentalLandingFrame__editBtn"
+						type="button"
+						onclick={() => startEdit('body')}
+					>
+						Edit
+					</button>
+				</div>
+			{/if}
+
+			{#if !hasEditorial && editing === null}
+				<p class="rentalLandingFrame__fallback">
+					No listings iframe or tile links yet. Configure URLs and embedded listings under
+					<a class="rentalLandingFrame__adminLink" href="/admin/rental-links">Admin → Rental links</a>,
+					or add hero, headline, and body here.
+				</p>
+			{/if}
+		</div>
+	{:else}
+		{#if hasHero}
+			<div
+				class="rentalLandingFrame__hero"
+				style:background-image={`url(${JSON.stringify(heroUrl)})`}
+				aria-hidden="true"
+			></div>
+		{/if}
+
+		<div class="rentalLandingFrame__main">
+			{#if hasHeadline}
+				<h2 class="rentalLandingFrame__headline">{headline!.trim()}</h2>
+			{/if}
+			{#if hasBody}
+				<div class="rentalLandingFrame__body">{body!.trim()}</div>
+			{/if}
+
+			{#if !hasEditorial}
+				<p class="rentalLandingFrame__fallback">
+					No listings or links configured for this city yet. Add a property group and/or tile URLs under
+					<a class="rentalLandingFrame__adminLink" href="/admin/rental-links">Admin → Rental links</a>.
+				</p>
+			{/if}
+		</div>
 	{/if}
-
-	<div class="rentalLandingFrame__main">
-		{#if hasHeadline}
-			<h2 class="rentalLandingFrame__headline">{headline!.trim()}</h2>
-		{/if}
-		{#if hasBody}
-			<div class="rentalLandingFrame__body">{body!.trim()}</div>
-		{/if}
-
-		{#if !hasEditorial}
-			<p class="rentalLandingFrame__fallback">
-				No listings or links configured for this city yet. Add a property group and/or tile URLs under
-				<a class="rentalLandingFrame__adminLink" href="/admin/rental-links">Admin → Rental links</a>.
-			</p>
-		{/if}
-	</div>
 </div>
 
 <style>
@@ -58,12 +277,30 @@
 		overflow: auto;
 	}
 
+	.rentalLandingFrame__heroSection {
+		flex-shrink: 0;
+		display: flex;
+		flex-direction: column;
+	}
+
 	.rentalLandingFrame__hero {
 		flex-shrink: 0;
 		min-height: clamp(10rem, 28vh, 18rem);
 		background-size: cover;
 		background-position: center;
 		background-repeat: no-repeat;
+	}
+
+	.rentalLandingFrame__heroPlaceholder {
+		min-height: clamp(6rem, 16vh, 10rem);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.9rem;
+		opacity: 0.65;
+		border: 1px dashed color-mix(in srgb, currentColor 28%, transparent);
+		border-radius: 0.35rem;
+		margin: 0.25rem;
 	}
 
 	.rentalLandingFrame__main {
@@ -90,6 +327,13 @@
 		white-space: pre-line;
 	}
 
+	.rentalLandingFrame__emptyHint {
+		margin: 0;
+		font-size: 0.95rem;
+		opacity: 0.65;
+		font-style: italic;
+	}
+
 	.rentalLandingFrame__fallback {
 		margin: 0;
 		max-width: 28rem;
@@ -104,6 +348,131 @@
 		text-decoration: underline;
 		text-underline-offset: 0.15em;
 	}
+
+	.rentalLandingFrame__editWrap {
+		position: relative;
+		border-radius: 0.35rem;
+		outline: 1px solid transparent;
+		transition: outline-color 0.12s ease;
+	}
+
+	.rentalLandingFrame__editWrap:hover,
+	.rentalLandingFrame__editWrap:focus-within {
+		outline-color: color-mix(in srgb, currentColor 22%, transparent);
+	}
+
+	.rentalLandingFrame__editWrap--text {
+		padding: 0.35rem 4.25rem 0.35rem 0.35rem;
+		min-height: 2.5rem;
+	}
+
+	.rentalLandingFrame__editBtn {
+		position: absolute;
+		top: 0.35rem;
+		right: 0.35rem;
+		appearance: none;
+		font: inherit;
+		font-size: 0.8rem;
+		font-weight: 650;
+		padding: 0.25rem 0.55rem;
+		border-radius: 0.35rem;
+		border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+		background: color-mix(in srgb, Canvas 88%, transparent);
+		color: inherit;
+		cursor: pointer;
+		opacity: 0;
+		transition: opacity 0.12s ease;
+	}
+
+	.rentalLandingFrame__editWrap:hover .rentalLandingFrame__editBtn,
+	.rentalLandingFrame__editWrap:focus-within .rentalLandingFrame__editBtn {
+		opacity: 1;
+	}
+
+	@media (hover: none) {
+		.rentalLandingFrame__editBtn {
+			opacity: 0.85;
+		}
+	}
+
+	/* Form edit mode: fixed light surface so fields stay readable on dark city themes */
+	.rentalLandingFrame__editor {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: clamp(1rem, 2.5vw, 1.25rem);
+		margin: 0.25rem;
+		border-radius: 0.5rem;
+		border: 1px solid #d4d4d4;
+		background: #fff;
+		color: #171717;
+	}
+
+	.rentalLandingFrame__label {
+		font-size: 0.8rem;
+		font-weight: 650;
+		color: #262626;
+	}
+
+	.rentalLandingFrame__input,
+	.rentalLandingFrame__textarea {
+		width: 100%;
+		font: inherit;
+		font-size: 0.95rem;
+		padding: 0.45rem 0.55rem;
+		border-radius: 0.35rem;
+		border: 1px solid #a3a3a3;
+		background: #fff;
+		color: #171717;
+		box-sizing: border-box;
+	}
+
+	.rentalLandingFrame__textarea {
+		resize: vertical;
+		min-height: 8rem;
+		line-height: 1.45;
+	}
+
+	.rentalLandingFrame__input::placeholder,
+	.rentalLandingFrame__textarea::placeholder {
+		color: #737373;
+	}
+
+	.rentalLandingFrame__editorActions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.rentalLandingFrame__btn {
+		appearance: none;
+		font: inherit;
+		font-weight: 650;
+		font-size: 0.88rem;
+		padding: 0.4rem 0.85rem;
+		border-radius: 0.35rem;
+		border: 1px solid #525252;
+		background: #f5f5f5;
+		color: #171717;
+		cursor: pointer;
+	}
+
+	.rentalLandingFrame__btn:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.rentalLandingFrame__btn--ghost {
+		background: #fff;
+		font-weight: 550;
+	}
+
+	.rentalLandingFrame__err {
+		margin: 0;
+		font-size: 0.88rem;
+		color: #b91c1c;
+	}
+
 
 	/* Theme tokens mirror `.rentalLanding__embedEmpty` / sidebar palettes — nested under parent `.rentalLanding--{theme}`. */
 	:global(.rentalLanding--cda) .rentalLandingFrame {

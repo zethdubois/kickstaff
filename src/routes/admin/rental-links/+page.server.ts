@@ -1,91 +1,18 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
-import { sql } from 'drizzle-orm';
 import { cities, isCitySlug } from '$lib/cities';
 import { getDb } from '$lib/server/db';
 import { requireAdmin } from '$lib/server/guards';
 import { rentalLandingLinks } from '$lib/server/schema';
-
-const MAX_URL_LEN = 2048;
-const MAX_PROPERTY_GROUP_LEN = 256;
-const MAX_ORDER_BY_LEN = 64;
-const MAX_LANDING_HEADLINE_LEN = 512;
-const MAX_LANDING_BODY_LEN = 32768;
-
-function parseOptionalPropertyGroup(raw: unknown): { ok: true; value: string | null } | { ok: false; message: string } {
-	const s = String(raw ?? '').trim();
-	if (!s) return { ok: true, value: null };
-	if (s.length > MAX_PROPERTY_GROUP_LEN) {
-		return { ok: false, message: 'Property group name is too long.' };
-	}
-	return { ok: true, value: s };
-}
-
-function parseOptionalThemeColor(
-	raw: unknown
-): { ok: true; value: string | null } | { ok: false; message: string } {
-	const s = String(raw ?? '').trim();
-	if (!s) return { ok: true, value: null };
-	if (s.length > 32) return { ok: false, message: 'Theme color is too long.' };
-	if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s)) {
-		return { ok: false, message: 'Theme color must be a hex value like #95bb3e.' };
-	}
-	return { ok: true, value: s };
-}
-
-function parseOptionalOrderBy(
-	raw: unknown
-): { ok: true; value: string | null } | { ok: false; message: string } {
-	const s = String(raw ?? '').trim();
-	if (!s) return { ok: true, value: null };
-	if (s.length > MAX_ORDER_BY_LEN) return { ok: false, message: 'Sort order value is too long.' };
-	if (!/^[a-zA-Z0-9_]+$/.test(s)) {
-		return { ok: false, message: 'Sort order may only contain letters, numbers, and underscores.' };
-	}
-	return { ok: true, value: s };
-}
-
-function parseOptionalHttpsUrl(
-	raw: unknown
-): { ok: true; value: string | null } | { ok: false; message: string } {
-	const s = String(raw ?? '').trim();
-	if (!s) return { ok: true, value: null };
-	if (s.length > MAX_URL_LEN) {
-		return { ok: false, message: 'A URL exceeds the maximum length.' };
-	}
-	let u: URL;
-	try {
-		u = new URL(s);
-	} catch {
-		return { ok: false, message: 'Invalid URL.' };
-	}
-	if (u.protocol !== 'https:') {
-		return { ok: false, message: 'URLs must use https://' };
-	}
-	return { ok: true, value: s };
-}
-
-function parseOptionalLandingHeadline(
-	raw: unknown
-): { ok: true; value: string | null } | { ok: false; message: string } {
-	const s = String(raw ?? '').trim();
-	if (!s) return { ok: true, value: null };
-	if (s.length > MAX_LANDING_HEADLINE_LEN) {
-		return { ok: false, message: 'Landing headline is too long.' };
-	}
-	return { ok: true, value: s };
-}
-
-function parseOptionalLandingBody(
-	raw: unknown
-): { ok: true; value: string | null } | { ok: false; message: string } {
-	const s = String(raw ?? '');
-	if (!s.trim()) return { ok: true, value: null };
-	if (s.length > MAX_LANDING_BODY_LEN) {
-		return { ok: false, message: 'Landing body is too long.' };
-	}
-	return { ok: true, value: s };
-}
+import {
+	parseOptionalHttpsUrl,
+	parseOptionalLandingBody,
+	parseOptionalLandingHeadline,
+	parseOptionalOrderBy,
+	parseOptionalPropertyGroup,
+	parseOptionalThemeColor,
+	upsertRentalLandingFull
+} from '$lib/server/rentalLandingLinksUpsert';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals.user);
@@ -149,40 +76,19 @@ export const actions: Actions = {
 		if (!lh.ok) return fail(400, { message: lh.message, city: cityRaw });
 		if (!lb.ok) return fail(400, { message: lb.message, city: cityRaw });
 
-		const db = getDb();
-		await db
-			.insert(rentalLandingLinks)
-			.values({
-				citySlug: cityRaw,
-				shortTermUrl: st.value,
-				longTermUrl: lt.value,
-				applyUrl: ap.value,
-				contactUrl: ct.value,
-				tenantPortalUrl: tp.value,
-				listingPropertyGroup: pg.value,
-				listingThemeColor: tc.value,
-				listingOrderBy: ob.value,
-				landingHeroImageUrl: hero.value,
-				landingHeadline: lh.value,
-				landingBody: lb.value
-			})
-			.onConflictDoUpdate({
-				target: rentalLandingLinks.citySlug,
-				set: {
-					shortTermUrl: st.value,
-					longTermUrl: lt.value,
-					applyUrl: ap.value,
-					contactUrl: ct.value,
-					tenantPortalUrl: tp.value,
-					listingPropertyGroup: pg.value,
-					listingThemeColor: tc.value,
-					listingOrderBy: ob.value,
-					landingHeroImageUrl: hero.value,
-					landingHeadline: lh.value,
-					landingBody: lb.value,
-					updatedAt: sql`now()`
-				}
-			});
+		await upsertRentalLandingFull(cityRaw, {
+			shortTermUrl: st.value,
+			longTermUrl: lt.value,
+			applyUrl: ap.value,
+			contactUrl: ct.value,
+			tenantPortalUrl: tp.value,
+			listingPropertyGroup: pg.value,
+			listingThemeColor: tc.value,
+			listingOrderBy: ob.value,
+			landingHeroImageUrl: hero.value,
+			landingHeadline: lh.value,
+			landingBody: lb.value
+		});
 
 		return { saved: true as const, city: cityRaw };
 	}
