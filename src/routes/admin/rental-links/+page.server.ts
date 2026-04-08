@@ -1,16 +1,19 @@
 import type { Actions, PageServerLoad } from './$types';
 import { fail } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 import { cities, isCitySlug } from '$lib/cities';
 import { getDb } from '$lib/server/db';
 import { requireAdmin } from '$lib/server/guards';
 import { rentalLandingLinks } from '$lib/server/schema';
 import {
+	parseOptionalHeroImageRef,
 	parseOptionalHttpsUrl,
 	parseOptionalLandingBody,
 	parseOptionalLandingHeadline,
 	parseOptionalOrderBy,
 	parseOptionalPropertyGroup,
 	parseOptionalThemeColor,
+	themeSliceFromRow,
 	upsertRentalLandingFull
 } from '$lib/server/rentalLandingLinksUpsert';
 
@@ -60,7 +63,7 @@ export const actions: Actions = {
 		const pg = parseOptionalPropertyGroup(form.get('listing_property_group'));
 		const tc = parseOptionalThemeColor(form.get('listing_theme_color'));
 		const ob = parseOptionalOrderBy(form.get('listing_order_by'));
-		const hero = parseOptionalHttpsUrl(form.get('landing_hero_image_url'));
+		const hero = parseOptionalHeroImageRef(form.get('landing_hero_image_url'));
 		const lh = parseOptionalLandingHeadline(form.get('landing_headline'));
 		const lb = parseOptionalLandingBody(form.get('landing_body'));
 
@@ -76,6 +79,13 @@ export const actions: Actions = {
 		if (!lh.ok) return fail(400, { message: lh.message, city: cityRaw });
 		if (!lb.ok) return fail(400, { message: lb.message, city: cityRaw });
 
+		const db = getDb();
+		const [existing] = await db
+			.select()
+			.from(rentalLandingLinks)
+			.where(eq(rentalLandingLinks.citySlug, cityRaw))
+			.limit(1);
+
 		await upsertRentalLandingFull(cityRaw, {
 			shortTermUrl: st.value,
 			longTermUrl: lt.value,
@@ -87,7 +97,8 @@ export const actions: Actions = {
 			listingOrderBy: ob.value,
 			landingHeroImageUrl: hero.value,
 			landingHeadline: lh.value,
-			landingBody: lb.value
+			landingBody: lb.value,
+			...themeSliceFromRow(existing)
 		});
 
 		return { saved: true as const, city: cityRaw };

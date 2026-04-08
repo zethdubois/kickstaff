@@ -1,15 +1,19 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
+	import type { RentalWysiwygTheme } from '$lib/cityAppfolioLinks';
 	import type { CitySlug } from '$lib/cities';
+	import RentalWysiwygGear from '$lib/RentalWysiwygGear.svelte';
 
 	let {
 		theme,
+		wysiwyg = null,
 		heroImageUrl = null,
 		headline = null,
 		body = null
 	}: {
 		theme: CitySlug;
+		wysiwyg?: RentalWysiwygTheme | null;
 		/** Optional full URL for hero / background (HTTPS or site-relative). */
 		heroImageUrl?: string | null;
 		headline?: string | null;
@@ -25,9 +29,17 @@
 	const hasBody = $derived(Boolean(body?.trim()));
 	const hasEditorial = $derived(hasHero || hasHeadline || hasBody);
 
-	type EditTarget = 'hero' | 'headline' | 'body';
+	const hasLandingWysiwyg = $derived(
+		!!(
+			wysiwyg?.landingBg ||
+			wysiwyg?.landingFg ||
+			wysiwyg?.landingFont ||
+			wysiwyg?.landingReadingMaxWidthPx != null
+		)
+	);
+
+	type EditTarget = 'headline' | 'body';
 	let editing = $state<EditTarget | null>(null);
-	let draftHero = $state('');
 	let draftHeadline = $state('');
 	let draftBody = $state('');
 	let saving = $state(false);
@@ -36,7 +48,6 @@
 	function startEdit(target: EditTarget) {
 		saveError = null;
 		editing = target;
-		if (target === 'hero') draftHero = heroImageUrl?.trim() ?? '';
 		if (target === 'headline') draftHeadline = headline?.trim() ?? '';
 		if (target === 'body') draftBody = body ?? '';
 	}
@@ -50,8 +61,7 @@
 		if (!editing) return;
 		saving = true;
 		saveError = null;
-		const landingHeroImageUrl =
-			editing === 'hero' ? draftHero : (heroImageUrl?.trim() ?? '');
+		const landingHeroImageUrl = heroImageUrl?.trim() ?? '';
 		const landingHeadline =
 			editing === 'headline' ? draftHeadline : (headline?.trim() ?? '');
 		const landingBody = editing === 'body' ? draftBody : (body ?? '');
@@ -85,64 +95,40 @@
 
 <div class="rentalLandingFrame">
 	{#if canEditLanding}
-		<div class="rentalLandingFrame__heroSection">
-			{#if editing === 'hero'}
-				<div class="rentalLandingFrame__editor">
-					<label class="rentalLandingFrame__label" for="landing-hero-url">Hero image URL (https)</label>
-					<input
-						id="landing-hero-url"
-						class="rentalLandingFrame__input"
-						type="url"
-						autocomplete="off"
-						placeholder="https://…"
-						bind:value={draftHero}
-						disabled={saving}
-					/>
-					{#if saveError}
-						<p class="rentalLandingFrame__err" role="alert">{saveError}</p>
-					{/if}
-					<div class="rentalLandingFrame__editorActions">
-						<button
-							class="rentalLandingFrame__btn"
-							type="button"
-							disabled={saving}
-							onclick={saveEdit}
-						>
-							{saving ? 'Saving…' : 'Save'}
-						</button>
-						<button
-							class="rentalLandingFrame__btn rentalLandingFrame__btn--ghost"
-							type="button"
-							disabled={saving}
-							onclick={cancelEdit}
-						>
-							Cancel
-						</button>
-					</div>
-				</div>
-			{:else}
-				<div class="rentalLandingFrame__editWrap">
-					{#if hasHero}
-						<div
-							class="rentalLandingFrame__hero"
-							style:background-image={`url(${JSON.stringify(heroUrl)})`}
-							aria-hidden="true"
-						></div>
-					{:else}
-						<div class="rentalLandingFrame__heroPlaceholder">No hero image URL</div>
-					{/if}
-					<button
-						class="rentalLandingFrame__editBtn"
-						type="button"
-						onclick={() => startEdit('hero')}
-					>
-						Edit
-					</button>
-				</div>
-			{/if}
+		<div class="rentalLandingFrame__heroSection rentalLandingFrame__heroSection--gear">
+			<RentalWysiwygGear
+				variant="hero"
+				citySlug={theme}
+				{wysiwyg}
+				heroUrl={heroImageUrl}
+				{headline}
+				{body}
+			/>
+			<div class="rentalLandingFrame__heroView">
+				{#if hasHero}
+					<div
+						class="rentalLandingFrame__hero"
+						style:background-image={`url(${JSON.stringify(heroUrl)})`}
+						aria-hidden="true"
+					></div>
+				{:else}
+					<div class="rentalLandingFrame__heroPlaceholder">No hero image — use the gear to set URL or upload</div>
+				{/if}
+			</div>
 		</div>
 
-		<div class="rentalLandingFrame__main">
+		<div class="rentalLandingFrame__mainOuter rentalLandingFrame__mainOuter--admin">
+			<RentalWysiwygGear variant="landing" citySlug={theme} {wysiwyg} heroUrl={heroImageUrl} {headline} {body} />
+			<div
+				class="rentalLandingFrame__main"
+				class:rentalLandingFrame__main--wysiwyg={hasLandingWysiwyg}
+				style:background={wysiwyg?.landingBg ?? undefined}
+				style:color={wysiwyg?.landingFg ?? undefined}
+				style:font-family={wysiwyg?.landingFont ?? undefined}
+				style:max-width={wysiwyg?.landingReadingMaxWidthPx != null
+					? `${wysiwyg.landingReadingMaxWidthPx}px`
+					: undefined}
+			>
 			{#if editing === 'headline'}
 				<div class="rentalLandingFrame__editor">
 					<label class="rentalLandingFrame__label" for="landing-headline">Headline</label>
@@ -240,6 +226,7 @@
 				</p>
 			{/if}
 		</div>
+		</div>
 	{:else}
 		{#if hasHero}
 			<div
@@ -249,7 +236,16 @@
 			></div>
 		{/if}
 
-		<div class="rentalLandingFrame__main">
+		<div
+			class="rentalLandingFrame__main"
+			class:rentalLandingFrame__main--wysiwyg={hasLandingWysiwyg}
+			style:background={wysiwyg?.landingBg ?? undefined}
+			style:color={wysiwyg?.landingFg ?? undefined}
+			style:font-family={wysiwyg?.landingFont ?? undefined}
+			style:max-width={wysiwyg?.landingReadingMaxWidthPx != null
+				? `${wysiwyg.landingReadingMaxWidthPx}px`
+				: undefined}
+		>
 			{#if hasHeadline}
 				<h2 class="rentalLandingFrame__headline">{headline!.trim()}</h2>
 			{/if}
@@ -268,7 +264,17 @@
 </div>
 
 <style>
+	/*
+	 * Landing copy font sizes — set once via custom properties; city themes override
+	 * `--rlf-*` on `:global(.rentalLanding--{theme}) .rentalLandingFrame` below.
+	 */
 	.rentalLandingFrame {
+		--rlf-headline-size: clamp(1.25rem, 2.5vw, 1.65rem);
+		--rlf-body-size: 1rem;
+		--rlf-empty-hint-size: 0.95rem;
+		--rlf-fallback-size: 0.95rem;
+		--rlf-hero-placeholder-size: 0.9rem;
+
 		flex: 1;
 		display: flex;
 		flex-direction: column;
@@ -281,6 +287,31 @@
 		flex-shrink: 0;
 		display: flex;
 		flex-direction: column;
+	}
+
+	.rentalLandingFrame__heroSection--gear {
+		position: relative;
+	}
+
+	.rentalLandingFrame__heroView {
+		position: relative;
+	}
+
+	.rentalLandingFrame__mainOuter {
+		position: relative;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	.rentalLandingFrame__mainOuter--admin .rentalLandingFrame__main {
+		padding-left: 2.75rem;
+	}
+
+	.rentalLandingFrame__main--wysiwyg {
+		margin-inline: auto;
+		width: 100%;
 	}
 
 	.rentalLandingFrame__hero {
@@ -296,7 +327,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		font-size: 0.9rem;
+		font-size: var(--rlf-hero-placeholder-size);
 		opacity: 0.65;
 		border: 1px dashed color-mix(in srgb, currentColor 28%, transparent);
 		border-radius: 0.35rem;
@@ -314,7 +345,7 @@
 
 	.rentalLandingFrame__headline {
 		margin: 0;
-		font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+		font-size: var(--rlf-headline-size);
 		font-weight: 650;
 		line-height: 1.2;
 		letter-spacing: -0.02em;
@@ -322,14 +353,14 @@
 
 	.rentalLandingFrame__body {
 		margin: 0;
-		font-size: 1rem;
+		font-size: var(--rlf-body-size);
 		line-height: 1.55;
 		white-space: pre-line;
 	}
 
 	.rentalLandingFrame__emptyHint {
 		margin: 0;
-		font-size: 0.95rem;
+		font-size: var(--rlf-empty-hint-size);
 		opacity: 0.65;
 		font-style: italic;
 	}
@@ -337,7 +368,7 @@
 	.rentalLandingFrame__fallback {
 		margin: 0;
 		max-width: 28rem;
-		font-size: 0.95rem;
+		font-size: var(--rlf-fallback-size);
 		line-height: 1.5;
 		text-align: center;
 		align-self: center;
@@ -504,6 +535,8 @@
 
 	:global(.rentalLanding--spt) .rentalLandingFrame {
 		background: rgb(15 23 42 / 0.35);
+		--rlf-headline-size: clamp(1.2rem, 2.4vw, 1.5rem);
+		--rlf-body-size: 0.95rem;
 	}
 
 	:global(.rentalLanding--spt) .rentalLandingFrame__headline {
@@ -511,11 +544,9 @@
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: #ecfdf5;
-		font-size: clamp(1.2rem, 2.4vw, 1.5rem);
 	}
 
 	:global(.rentalLanding--spt) .rentalLandingFrame__body {
-		font-size: 0.95rem;
 		font-weight: 500;
 		letter-spacing: 0.04em;
 		color: rgb(236 253 245 / 0.92);
@@ -535,6 +566,7 @@
 
 	:global(.rentalLanding--mos) .rentalLandingFrame {
 		background: #faf7f2;
+		--rlf-headline-size: clamp(1.35rem, 2.8vw, 1.85rem);
 	}
 
 	:global(.rentalLanding--mos) .rentalLandingFrame__headline {
@@ -542,7 +574,6 @@
 		letter-spacing: -0.03em;
 		text-transform: uppercase;
 		color: #292524;
-		font-size: clamp(1.35rem, 2.8vw, 1.85rem);
 	}
 
 	:global(.rentalLanding--mos) .rentalLandingFrame__body {
@@ -560,5 +591,24 @@
 
 	:global(.rentalLanding--mos) .rentalLandingFrame__hero {
 		border-bottom: 1px solid #d6d3d1;
+	}
+
+	:global(.rentalLanding--cda) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__headline,
+	:global(.rentalLanding--cda) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__body,
+	:global(.rentalLanding--cda) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__fallback,
+	:global(.rentalLanding--spt) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__headline,
+	:global(.rentalLanding--spt) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__body,
+	:global(.rentalLanding--spt) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__fallback,
+	:global(.rentalLanding--mos) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__headline,
+	:global(.rentalLanding--mos) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__body,
+	:global(.rentalLanding--mos) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__fallback {
+		color: inherit;
+	}
+
+	:global(.rentalLanding--cda) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__adminLink,
+	:global(.rentalLanding--spt) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__adminLink,
+	:global(.rentalLanding--mos) .rentalLandingFrame__main--wysiwyg .rentalLandingFrame__adminLink {
+		color: inherit;
+		text-decoration-color: currentColor;
 	}
 </style>

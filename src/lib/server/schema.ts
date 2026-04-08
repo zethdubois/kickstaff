@@ -39,10 +39,20 @@ export const rentalLandingLinks = pgTable('rental_landing_links', {
 	listingThemeColor: text('listing_theme_color'),
 	/** Same as Appfolio.Listing `defaultOrder` → `filters[order_by]` (e.g. date_posted). */
 	listingOrderBy: text('listing_order_by'),
-	/** Hero image for the rental landing main column (HTTPS URL). */
+	/** Hero image: https URL or site path e.g. /rental-media/{slug}/file.ext */
 	landingHeroImageUrl: text('landing_hero_image_url'),
 	landingHeadline: text('landing_headline'),
 	landingBody: text('landing_body'),
+	/** WYSIWYG preview: left nav column (hex / font stack / px). */
+	navWysiwygBg: text('nav_wysiwyg_bg'),
+	navWysiwygFg: text('nav_wysiwyg_fg'),
+	navWysiwygFont: text('nav_wysiwyg_font'),
+	navWysiwygMaxWidthPx: integer('nav_wysiwyg_max_width_px'),
+	/** WYSIWYG preview: landing main column text area. */
+	landingWysiwygBg: text('landing_wysiwyg_bg'),
+	landingWysiwygFg: text('landing_wysiwyg_fg'),
+	landingWysiwygFont: text('landing_wysiwyg_font'),
+	landingWysiwygMaxWidthPx: integer('landing_wysiwyg_max_width_px'),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
 

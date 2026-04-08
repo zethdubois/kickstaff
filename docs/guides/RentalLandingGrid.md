@@ -11,6 +11,25 @@ City rental landing layout: **nav tiles** (short/long listings, apply, contact) 
 - **`theme`** — `CitySlug` (`cda` | `mos` | `spt`) for styling and behavior.
 - **`listingEmbedUrl`** — AppFolio `/listings` embed URL or `null` if iframe should not be used.
 - **`landingHeroImageUrl`**, **`landingHeadline`**, **`landingBody`** — Optional hero when the iframe is not shown.
+- **`links.wysiwyg`** — Optional per-city WYSIWYG overrides (`RentalWysiwygTheme` from `rental_landing_links`): nav column and landing column colors, font stacks, and max widths (px). Null means use the built-in city theme CSS (`rentalLanding--cda` / `--mos` / `--spt`).
+
+## Admin WYSIWYG (preview)
+
+**Who:** Logged-in users with `role === 'admin'` on the public city pages (`/cda`, `/mos`, `/spt`).
+
+**UI:** A gear control appears at the top-left of (1) the **left nav column**, (2) the **hero / banner** area, and (3) the **landing main column** (headline/body). Each opens a small panel:
+
+| Area | Controls |
+|------|-----------|
+| Nav | Background & text (hex swatch + text field), font preset, column width slider (200–480 px). |
+| Hero | HTTPS image URL and/or **file upload** (JPEG/PNG/WebP/GIF, ≤ 4 MB). Uploads are written under `static/rental-media/{citySlug}/` and the **public path** `/rental-media/...` is stored in `landing_hero_image_url` (same column as external URLs). |
+| Landing | Background & text, font preset, reading width slider (320–900 px). |
+
+**APIs:** `POST /api/admin/rental-theme` (JSON body with `citySlug` and all eight theme fields), `POST /api/admin/rental-hero-upload` (`multipart/form-data`: `citySlug`, `file`), and existing `POST /api/admin/rental-landing` for hero/headline/body text. **Auth:** session cookie; admin only.
+
+**DB:** Columns `nav_wysiwyg_*`, `landing_wysiwyg_*` on `rental_landing_links`. The **Admin → Rental links** form does not edit these fields; saving that form **preserves** WYSIWYG columns by merging the existing row before upsert.
+
+**Deploy:** Uploaded files live under `static/rental-media/` (gitignored); ensure the directory is writable on the server or use external storage in production if needed.
 
 ## Behavior
 

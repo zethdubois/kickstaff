@@ -4,9 +4,11 @@
   @faq: docs/guides/RentalLandingGrid.md
 -->
 <script lang="ts">
+	import { page } from '$app/state';
 	import type { CityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import type { CitySlug } from '$lib/cities';
 	import RentalLandingFrame from '$lib/RentalLandingFrame.svelte';
+	import RentalWysiwygGear from '$lib/RentalWysiwygGear.svelte';
 
 	type TileKey = 'short' | 'long' | 'apply' | 'contact';
 
@@ -52,6 +54,17 @@
 		e.preventDefault();
 		iframeSrc = href;
 	}
+
+	const isAdmin = $derived(page.data.user?.role === 'admin');
+
+	const navCustom = $derived(
+		!!(
+			links.wysiwyg?.navBg ||
+			links.wysiwyg?.navFg ||
+			links.wysiwyg?.navFont ||
+			links.wysiwyg?.navReadingMaxWidthPx != null
+		)
+	);
 </script>
 
 {#snippet tileIcon(key: TileKey)}
@@ -85,7 +98,20 @@
 
 <div class="rentalLanding rentalLanding--{theme}">
 	<div class="rentalLanding__layout">
-		<aside class="rentalLanding__sidebar">
+		<div class="rentalLanding__sidebarWrap">
+			{#if isAdmin}
+				<RentalWysiwygGear variant="nav" citySlug={theme} wysiwyg={links.wysiwyg} />
+			{/if}
+			<aside
+				class="rentalLanding__sidebar"
+				class:rentalLanding__sidebar--custom={navCustom}
+				style:background={links.wysiwyg?.navBg ?? undefined}
+				style:color={links.wysiwyg?.navFg ?? undefined}
+				style:font-family={links.wysiwyg?.navFont ?? undefined}
+				style:max-width={links.wysiwyg?.navReadingMaxWidthPx != null
+					? `${links.wysiwyg.navReadingMaxWidthPx}px`
+					: undefined}
+			>
 			<header class="rentalLanding__header">
 				{#if theme === 'cda'}
 					<p class="rentalLanding__eyebrow">Rentals</p>
@@ -148,6 +174,7 @@
 				{/if}
 			</nav>
 		</aside>
+		</div>
 
 		<section class="rentalLanding__embed" aria-label="AppFolio content">
 			{#if iframeSrc}
@@ -155,6 +182,7 @@
 			{:else}
 				<RentalLandingFrame
 					{theme}
+					wysiwyg={links.wysiwyg}
 					heroImageUrl={landingHeroImageUrl}
 					headline={landingHeadline}
 					body={landingBody}
@@ -175,6 +203,13 @@
 		grid-template-rows: 1fr;
 		align-items: stretch;
 		min-height: calc(100dvh - var(--rental-viewport-offset, 0px));
+	}
+
+	.rentalLanding__sidebarWrap {
+		position: relative;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.rentalLanding__sidebar {
@@ -451,5 +486,43 @@
 		.rentalLanding--mos .rentalLanding__sidebar {
 			border-bottom-color: #d6d3d1;
 		}
+	}
+
+	/* WYSIWYG nav: override city theme tiles when custom colors are set */
+	.rentalLanding--cda .rentalLanding__sidebar--custom .rentalLanding__tile:not(.rentalLanding__tile--disabled),
+	.rentalLanding--spt .rentalLanding__sidebar--custom .rentalLanding__tile:not(.rentalLanding__tile--disabled),
+	.rentalLanding--mos .rentalLanding__sidebar--custom .rentalLanding__tile:not(.rentalLanding__tile--disabled) {
+		color: inherit;
+		background: color-mix(in srgb, currentColor 10%, transparent);
+		border-color: color-mix(in srgb, currentColor 28%, transparent);
+		box-shadow: none;
+		transform: none;
+	}
+
+	.rentalLanding--cda .rentalLanding__sidebar--custom .rentalLanding__tile:not(.rentalLanding__tile--disabled):hover,
+	.rentalLanding--spt .rentalLanding__sidebar--custom .rentalLanding__tile:not(.rentalLanding__tile--disabled):hover,
+	.rentalLanding--mos .rentalLanding__sidebar--custom .rentalLanding__tile:not(.rentalLanding__tile--disabled):hover {
+		background: color-mix(in srgb, currentColor 16%, transparent);
+		border-color: color-mix(in srgb, currentColor 38%, transparent);
+		box-shadow: none;
+		transform: none;
+	}
+
+	.rentalLanding--cda .rentalLanding__sidebar--custom .rentalLanding__tile--disabled,
+	.rentalLanding--spt .rentalLanding__sidebar--custom .rentalLanding__tile--disabled,
+	.rentalLanding--mos .rentalLanding__sidebar--custom .rentalLanding__tile--disabled {
+		color: inherit;
+		opacity: 0.45;
+		border-color: color-mix(in srgb, currentColor 22%, transparent);
+	}
+
+	.rentalLanding--cda .rentalLanding__sidebar--custom .rentalLanding__eyebrow,
+	.rentalLanding--cda .rentalLanding__sidebar--custom .rentalLanding__title,
+	.rentalLanding--cda .rentalLanding__sidebar--custom .rentalLanding__tagline,
+	.rentalLanding--spt .rentalLanding__sidebar--custom .rentalLanding__title,
+	.rentalLanding--spt .rentalLanding__sidebar--custom .rentalLanding__tagline,
+	.rentalLanding--mos .rentalLanding__sidebar--custom .rentalLanding__title,
+	.rentalLanding--mos .rentalLanding__sidebar--custom .rentalLanding__tagline {
+		color: inherit;
 	}
 </style>

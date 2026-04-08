@@ -1,5 +1,18 @@
 import type { CitySlug } from '$lib/cities';
 
+export type RentalWysiwygTheme = {
+	navBg: string | null;
+	navFg: string | null;
+	navFont: string | null;
+	/** Max width of the left nav column (px). */
+	navReadingMaxWidthPx: number | null;
+	landingBg: string | null;
+	landingFg: string | null;
+	landingFont: string | null;
+	/** Max width of headline/body column (px). */
+	landingReadingMaxWidthPx: number | null;
+};
+
 export type CityAppfolioLinks = {
 	shortTerm: string | null;
 	longTerm: string | null;
@@ -12,17 +25,51 @@ export type CityAppfolioLinks = {
 	listingThemeColor: string | null;
 	/** AppFolio.Listing `defaultOrder` / `filters[order_by]`; null = date_posted. */
 	listingOrderBy: string | null;
-	/** HTTPS URL for the main-column hero image; null = none. */
+	/** Hero image URL (https) or uploaded path `/rental-media/...`. */
 	landingHeroImageUrl: string | null;
 	landingHeadline: string | null;
 	/** Plain text; line breaks preserved in the frame. */
 	landingBody: string | null;
+	/** Admin WYSIWYG overrides; null = use built-in city theme CSS. */
+	wysiwyg: RentalWysiwygTheme | null;
 };
 
 /** Non-empty trimmed string, or null if unset (tile should be disabled). */
 function optional(v: string | undefined | null): string | null {
 	const t = v?.trim();
 	return t || null;
+}
+
+function wysiwygFromRow(row: {
+	navWysiwygBg: string | null;
+	navWysiwygFg: string | null;
+	navWysiwygFont: string | null;
+	navWysiwygMaxWidthPx: number | null;
+	landingWysiwygBg: string | null;
+	landingWysiwygFg: string | null;
+	landingWysiwygFont: string | null;
+	landingWysiwygMaxWidthPx: number | null;
+}): RentalWysiwygTheme | null {
+	const anySet =
+		row.navWysiwygBg ||
+		row.navWysiwygFg ||
+		row.navWysiwygFont ||
+		row.navWysiwygMaxWidthPx != null ||
+		row.landingWysiwygBg ||
+		row.landingWysiwygFg ||
+		row.landingWysiwygFont ||
+		row.landingWysiwygMaxWidthPx != null;
+	if (!anySet) return null;
+	return {
+		navBg: optional(row.navWysiwygBg),
+		navFg: optional(row.navWysiwygFg),
+		navFont: optional(row.navWysiwygFont),
+		navReadingMaxWidthPx: row.navWysiwygMaxWidthPx,
+		landingBg: optional(row.landingWysiwygBg),
+		landingFg: optional(row.landingWysiwygFg),
+		landingFont: optional(row.landingWysiwygFont),
+		landingReadingMaxWidthPx: row.landingWysiwygMaxWidthPx
+	};
 }
 
 /**
@@ -42,6 +89,14 @@ export function cityAppfolioLinksFromRow(
 		landingHeroImageUrl: string | null;
 		landingHeadline: string | null;
 		landingBody: string | null;
+		navWysiwygBg: string | null;
+		navWysiwygFg: string | null;
+		navWysiwygFont: string | null;
+		navWysiwygMaxWidthPx: number | null;
+		landingWysiwygBg: string | null;
+		landingWysiwygFg: string | null;
+		landingWysiwygFont: string | null;
+		landingWysiwygMaxWidthPx: number | null;
 	} | null
 ): CityAppfolioLinks {
 	if (!row) {
@@ -56,7 +111,8 @@ export function cityAppfolioLinksFromRow(
 			listingOrderBy: null,
 			landingHeroImageUrl: null,
 			landingHeadline: null,
-			landingBody: null
+			landingBody: null,
+			wysiwyg: null
 		};
 	}
 	return {
@@ -70,6 +126,7 @@ export function cityAppfolioLinksFromRow(
 		listingOrderBy: optional(row.listingOrderBy),
 		landingHeroImageUrl: optional(row.landingHeroImageUrl),
 		landingHeadline: optional(row.landingHeadline),
-		landingBody: optional(row.landingBody)
+		landingBody: optional(row.landingBody),
+		wysiwyg: wysiwygFromRow(row)
 	};
 }
