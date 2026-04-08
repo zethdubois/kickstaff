@@ -17,6 +17,7 @@ export async function loadCityAppfolioLinks(slug: CitySlug) {
 			longTermUrl: rentalLandingLinks.longTermUrl,
 			applyUrl: rentalLandingLinks.applyUrl,
 			contactUrl: rentalLandingLinks.contactUrl,
+			tenantPortalUrl: rentalLandingLinks.tenantPortalUrl,
 			listingPropertyGroup: rentalLandingLinks.listingPropertyGroup,
 			listingThemeColor: rentalLandingLinks.listingThemeColor,
 			listingOrderBy: rentalLandingLinks.listingOrderBy,

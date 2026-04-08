@@ -50,6 +50,13 @@
       "when": 1775210364045,
       "tag": "0006_deep_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775686653051,
+      "tag": "0007_outgoing_songbird",
+      "breakpoints": true
     }
   ]
 }

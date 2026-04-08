@@ -31,6 +31,8 @@ export const rentalLandingLinks = pgTable('rental_landing_links', {
 	longTermUrl: text('long_term_url'),
 	applyUrl: text('apply_url'),
 	contactUrl: text('contact_url'),
+	/** Tenant-facing portal (HTTPS); shown at bottom of city rental column when set. */
+	tenantPortalUrl: text('tenant_portal_url'),
 	/** AppFolio property group name for embedded `/listings` iframe (filters[property_list]). */
 	listingPropertyGroup: text('listing_property_group'),
 	/** Same as Appfolio.Listing `themeColor` → query `theme_color`. */

@@ -1,3 +1,8 @@
+<!--
+  @docs: docs/sop-svelte-and-components.md
+  @component: RentalLandingGrid.svelte
+  @faq: docs/guides/RentalLandingGrid.md
+-->
 <script lang="ts">
 	import type { CityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import type { CitySlug } from '$lib/cities';
@@ -89,7 +94,11 @@
 				<p class="rentalLanding__tagline">{tagline}</p>
 			</header>
 
-			<nav class="rentalLanding__nav" aria-label="Rental links">
+			<nav
+				class="rentalLanding__nav"
+				class:rentalLanding__nav--withTenant={!!links.tenantPortal}
+				aria-label={links.tenantPortal ? 'Rental links and tenant portal' : 'Rental links'}
+			>
 				{#each tiles as { key, href, label } (key)}
 					{#if href}
 						<a
@@ -117,6 +126,26 @@
 						</span>
 					{/if}
 				{/each}
+				{#if links.tenantPortal}
+					<div class="rentalLanding__navFlexSpacer" aria-hidden="true"></div>
+					<a
+						class="rentalLanding__tile"
+						href={links.tenantPortal}
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label="Tenant portal — opens in a new tab"
+					>
+						<span class="rentalLanding__icon" aria-hidden="true">
+							<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
+								<path
+									fill="currentColor"
+									d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+								/>
+							</svg>
+						</span>
+						<span class="rentalLanding__label">Tenant portal</span>
+					</a>
+				{/if}
 			</nav>
 		</aside>
 
@@ -152,7 +181,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
-		padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.5rem) 1.5rem;
+		padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.5rem) 0;
 		min-height: 0;
 		border-right: 1px solid transparent;
 	}
@@ -184,10 +213,21 @@
 	}
 
 	.rentalLanding__nav {
+		flex: 1 1 auto;
 		display: flex;
 		flex-direction: column;
 		gap: 0.65rem;
 		min-height: 0;
+		padding-bottom: 1.5rem;
+	}
+
+	.rentalLanding__nav--withTenant {
+		padding-bottom: 3rem;
+	}
+
+	.rentalLanding__navFlexSpacer {
+		flex: 1 1 auto;
+		min-height: 2.5rem;
 	}
 
 	.rentalLanding__tile {

@@ -5,6 +5,7 @@ export type CityAppfolioLinks = {
 	longTerm: string | null;
 	apply: string | null;
 	contact: string | null;
+	tenantPortal: string | null;
 	/** AppFolio property group for embedded listings; null disables iframe. */
 	listingPropertyGroup: string | null;
 	/** AppFolio.Listing `themeColor`; null = use app default when building embed URL. */
@@ -34,6 +35,7 @@ export function cityAppfolioLinksFromRow(
 		longTermUrl: string | null;
 		applyUrl: string | null;
 		contactUrl: string | null;
+		tenantPortalUrl: string | null;
 		listingPropertyGroup: string | null;
 		listingThemeColor: string | null;
 		listingOrderBy: string | null;
@@ -48,6 +50,7 @@ export function cityAppfolioLinksFromRow(
 			longTerm: null,
 			apply: null,
 			contact: null,
+			tenantPortal: null,
 			listingPropertyGroup: null,
 			listingThemeColor: null,
 			listingOrderBy: null,
@@ -61,6 +64,7 @@ export function cityAppfolioLinksFromRow(
 		longTerm: optional(row.longTermUrl),
 		apply: optional(row.applyUrl),
 		contact: optional(row.contactUrl),
+		tenantPortal: optional(row.tenantPortalUrl),
 		listingPropertyGroup: optional(row.listingPropertyGroup),
 		listingThemeColor: optional(row.listingThemeColor),
 		listingOrderBy: optional(row.listingOrderBy),

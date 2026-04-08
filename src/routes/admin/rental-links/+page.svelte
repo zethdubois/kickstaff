@@ -1,3 +1,7 @@
+<!--
+  @docs: docs/sop-svelte-and-components.md
+  @faq: docs/guides/admin-rental-links.md
+-->
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -159,6 +163,18 @@
 							autocomplete="off"
 							placeholder="https://…"
 							value={c.contactUrl}
+						/>
+					</label>
+					<label class="field">
+						<span class="field__label">Tenant Portal</span>
+						<input
+							class="field__input"
+							name="tenant_portal_url"
+							type="url"
+							inputmode="url"
+							autocomplete="off"
+							placeholder="https://…"
+							value={c.tenantPortalUrl}
 						/>
 					</label>
 					<label class="field">

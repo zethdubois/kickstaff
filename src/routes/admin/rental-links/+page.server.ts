@@ -103,6 +103,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				longTermUrl: row?.longTermUrl ?? '',
 				applyUrl: row?.applyUrl ?? '',
 				contactUrl: row?.contactUrl ?? '',
+				tenantPortalUrl: row?.tenantPortalUrl ?? '',
 				listingPropertyGroup: row?.listingPropertyGroup ?? '',
 				listingThemeColor: row?.listingThemeColor ?? '',
 				listingOrderBy: row?.listingOrderBy ?? '',
@@ -128,6 +129,7 @@ export const actions: Actions = {
 		const lt = parseOptionalHttpsUrl(form.get('long_term_url'));
 		const ap = parseOptionalHttpsUrl(form.get('apply_url'));
 		const ct = parseOptionalHttpsUrl(form.get('contact_url'));
+		const tp = parseOptionalHttpsUrl(form.get('tenant_portal_url'));
 		const pg = parseOptionalPropertyGroup(form.get('listing_property_group'));
 		const tc = parseOptionalThemeColor(form.get('listing_theme_color'));
 		const ob = parseOptionalOrderBy(form.get('listing_order_by'));
@@ -139,6 +141,7 @@ export const actions: Actions = {
 		if (!lt.ok) return fail(400, { message: lt.message, city: cityRaw });
 		if (!ap.ok) return fail(400, { message: ap.message, city: cityRaw });
 		if (!ct.ok) return fail(400, { message: ct.message, city: cityRaw });
+		if (!tp.ok) return fail(400, { message: tp.message, city: cityRaw });
 		if (!pg.ok) return fail(400, { message: pg.message, city: cityRaw });
 		if (!tc.ok) return fail(400, { message: tc.message, city: cityRaw });
 		if (!ob.ok) return fail(400, { message: ob.message, city: cityRaw });
@@ -155,6 +158,7 @@ export const actions: Actions = {
 				longTermUrl: lt.value,
 				applyUrl: ap.value,
 				contactUrl: ct.value,
+				tenantPortalUrl: tp.value,
 				listingPropertyGroup: pg.value,
 				listingThemeColor: tc.value,
 				listingOrderBy: ob.value,
@@ -169,6 +173,7 @@ export const actions: Actions = {
 					longTermUrl: lt.value,
 					applyUrl: ap.value,
 					contactUrl: ct.value,
+					tenantPortalUrl: tp.value,
 					listingPropertyGroup: pg.value,
 					listingThemeColor: tc.value,
 					listingOrderBy: ob.value,

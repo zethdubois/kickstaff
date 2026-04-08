@@ -1,3 +1,7 @@
+<!--
+  @docs: docs/sop-svelte-and-components.md
+  @faq: docs/guides/admin-users.md
+-->
 <script lang="ts">
   let { data, form } = $props();
 
