@@ -1,0 +1,1 @@
+ALTER TABLE "rental_landing_links" ADD COLUMN "tenant_portal_url" text;
