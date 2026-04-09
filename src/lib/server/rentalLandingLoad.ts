@@ -22,6 +22,7 @@ export async function loadCityAppfolioLinks(slug: CitySlug) {
 			listingThemeColor: rentalLandingLinks.listingThemeColor,
 			listingOrderBy: rentalLandingLinks.listingOrderBy,
 			landingHeroImageUrl: rentalLandingLinks.landingHeroImageUrl,
+			landingHeroBgPositionYPct: rentalLandingLinks.landingHeroBgPositionYPct,
 			landingHeadline: rentalLandingLinks.landingHeadline,
 			landingBody: rentalLandingLinks.landingBody,
 			navWysiwygBg: rentalLandingLinks.navWysiwygBg,

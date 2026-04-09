@@ -27,6 +27,8 @@ export type CityAppfolioLinks = {
 	listingOrderBy: string | null;
 	/** Hero image URL (https) or uploaded path `/rental-media/...`. */
 	landingHeroImageUrl: string | null;
+	/** Hero background vertical position 0–100 (null = center / 50%). */
+	landingHeroBgPositionYPct: number | null;
 	landingHeadline: string | null;
 	/** Plain text; line breaks preserved in the frame. */
 	landingBody: string | null;
@@ -87,6 +89,7 @@ export function cityAppfolioLinksFromRow(
 		listingThemeColor: string | null;
 		listingOrderBy: string | null;
 		landingHeroImageUrl: string | null;
+		landingHeroBgPositionYPct: number | null;
 		landingHeadline: string | null;
 		landingBody: string | null;
 		navWysiwygBg: string | null;
@@ -110,6 +113,7 @@ export function cityAppfolioLinksFromRow(
 			listingThemeColor: null,
 			listingOrderBy: null,
 			landingHeroImageUrl: null,
+			landingHeroBgPositionYPct: null,
 			landingHeadline: null,
 			landingBody: null,
 			wysiwyg: null
@@ -125,6 +129,7 @@ export function cityAppfolioLinksFromRow(
 		listingThemeColor: optional(row.listingThemeColor),
 		listingOrderBy: optional(row.listingOrderBy),
 		landingHeroImageUrl: optional(row.landingHeroImageUrl),
+		landingHeroBgPositionYPct: row.landingHeroBgPositionYPct,
 		landingHeadline: optional(row.landingHeadline),
 		landingBody: optional(row.landingBody),
 		wysiwyg: wysiwygFromRow(row)

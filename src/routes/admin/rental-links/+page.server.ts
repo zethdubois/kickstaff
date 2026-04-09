@@ -6,6 +6,7 @@ import { getDb } from '$lib/server/db';
 import { requireAdmin } from '$lib/server/guards';
 import { rentalLandingLinks } from '$lib/server/schema';
 import {
+	parseOptionalHeroBgPositionYPct,
 	parseOptionalHeroImageRef,
 	parseOptionalHttpsUrl,
 	parseOptionalLandingBody,
@@ -38,6 +39,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 				listingThemeColor: row?.listingThemeColor ?? '',
 				listingOrderBy: row?.listingOrderBy ?? '',
 				landingHeroImageUrl: row?.landingHeroImageUrl ?? '',
+				landingHeroBgPositionYPct:
+					row?.landingHeroBgPositionYPct != null ? String(row.landingHeroBgPositionYPct) : '',
 				landingHeadline: row?.landingHeadline ?? '',
 				landingBody: row?.landingBody ?? ''
 			};
@@ -64,6 +67,7 @@ export const actions: Actions = {
 		const tc = parseOptionalThemeColor(form.get('listing_theme_color'));
 		const ob = parseOptionalOrderBy(form.get('listing_order_by'));
 		const hero = parseOptionalHeroImageRef(form.get('landing_hero_image_url'));
+		const heroY = parseOptionalHeroBgPositionYPct(form.get('landing_hero_bg_position_y_pct'));
 		const lh = parseOptionalLandingHeadline(form.get('landing_headline'));
 		const lb = parseOptionalLandingBody(form.get('landing_body'));
 
@@ -76,6 +80,7 @@ export const actions: Actions = {
 		if (!tc.ok) return fail(400, { message: tc.message, city: cityRaw });
 		if (!ob.ok) return fail(400, { message: ob.message, city: cityRaw });
 		if (!hero.ok) return fail(400, { message: hero.message, city: cityRaw });
+		if (!heroY.ok) return fail(400, { message: heroY.message, city: cityRaw });
 		if (!lh.ok) return fail(400, { message: lh.message, city: cityRaw });
 		if (!lb.ok) return fail(400, { message: lb.message, city: cityRaw });
 
@@ -96,6 +101,7 @@ export const actions: Actions = {
 			listingThemeColor: tc.value,
 			listingOrderBy: ob.value,
 			landingHeroImageUrl: hero.value,
+			landingHeroBgPositionYPct: heroY.value,
 			landingHeadline: lh.value,
 			landingBody: lb.value,
 			...themeSliceFromRow(existing)

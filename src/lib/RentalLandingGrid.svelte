@@ -184,6 +184,7 @@
 					{theme}
 					wysiwyg={links.wysiwyg}
 					heroImageUrl={landingHeroImageUrl}
+					heroBgPositionYPct={links.landingHeroBgPositionYPct}
 					headline={landingHeadline}
 					body={landingBody}
 				/>
@@ -325,7 +326,10 @@
 		flex-direction: column;
 		min-width: 0;
 		min-height: 0;
-		background: #fff;
+		background:
+			radial-gradient(circle at center, rgb(15 23 42 / 0.1) 1px, transparent 1.12px),
+			#fff;
+		background-size: 24px 24px, auto;
 	}
 
 	.rentalLanding__frame {

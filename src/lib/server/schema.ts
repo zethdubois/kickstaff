@@ -41,6 +41,8 @@ export const rentalLandingLinks = pgTable('rental_landing_links', {
 	listingOrderBy: text('listing_order_by'),
 	/** Hero image: https URL or site path e.g. /rental-media/{slug}/file.ext */
 	landingHeroImageUrl: text('landing_hero_image_url'),
+	/** Vertical focus for hero `background-position` Y (0 = top … 100 = bottom); null = center. */
+	landingHeroBgPositionYPct: integer('landing_hero_bg_position_y_pct'),
 	landingHeadline: text('landing_headline'),
 	landingBody: text('landing_body'),
 	/** WYSIWYG preview: left nav column (hex / font stack / px). */

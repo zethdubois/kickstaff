@@ -64,6 +64,13 @@
       "when": 1775689449727,
       "tag": "0008_cuddly_lockheed",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776000000000,
+      "tag": "0009_hero_bg_position_y",
+      "breakpoints": true
     }
   ]
 }

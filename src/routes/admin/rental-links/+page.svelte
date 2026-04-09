@@ -224,6 +224,22 @@
 						/>
 					</label>
 					<label class="field">
+						<span class="field__label"
+							>Hero vertical focus (0–100, empty = center). Shifts background crop up/down.</span
+						>
+						<input
+							class="field__input"
+							name="landing_hero_bg_position_y_pct"
+							type="number"
+							min="0"
+							max="100"
+							step="1"
+							autocomplete="off"
+							placeholder="50"
+							value={c.landingHeroBgPositionYPct}
+						/>
+					</label>
+					<label class="field">
 						<span class="field__label">Landing headline</span>
 						<input
 							class="field__input"
