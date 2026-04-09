@@ -7,6 +7,7 @@
 	import { page } from '$app/state';
 	import type { CityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import type { CitySlug } from '$lib/cities';
+	import RentalContactModal from '$lib/RentalContactModal.svelte';
 	import RentalLandingFrame from '$lib/RentalLandingFrame.svelte';
 	import RentalWysiwygGear from '$lib/RentalWysiwygGear.svelte';
 
@@ -42,6 +43,7 @@
 
 	/** Iframe loads only after a nav tile click; null shows the landing frame in the main column. */
 	let iframeSrc = $state<string | null>(null);
+	let contactOpen = $state(false);
 
 	$effect(() => {
 		theme;
@@ -53,6 +55,12 @@
 		if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 		e.preventDefault();
 		iframeSrc = href;
+	}
+
+	function onContactClick(e: MouseEvent) {
+		if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+		e.preventDefault();
+		contactOpen = true;
 	}
 
 	const isAdmin = $derived(page.data.user?.role === 'admin');
@@ -120,59 +128,70 @@
 				<p class="rentalLanding__tagline">{tagline}</p>
 			</header>
 
-			<nav
-				class="rentalLanding__nav"
-				class:rentalLanding__nav--withTenant={!!links.tenantPortal}
-				aria-label={links.tenantPortal ? 'Rental links and tenant portal' : 'Rental links'}
-			>
-				{#each tiles as { key, href, label } (key)}
-					{#if href}
+			<div class="rentalLanding__sidebarBody">
+				<nav class="rentalLanding__nav" aria-label="Rental links">
+					{#each tiles as { key, href, label } (key)}
+						{#if key === 'contact'}
+							<button
+								class="rentalLanding__tile rentalLanding__tile--btn"
+								type="button"
+								aria-label={label}
+								onclick={onContactClick}
+							>
+								<span class="rentalLanding__icon" aria-hidden="true">
+									{@render tileIcon(key)}
+								</span>
+								<span class="rentalLanding__label">{label}</span>
+							</button>
+						{:else if href}
+							<a
+								class="rentalLanding__tile"
+								{href}
+								aria-label={label}
+								onclick={(e) => onTileClick(e, href)}
+							>
+								<span class="rentalLanding__icon" aria-hidden="true">
+									{@render tileIcon(key)}
+								</span>
+								<span class="rentalLanding__label">{label}</span>
+							</a>
+						{:else}
+							<span
+								class="rentalLanding__tile rentalLanding__tile--disabled"
+								aria-disabled="true"
+								aria-label="{label} — link not configured"
+								title="Link not configured"
+							>
+								<span class="rentalLanding__icon" aria-hidden="true">
+									{@render tileIcon(key)}
+								</span>
+								<span class="rentalLanding__label">{label}</span>
+							</span>
+						{/if}
+					{/each}
+				</nav>
+				{#if links.tenantPortal}
+					<div class="rentalLanding__tenantFooter">
 						<a
 							class="rentalLanding__tile"
-							{href}
-							aria-label={label}
-							onclick={(e) => onTileClick(e, href)}
+							href={links.tenantPortal}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Tenant portal — opens in a new tab"
 						>
 							<span class="rentalLanding__icon" aria-hidden="true">
-								{@render tileIcon(key)}
+								<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
+									<path
+										fill="currentColor"
+										d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+									/>
+								</svg>
 							</span>
-							<span class="rentalLanding__label">{label}</span>
+							<span class="rentalLanding__label">Tenant portal</span>
 						</a>
-					{:else}
-						<span
-							class="rentalLanding__tile rentalLanding__tile--disabled"
-							aria-disabled="true"
-							aria-label="{label} — link not configured"
-							title="Link not configured"
-						>
-							<span class="rentalLanding__icon" aria-hidden="true">
-								{@render tileIcon(key)}
-							</span>
-							<span class="rentalLanding__label">{label}</span>
-						</span>
-					{/if}
-				{/each}
-				{#if links.tenantPortal}
-					<div class="rentalLanding__navFlexSpacer" aria-hidden="true"></div>
-					<a
-						class="rentalLanding__tile"
-						href={links.tenantPortal}
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label="Tenant portal — opens in a new tab"
-					>
-						<span class="rentalLanding__icon" aria-hidden="true">
-							<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
-								<path
-									fill="currentColor"
-									d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-								/>
-							</svg>
-						</span>
-						<span class="rentalLanding__label">Tenant portal</span>
-					</a>
+					</div>
 				{/if}
-			</nav>
+			</div>
 		</aside>
 		</div>
 
@@ -193,6 +212,8 @@
 	</div>
 </div>
 
+<RentalContactModal bind:open={contactOpen} citySlug={theme} cityLabel={title} />
+
 <style>
 	.rentalLanding {
 		width: 100%;
@@ -209,17 +230,29 @@
 	.rentalLanding__sidebarWrap {
 		position: relative;
 		min-width: 0;
+		min-height: 0;
+		height: 100%;
 		display: flex;
 		flex-direction: column;
+		align-self: stretch;
 	}
 
 	.rentalLanding__sidebar {
+		flex: 1;
+		min-height: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
-		padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.5rem) 0;
-		min-height: 0;
+		padding: clamp(1.25rem, 3vw, 2rem) clamp(1rem, 2.5vw, 1.5rem)
+			clamp(1rem, 3vh, 2.25rem);
 		border-right: 1px solid transparent;
+	}
+
+	.rentalLanding__sidebarBody {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.rentalLanding__header {
@@ -254,16 +287,21 @@
 		flex-direction: column;
 		gap: 0.65rem;
 		min-height: 0;
-		padding-bottom: 1.5rem;
 	}
 
-	.rentalLanding__nav--withTenant {
-		padding-bottom: 3rem;
+	.rentalLanding__tenantFooter {
+		flex-shrink: 0;
+		margin-top: auto;
+		padding-top: 0.75rem;
 	}
 
-	.rentalLanding__navFlexSpacer {
-		flex: 1 1 auto;
-		min-height: 2.5rem;
+	.rentalLanding__tile--btn {
+		appearance: none;
+		font: inherit;
+		width: 100%;
+		margin: 0;
+		cursor: pointer;
+		text-align: left;
 	}
 
 	.rentalLanding__tile {

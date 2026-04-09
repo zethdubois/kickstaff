@@ -5,6 +5,7 @@ type MailPayload = {
 	to: string;
 	subject: string;
 	text: string;
+	replyTo?: string;
 };
 
 function smtpConfigured(): boolean {
@@ -47,6 +48,7 @@ async function sendMail(payload: MailPayload): Promise<boolean> {
 		console.info('[MAIL] MAIL_DEV_ONLY=true — skipping SMTP and logging only', {
 			from,
 			to: payload.to,
+			replyTo: payload.replyTo,
 			subject: payload.subject,
 			text: payload.text
 		});
@@ -65,7 +67,8 @@ async function sendMail(payload: MailPayload): Promise<boolean> {
 			from,
 			to: payload.to,
 			subject: payload.subject,
-			text: payload.text
+			text: payload.text,
+			...(payload.replyTo ? { replyTo: payload.replyTo } : {})
 		});
 		console.info('[MAIL] Sent via SMTP', { from, to: payload.to, subject: payload.subject });
 		return true;
@@ -76,6 +79,7 @@ async function sendMail(payload: MailPayload): Promise<boolean> {
 		{
 			from,
 			to: payload.to,
+			replyTo: payload.replyTo,
 			subject: payload.subject,
 			text: payload.text
 		}
@@ -134,5 +138,30 @@ export async function sendPasswordResetEmail(
 		to: email,
 		subject,
 		text
+	});
+}
+
+/** Public rental “Contact us” form; delivers to CONTACT_INBOX or ADMIN_EMAIL. */
+export async function sendRentalContactInquiry(opts: {
+	inboxTo: string;
+	replyTo: string;
+	cityLabel: string;
+	citySlug: string;
+	name: string;
+	message: string;
+}): Promise<boolean> {
+	const subject = `[Rental contact] ${opts.cityLabel}`;
+	const text = [
+		`City: ${opts.cityLabel} (${opts.citySlug})`,
+		`From: ${opts.name} <${opts.replyTo}>`,
+		'',
+		opts.message
+	].join('\n');
+
+	return sendMail({
+		to: opts.inboxTo,
+		subject,
+		text,
+		replyTo: opts.replyTo
 	});
 }
