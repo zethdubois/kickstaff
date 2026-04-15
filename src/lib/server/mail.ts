@@ -42,7 +42,9 @@ function getTransporter(): nodemailer.Transporter | null {
 
 async function sendMail(payload: MailPayload): Promise<boolean> {
 	const devOnly = env.MAIL_DEV_ONLY?.trim().toLowerCase() === 'true';
-	const from = env.ADMIN_EMAIL?.trim() || 'no-reply@example.com';
+	/** Prefer SMTP login identity so providers (e.g. Gmail) accept From vs AUTH. */
+	const from =
+		env.SMTP_USER?.trim() || env.ADMIN_EMAIL?.trim() || 'no-reply@example.com';
 
 	if (devOnly) {
 		console.info('[MAIL] MAIL_DEV_ONLY=true — skipping SMTP and logging only', {
@@ -58,9 +60,9 @@ async function sendMail(payload: MailPayload): Promise<boolean> {
 	const t = getTransporter();
 
 	if (t) {
-		if (!env.ADMIN_EMAIL?.trim()) {
+		if (!env.SMTP_USER?.trim() && !env.ADMIN_EMAIL?.trim()) {
 			console.warn(
-				'[MAIL] ADMIN_EMAIL is not set; using default From. Many SMTP providers require a verified sender address.'
+				'[MAIL] SMTP_USER and ADMIN_EMAIL are unset; using default From. Many SMTP providers require a verified sender address.'
 			);
 		}
 		await t.sendMail({

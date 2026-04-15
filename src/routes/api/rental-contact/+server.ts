@@ -7,6 +7,9 @@ import type { RequestHandler } from './$types';
 const MAX_NAME = 120;
 const MAX_MESSAGE = 4000;
 
+/** Inbox for rental contact (override with CONTACT_INBOX). */
+const DEFAULT_CONTACT_INBOX = 'kick.asset.management@gmail.com';
+
 function parseEmail(s: string): boolean {
 	if (s.length > 254) return false;
 	// pragmatic validation
@@ -14,13 +17,7 @@ function parseEmail(s: string): boolean {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
-	const inbox = env.CONTACT_INBOX?.trim() || env.ADMIN_EMAIL?.trim();
-	if (!inbox) {
-		return json(
-			{ message: 'Contact form is not configured (set CONTACT_INBOX or ADMIN_EMAIL).' },
-			{ status: 503 }
-		);
-	}
+	const inbox = env.CONTACT_INBOX?.trim() || DEFAULT_CONTACT_INBOX;
 
 	let body: unknown;
 	try {
