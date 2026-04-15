@@ -39,8 +39,21 @@
       wysiwyg?.landingBg ||
       wysiwyg?.landingFg ||
       wysiwyg?.landingFont ||
-      wysiwyg?.landingReadingMaxWidthPx != null
+      wysiwyg?.landingReadingMaxWidthPx != null ||
+      wysiwyg?.landingFontSizePx != null
     ),
+  );
+
+  const frameFontStyle = $derived(
+    wysiwyg?.landingFontSizePx != null
+      ? (() => {
+          const px = wysiwyg.landingFontSizePx;
+          const lo = Math.round(px * 1.2);
+          const hi = Math.round(px * 1.75);
+          const small = Math.round(px * 0.95);
+          return `--rlf-body-size: ${px}px; --rlf-headline-size: clamp(${lo}px, 2.5vw, ${hi}px); --rlf-empty-hint-size: ${small}px; --rlf-fallback-size: ${small}px`;
+        })()
+      : undefined,
   );
 
   type EditTarget = "headline" | "body";
@@ -99,7 +112,7 @@
   }
 </script>
 
-<div class="rentalLandingFrame">
+<div class="rentalLandingFrame" style={frameFontStyle}>
   {#if canEditLanding}
     <div
       class="rentalLandingFrame__heroSection rentalLandingFrame__heroSection--gear"

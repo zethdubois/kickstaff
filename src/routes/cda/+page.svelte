@@ -5,7 +5,7 @@
 	let { data } = $props();
 
 	const label = cityBySlug.cda;
-	const tagline = 'Lake living in North Idaho';
+	const taglineDefault = 'Lake living in North Idaho';
 </script>
 
 <svelte:head>
@@ -17,7 +17,7 @@
 		<RentalLandingGrid
 			links={data.links}
 			title={label}
-			{tagline}
+			{taglineDefault}
 			theme="cda"
 			listingEmbedUrl={data.listingEmbedUrl}
 			landingHeroImageUrl={data.links.landingHeroImageUrl}

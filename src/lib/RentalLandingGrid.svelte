@@ -16,7 +16,8 @@
 	let {
 		links,
 		title,
-		tagline,
+		taglineDefault,
+		tagline: taglineProp,
 		theme,
 		listingEmbedUrl,
 		landingHeroImageUrl = null,
@@ -25,7 +26,10 @@
 	}: {
 		links: CityAppfolioLinks;
 		title: string;
-		tagline: string;
+		/** Fallback subtitle when `links.sidebarTagline` is unset. */
+		taglineDefault?: string;
+		/** @deprecated Same as `taglineDefault` (older prop name). */
+		tagline?: string;
 		theme: CitySlug;
 		/** AppFolio /listings URL (same query as Appfolio.Listing + listing.js). */
 		listingEmbedUrl: string | null;
@@ -33,6 +37,22 @@
 		landingHeadline?: string | null;
 		landingBody?: string | null;
 	} = $props();
+
+	/** Resolved line under the title (DB override or page default). */
+	const tagline = $derived(links.sidebarTagline ?? taglineDefault ?? taglineProp ?? '');
+
+	const defaultSubtitleHint = $derived(taglineDefault ?? taglineProp ?? '');
+
+	const navAsideBg = $derived(
+		(() => {
+			const w = links.wysiwyg;
+			if (w?.navGradientFrom && w?.navGradientTo) {
+				const a = w.navGradientAngleDeg ?? 180;
+				return `linear-gradient(${a}deg, ${w.navGradientFrom}, ${w.navGradientTo})`;
+			}
+			return w?.navBg ?? undefined;
+		})()
+	);
 
 	const tiles = $derived([
 		{ key: 'short' as const, href: links.shortTerm, label: 'Short-term rentals' },
@@ -70,9 +90,12 @@
 			links.wysiwyg?.navBg ||
 			links.wysiwyg?.navFg ||
 			links.wysiwyg?.navFont ||
-			links.wysiwyg?.navReadingMaxWidthPx != null
+			(links.wysiwyg?.navGradientFrom && links.wysiwyg?.navGradientTo) ||
+			links.wysiwyg?.navFontSizePx != null
 		)
 	);
+
+	const navFontSized = $derived(links.wysiwyg?.navFontSizePx != null);
 </script>
 
 {#snippet tileIcon(key: TileKey)}
@@ -108,16 +131,23 @@
 	<div class="rentalLanding__layout">
 		<div class="rentalLanding__sidebarWrap">
 			{#if isAdmin}
-				<RentalWysiwygGear variant="nav" citySlug={theme} wysiwyg={links.wysiwyg} />
+				<RentalWysiwygGear
+					variant="nav"
+					citySlug={theme}
+					wysiwyg={links.wysiwyg}
+					sidebarTagline={links.sidebarTagline}
+					taglineDefault={defaultSubtitleHint}
+				/>
 			{/if}
 			<aside
 				class="rentalLanding__sidebar"
 				class:rentalLanding__sidebar--custom={navCustom}
-				style:background={links.wysiwyg?.navBg ?? undefined}
+				class:rentalLanding__sidebar--navFontSize={navFontSized}
+				style:background={navAsideBg}
 				style:color={links.wysiwyg?.navFg ?? undefined}
 				style:font-family={links.wysiwyg?.navFont ?? undefined}
-				style:max-width={links.wysiwyg?.navReadingMaxWidthPx != null
-					? `${links.wysiwyg.navReadingMaxWidthPx}px`
+				style:font-size={links.wysiwyg?.navFontSizePx != null
+					? `${links.wysiwyg.navFontSizePx}px`
 					: undefined}
 			>
 			<header class="rentalLanding__header">
@@ -221,7 +251,7 @@
 
 	.rentalLanding__layout {
 		display: grid;
-		grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+		grid-template-columns: 320px minmax(0, 1fr);
 		grid-template-rows: 1fr;
 		align-items: stretch;
 		min-height: calc(100dvh - var(--rental-viewport-offset, 0px));
@@ -566,5 +596,9 @@
 	.rentalLanding--mos .rentalLanding__sidebar--custom .rentalLanding__title,
 	.rentalLanding--mos .rentalLanding__sidebar--custom .rentalLanding__tagline {
 		color: inherit;
+	}
+
+	.rentalLanding .rentalLanding__sidebar--navFontSize .rentalLanding__title {
+		font-size: clamp(1.2em, 2.8vw, 1.65em);
 	}
 </style>

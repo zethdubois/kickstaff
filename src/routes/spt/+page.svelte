@@ -5,7 +5,7 @@
 	let { data } = $props();
 
 	const label = cityBySlug.spt;
-	const tagline = 'Mountains & Schweitzer';
+	const taglineDefault = 'Mountains & Schweitzer';
 </script>
 
 <svelte:head>
@@ -18,7 +18,7 @@
 		<RentalLandingGrid
 			links={data.links}
 			title={label}
-			{tagline}
+			{taglineDefault}
 			theme="spt"
 			listingEmbedUrl={data.listingEmbedUrl}
 			landingHeroImageUrl={data.links.landingHeroImageUrl}

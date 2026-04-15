@@ -6,11 +6,20 @@ export type RentalWysiwygTheme = {
 	navFont: string | null;
 	/** Max width of the left nav column (px). */
 	navReadingMaxWidthPx: number | null;
+	/** Both ends required in DB to show a gradient over the solid nav background. */
+	navGradientFrom: string | null;
+	navGradientTo: string | null;
+	/** Degrees; null uses 180 when a gradient is shown. */
+	navGradientAngleDeg: number | null;
+	/** Base font size for the nav column (px); H1 scales up with em. */
+	navFontSizePx: number | null;
 	landingBg: string | null;
 	landingFg: string | null;
 	landingFont: string | null;
 	/** Max width of headline/body column (px). */
 	landingReadingMaxWidthPx: number | null;
+	/** Base font size for landing body (px); headline scales from this. */
+	landingFontSizePx: number | null;
 };
 
 export type CityAppfolioLinks = {
@@ -32,6 +41,8 @@ export type CityAppfolioLinks = {
 	landingHeadline: string | null;
 	/** Plain text; line breaks preserved in the frame. */
 	landingBody: string | null;
+	/** Subtitle under the city title; null = use the page default string. */
+	sidebarTagline: string | null;
 	/** Admin WYSIWYG overrides; null = use built-in city theme CSS. */
 	wysiwyg: RentalWysiwygTheme | null;
 };
@@ -47,30 +58,45 @@ function wysiwygFromRow(row: {
 	navWysiwygFg: string | null;
 	navWysiwygFont: string | null;
 	navWysiwygMaxWidthPx: number | null;
+	navWysiwygGradientFrom: string | null;
+	navWysiwygGradientTo: string | null;
+	navWysiwygGradientAngleDeg: number | null;
+	navWysiwygFontSizePx: number | null;
 	landingWysiwygBg: string | null;
 	landingWysiwygFg: string | null;
 	landingWysiwygFont: string | null;
 	landingWysiwygMaxWidthPx: number | null;
+	landingWysiwygFontSizePx: number | null;
 }): RentalWysiwygTheme | null {
 	const anySet =
 		row.navWysiwygBg ||
 		row.navWysiwygFg ||
 		row.navWysiwygFont ||
 		row.navWysiwygMaxWidthPx != null ||
+		row.navWysiwygGradientFrom ||
+		row.navWysiwygGradientTo ||
+		row.navWysiwygGradientAngleDeg != null ||
+		row.navWysiwygFontSizePx != null ||
 		row.landingWysiwygBg ||
 		row.landingWysiwygFg ||
 		row.landingWysiwygFont ||
-		row.landingWysiwygMaxWidthPx != null;
+		row.landingWysiwygMaxWidthPx != null ||
+		row.landingWysiwygFontSizePx != null;
 	if (!anySet) return null;
 	return {
 		navBg: optional(row.navWysiwygBg),
 		navFg: optional(row.navWysiwygFg),
 		navFont: optional(row.navWysiwygFont),
 		navReadingMaxWidthPx: row.navWysiwygMaxWidthPx,
+		navGradientFrom: optional(row.navWysiwygGradientFrom),
+		navGradientTo: optional(row.navWysiwygGradientTo),
+		navGradientAngleDeg: row.navWysiwygGradientAngleDeg,
+		navFontSizePx: row.navWysiwygFontSizePx,
 		landingBg: optional(row.landingWysiwygBg),
 		landingFg: optional(row.landingWysiwygFg),
 		landingFont: optional(row.landingWysiwygFont),
-		landingReadingMaxWidthPx: row.landingWysiwygMaxWidthPx
+		landingReadingMaxWidthPx: row.landingWysiwygMaxWidthPx,
+		landingFontSizePx: row.landingWysiwygFontSizePx
 	};
 }
 
@@ -92,14 +118,20 @@ export function cityAppfolioLinksFromRow(
 		landingHeroBgPositionYPct: number | null;
 		landingHeadline: string | null;
 		landingBody: string | null;
+		sidebarTagline: string | null;
 		navWysiwygBg: string | null;
 		navWysiwygFg: string | null;
 		navWysiwygFont: string | null;
 		navWysiwygMaxWidthPx: number | null;
+		navWysiwygGradientFrom: string | null;
+		navWysiwygGradientTo: string | null;
+		navWysiwygGradientAngleDeg: number | null;
+		navWysiwygFontSizePx: number | null;
 		landingWysiwygBg: string | null;
 		landingWysiwygFg: string | null;
 		landingWysiwygFont: string | null;
 		landingWysiwygMaxWidthPx: number | null;
+		landingWysiwygFontSizePx: number | null;
 	} | null
 ): CityAppfolioLinks {
 	if (!row) {
@@ -116,6 +148,7 @@ export function cityAppfolioLinksFromRow(
 			landingHeroBgPositionYPct: null,
 			landingHeadline: null,
 			landingBody: null,
+			sidebarTagline: null,
 			wysiwyg: null
 		};
 	}
@@ -132,6 +165,7 @@ export function cityAppfolioLinksFromRow(
 		landingHeroBgPositionYPct: row.landingHeroBgPositionYPct,
 		landingHeadline: optional(row.landingHeadline),
 		landingBody: optional(row.landingBody),
+		sidebarTagline: optional(row.sidebarTagline),
 		wysiwyg: wysiwygFromRow(row)
 	};
 }

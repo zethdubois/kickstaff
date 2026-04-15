@@ -8,6 +8,7 @@
 	type Variant = 'nav' | 'hero' | 'landing';
 
 	const DEBOUNCE_MS = 450;
+	const NAV_COLUMN_WIDTH_PX = 320;
 
 	let {
 		variant,
@@ -16,7 +17,9 @@
 		heroUrl = null,
 		heroBgPositionYPct = null,
 		headline = null,
-		body = null
+		body = null,
+		sidebarTagline = null,
+		taglineDefault = ''
 	}: {
 		variant: Variant;
 		citySlug: CitySlug;
@@ -26,23 +29,36 @@
 		heroBgPositionYPct?: number | null;
 		headline?: string | null;
 		body?: string | null;
+		/** DB override for nav subtitle; null = use page default. */
+		sidebarTagline?: string | null;
+		/** Shown as placeholder when editing subtitle (page default copy). */
+		taglineDefault?: string;
 	} = $props();
 
 	let open = $state(false);
 	let busy = $state(false);
 	let err = $state<string | null>(null);
+	/** Panel chrome opacity: solid vs ~20% so you can see the page behind. */
+	let panelOpaque = $state(true);
 
 	let rootEl = $state<HTMLDivElement | null>(null);
 
 	let navBg = $state('#ffffff');
 	let navFg = $state('#171717');
 	let navFont = $state('');
-	let navWidth = $state(320);
 
 	let landingBg = $state('#ffffff');
 	let landingFg = $state('#171717');
 	let landingFont = $state('');
 	let landingWidth = $state(640);
+	let landingFontSizeDraft = $state<number | null>(null);
+
+	let navGradEnabled = $state(false);
+	let navGrad1 = $state('#0c4a6e');
+	let navGrad2 = $state('#0369a1');
+	let navGradAngle = $state(180);
+	let navFontSizeDraft = $state<number | null>(null);
+	let sidebarTaglineDraft = $state('');
 
 	let heroDraftUrl = $state('');
 	let heroFile = $state<File | null>(null);
@@ -50,8 +66,46 @@
 
 	/** Full theme + hero URL at panel open — used by Cancel to revert. */
 	let snapshotTheme = $state<RentalWysiwygTheme | null>(null);
+	let snapshotSidebarTagline = $state<string | null>(null);
 	let snapshotHeroUrl = $state<string | null>(null);
 	let snapshotHeroPositionY = $state<number | null>(null);
+
+	function emptyTheme(): RentalWysiwygTheme {
+		return {
+			navBg: null,
+			navFg: null,
+			navFont: null,
+			navReadingMaxWidthPx: null,
+			navGradientFrom: null,
+			navGradientTo: null,
+			navGradientAngleDeg: null,
+			navFontSizePx: null,
+			landingBg: null,
+			landingFg: null,
+			landingFont: null,
+			landingReadingMaxWidthPx: null,
+			landingFontSizePx: null
+		};
+	}
+
+	function themeSnapshotValue(w: RentalWysiwygTheme | null): RentalWysiwygTheme {
+		if (!w) return emptyTheme();
+		return {
+			navBg: w.navBg,
+			navFg: w.navFg,
+			navFont: w.navFont,
+			navReadingMaxWidthPx: w.navReadingMaxWidthPx,
+			navGradientFrom: w.navGradientFrom,
+			navGradientTo: w.navGradientTo,
+			navGradientAngleDeg: w.navGradientAngleDeg,
+			navFontSizePx: w.navFontSizePx,
+			landingBg: w.landingBg,
+			landingFg: w.landingFg,
+			landingFont: w.landingFont,
+			landingReadingMaxWidthPx: w.landingReadingMaxWidthPx,
+			landingFontSizePx: w.landingFontSizePx
+		};
+	}
 
 	let debounceNavLand: ReturnType<typeof setTimeout> | null = null;
 	let debounceHero: ReturnType<typeof setTimeout> | null = null;
@@ -77,12 +131,18 @@
 			navBg = w?.navBg ?? '#ffffff';
 			navFg = w?.navFg ?? '#171717';
 			navFont = w?.navFont ?? '';
-			navWidth = w?.navReadingMaxWidthPx ?? 320;
+			sidebarTaglineDraft = sidebarTagline ?? '';
+			navGradEnabled = !!(w?.navGradientFrom && w?.navGradientTo);
+			navGrad1 = w?.navGradientFrom ?? '#0c4a6e';
+			navGrad2 = w?.navGradientTo ?? '#0369a1';
+			navGradAngle = w?.navGradientAngleDeg ?? 180;
+			navFontSizeDraft = w?.navFontSizePx ?? null;
 		} else if (variant === 'landing') {
 			landingBg = w?.landingBg ?? '#ffffff';
 			landingFg = w?.landingFg ?? '#171717';
 			landingFont = w?.landingFont ?? '';
 			landingWidth = w?.landingReadingMaxWidthPx ?? 640;
+			landingFontSizeDraft = w?.landingFontSizePx ?? null;
 		} else {
 			heroDraftUrl = heroUrl?.trim() ?? '';
 			heroFile = null;
@@ -91,54 +151,30 @@
 	}
 
 	function captureSnapshot() {
-		const w = wysiwyg;
-		snapshotTheme = w
-			? {
-					navBg: w.navBg,
-					navFg: w.navFg,
-					navFont: w.navFont,
-					navReadingMaxWidthPx: w.navReadingMaxWidthPx,
-					landingBg: w.landingBg,
-					landingFg: w.landingFg,
-					landingFont: w.landingFont,
-					landingReadingMaxWidthPx: w.landingReadingMaxWidthPx
-				}
-			: {
-					navBg: null,
-					navFg: null,
-					navFont: null,
-					navReadingMaxWidthPx: null,
-					landingBg: null,
-					landingFg: null,
-					landingFont: null,
-					landingReadingMaxWidthPx: null
-				};
+		snapshotTheme = themeSnapshotValue(wysiwyg);
+		snapshotSidebarTagline = sidebarTagline ?? null;
 		const hu = heroUrl?.trim();
 		snapshotHeroUrl = hu ? hu : null;
 		snapshotHeroPositionY = heroBgPositionYPct ?? null;
 	}
 
-	function themeSnapshotToApi(t: RentalWysiwygTheme | null) {
-		const z = t ?? {
-			navBg: null,
-			navFg: null,
-			navFont: null,
-			navReadingMaxWidthPx: null,
-			landingBg: null,
-			landingFg: null,
-			landingFont: null,
-			landingReadingMaxWidthPx: null
-		};
+	function themeSnapshotToApi(t: RentalWysiwygTheme, sidebar: string | null) {
 		return {
 			citySlug,
-			navBg: z.navBg,
-			navFg: z.navFg,
-			navFont: z.navFont,
-			navReadingMaxWidthPx: z.navReadingMaxWidthPx,
-			landingBg: z.landingBg,
-			landingFg: z.landingFg,
-			landingFont: z.landingFont,
-			landingReadingMaxWidthPx: z.landingReadingMaxWidthPx
+			sidebarTagline: sidebar,
+			navBg: t.navBg,
+			navFg: t.navFg,
+			navFont: t.navFont,
+			navReadingMaxWidthPx: t.navReadingMaxWidthPx,
+			navGradientFrom: t.navGradientFrom,
+			navGradientTo: t.navGradientTo,
+			navGradientAngleDeg: t.navGradientAngleDeg,
+			navFontSizePx: t.navFontSizePx,
+			landingBg: t.landingBg,
+			landingFg: t.landingFg,
+			landingFont: t.landingFont,
+			landingReadingMaxWidthPx: t.landingReadingMaxWidthPx,
+			landingFontSizePx: t.landingFontSizePx
 		};
 	}
 
@@ -162,15 +198,40 @@
 				credentials: 'include',
 				body: JSON.stringify({
 					citySlug,
-					navBg: variant === 'nav' ? normHex(navBg) : w?.navBg ?? null,
-					navFg: variant === 'nav' ? normHex(navFg) : w?.navFg ?? null,
-					navFont: variant === 'nav' ? emptyToNull(navFont) : w?.navFont ?? null,
-					navReadingMaxWidthPx: variant === 'nav' ? navWidth : w?.navReadingMaxWidthPx ?? null,
-					landingBg: variant === 'landing' ? normHex(landingBg) : w?.landingBg ?? null,
-					landingFg: variant === 'landing' ? normHex(landingFg) : w?.landingFg ?? null,
-					landingFont: variant === 'landing' ? emptyToNull(landingFont) : w?.landingFont ?? null,
+					sidebarTagline:
+						variant === 'nav'
+							? emptyToNull(sidebarTaglineDraft)
+							: (sidebarTagline ?? null),
+					navBg: variant === 'nav' ? normHex(navBg) : (w?.navBg ?? null),
+					navFg: variant === 'nav' ? normHex(navFg) : (w?.navFg ?? null),
+					navFont: variant === 'nav' ? emptyToNull(navFont) : (w?.navFont ?? null),
+					navReadingMaxWidthPx: NAV_COLUMN_WIDTH_PX,
+					navGradientFrom:
+						variant === 'nav'
+							? navGradEnabled
+								? normHex(navGrad1)
+								: null
+							: (w?.navGradientFrom ?? null),
+					navGradientTo:
+						variant === 'nav'
+							? navGradEnabled
+								? normHex(navGrad2)
+								: null
+							: (w?.navGradientTo ?? null),
+					navGradientAngleDeg:
+						variant === 'nav'
+							? navGradEnabled
+								? navGradAngle
+								: null
+							: (w?.navGradientAngleDeg ?? null),
+					navFontSizePx: variant === 'nav' ? navFontSizeDraft : (w?.navFontSizePx ?? null),
+					landingBg: variant === 'landing' ? normHex(landingBg) : (w?.landingBg ?? null),
+					landingFg: variant === 'landing' ? normHex(landingFg) : (w?.landingFg ?? null),
+					landingFont: variant === 'landing' ? emptyToNull(landingFont) : (w?.landingFont ?? null),
 					landingReadingMaxWidthPx:
-						variant === 'landing' ? landingWidth : w?.landingReadingMaxWidthPx ?? null
+						variant === 'landing' ? landingWidth : (w?.landingReadingMaxWidthPx ?? null),
+					landingFontSizePx:
+						variant === 'landing' ? landingFontSizeDraft : (w?.landingFontSizePx ?? null)
 				})
 			});
 			const data = (await res.json().catch(() => ({}))) as { message?: string };
@@ -290,7 +351,9 @@
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					credentials: 'include',
-					body: JSON.stringify(themeSnapshotToApi(snapshotTheme))
+					body: JSON.stringify(
+						themeSnapshotToApi(snapshotTheme ?? emptyTheme(), snapshotSidebarTagline)
+					)
 				});
 				const data = (await res.json().catch(() => ({}))) as { message?: string };
 				if (!res.ok) {
@@ -358,7 +421,7 @@
 	});
 </script>
 
-<div class="rentalWysiwyg" bind:this={rootEl}>
+<div class="rentalWysiwyg rentalWysiwyg--{variant}" bind:this={rootEl}>
 	<button
 		class="rentalWysiwyg__gear"
 		type="button"
@@ -377,12 +440,30 @@
 	</button>
 
 	{#if open}
-		<div class="rentalWysiwyg__panel" role="region" aria-label="Rental style" tabindex="-1">
+		<div
+			class="rentalWysiwyg__panel"
+			class:rentalWysiwyg__panel--translucent={!panelOpaque}
+			role="region"
+			aria-label="Rental style"
+			tabindex="-1"
+		>
+			<button
+				class="rentalWysiwyg__seeThru"
+				type="button"
+				aria-pressed={!panelOpaque}
+				title={panelOpaque ? 'Make panel background ~20% opaque' : 'Solid white panel background'}
+				onclick={(e) => {
+					e.stopPropagation();
+					panelOpaque = !panelOpaque;
+				}}
+			>
+				{panelOpaque ? 'See thru' : 'Solid'}
+			</button>
 			{#if variant === 'nav'}
 				<h3 class="rentalWysiwyg__title">Navigation column</h3>
 				<p class="rentalWysiwyg__hint">Changes save automatically. Keep closes; Cancel reverts this session.</p>
 				<label class="rentalWysiwyg__field">
-					<span>Background</span>
+					<span>Background (solid)</span>
 					<span class="rentalWysiwyg__swatchRow">
 						<input
 							class="rentalWysiwyg__color"
@@ -398,23 +479,59 @@
 						/>
 					</span>
 				</label>
-				<label class="rentalWysiwyg__field">
-					<span>Text</span>
-					<span class="rentalWysiwyg__swatchRow">
+				<div class="rentalWysiwyg__field">
+					<label class="rentalWysiwyg__check">
 						<input
-							class="rentalWysiwyg__color"
-							type="color"
-							bind:value={navFg}
-							oninput={scheduleNavLandingSave}
+							type="checkbox"
+							bind:checked={navGradEnabled}
+							onchange={scheduleNavLandingSave}
 						/>
-						<input
-							class="rentalWysiwyg__text"
-							type="text"
-							bind:value={navFg}
-							oninput={scheduleNavLandingSave}
-						/>
-					</span>
-				</label>
+						<span>Gradient background (overrides solid)</span>
+					</label>
+					{#if navGradEnabled}
+						<span class="rentalWysiwyg__subLabel">Color 1</span>
+						<span class="rentalWysiwyg__swatchRow">
+							<input
+								class="rentalWysiwyg__color"
+								type="color"
+								bind:value={navGrad1}
+								oninput={scheduleNavLandingSave}
+							/>
+							<input
+								class="rentalWysiwyg__text"
+								type="text"
+								bind:value={navGrad1}
+								oninput={scheduleNavLandingSave}
+							/>
+						</span>
+						<span class="rentalWysiwyg__subLabel">Color 2</span>
+						<span class="rentalWysiwyg__swatchRow">
+							<input
+								class="rentalWysiwyg__color"
+								type="color"
+								bind:value={navGrad2}
+								oninput={scheduleNavLandingSave}
+							/>
+							<input
+								class="rentalWysiwyg__text"
+								type="text"
+								bind:value={navGrad2}
+								oninput={scheduleNavLandingSave}
+							/>
+						</span>
+						<label class="rentalWysiwyg__field rentalWysiwyg__field--tight">
+							<span>Direction (deg): {navGradAngle}</span>
+							<input
+								type="range"
+								min="0"
+								max="360"
+								step="1"
+								bind:value={navGradAngle}
+								oninput={scheduleNavLandingSave}
+							/>
+						</label>
+					{/if}
+				</div>
 				<label class="rentalWysiwyg__field">
 					<span>Font</span>
 					<select class="rentalWysiwyg__select" bind:value={navFont} onchange={scheduleNavLandingSave}>
@@ -424,15 +541,59 @@
 					</select>
 				</label>
 				<label class="rentalWysiwyg__field">
-					<span>Column width (px): {navWidth}</span>
+					<span>Font color</span>
+					<span class="rentalWysiwyg__swatchRow">
+						<input
+							class="rentalWysiwyg__color"
+							type="color"
+							bind:value={navFg}
+							oninput={scheduleNavLandingSave}
+						/>
+						<input
+							class="rentalWysiwyg__text"
+							type="text"
+							bind:value={navFg}
+							oninput={scheduleNavLandingSave}
+						/>
+					</span>
+				</label>
+				<div class="rentalWysiwyg__field">
+					<span
+						>Base font size (px){#if navFontSizeDraft == null}
+							— default{/if}: {navFontSizeDraft ?? '—'}</span
+					>
 					<input
 						type="range"
-						min="200"
-						max="480"
-						step="4"
-						bind:value={navWidth}
-						oninput={scheduleNavLandingSave}
+						min="11"
+						max="24"
+						step="1"
+						value={navFontSizeDraft ?? 16}
+						oninput={(e) => {
+							navFontSizeDraft = Number(e.currentTarget.value);
+							scheduleNavLandingSave();
+						}}
 					/>
+					<button
+						class="rentalWysiwyg__linkish"
+						type="button"
+						onclick={() => {
+							navFontSizeDraft = null;
+							scheduleNavLandingSave();
+						}}
+					>
+						Use theme default size
+					</button>
+				</div>
+				<label class="rentalWysiwyg__field">
+					<span>Subtitle under title</span>
+					<textarea
+						class="rentalWysiwyg__textarea"
+						rows="2"
+						placeholder={taglineDefault ? `Default: ${taglineDefault}` : 'Optional subtitle'}
+						bind:value={sidebarTaglineDraft}
+						oninput={scheduleNavLandingSave}
+					></textarea>
+					<span class="rentalWysiwyg__micro">Leave empty to use the page default line.</span>
 				</label>
 			{:else if variant === 'landing'}
 				<h3 class="rentalWysiwyg__title">Landing content</h3>
@@ -455,7 +616,19 @@
 					</span>
 				</label>
 				<label class="rentalWysiwyg__field">
-					<span>Text</span>
+					<span>Font</span>
+					<select
+						class="rentalWysiwyg__select"
+						bind:value={landingFont}
+						onchange={scheduleNavLandingSave}
+					>
+						{#each RENTAL_FONT_STACK_OPTIONS as o (o.value)}
+							<option value={o.value}>{o.label}</option>
+						{/each}
+					</select>
+				</label>
+				<label class="rentalWysiwyg__field">
+					<span>Font color</span>
 					<span class="rentalWysiwyg__swatchRow">
 						<input
 							class="rentalWysiwyg__color"
@@ -471,18 +644,33 @@
 						/>
 					</span>
 				</label>
-				<label class="rentalWysiwyg__field">
-					<span>Font</span>
-					<select
-						class="rentalWysiwyg__select"
-						bind:value={landingFont}
-						onchange={scheduleNavLandingSave}
+				<div class="rentalWysiwyg__field">
+					<span
+						>Base font size (px){#if landingFontSizeDraft == null}
+							— default{/if}: {landingFontSizeDraft ?? '—'}</span
 					>
-						{#each RENTAL_FONT_STACK_OPTIONS as o (o.value)}
-							<option value={o.value}>{o.label}</option>
-						{/each}
-					</select>
-				</label>
+					<input
+						type="range"
+						min="12"
+						max="28"
+						step="1"
+						value={landingFontSizeDraft ?? 16}
+						oninput={(e) => {
+							landingFontSizeDraft = Number(e.currentTarget.value);
+							scheduleNavLandingSave();
+						}}
+					/>
+					<button
+						class="rentalWysiwyg__linkish"
+						type="button"
+						onclick={() => {
+							landingFontSizeDraft = null;
+							scheduleNavLandingSave();
+						}}
+					>
+						Use theme default size
+					</button>
+				</div>
 				<label class="rentalWysiwyg__field">
 					<span>Reading width (px): {landingWidth}</span>
 					<input
@@ -599,18 +787,59 @@
 		border: 0;
 	}
 
+	/*
+	 * Fixed to the viewport right edge so parent overflow (e.g. .rentalLandingFrame)
+	 * never clips the panel or the See thru control.
+	 */
 	.rentalWysiwyg__panel {
-		position: absolute;
-		top: 2.5rem;
-		left: 0;
-		width: min(22rem, calc(100vw - 2rem));
+		position: fixed;
+		top: calc(0.5rem + var(--rental-viewport-offset, 0px));
+		right: 0;
+		left: auto;
+		bottom: max(0.35rem, env(safe-area-inset-bottom, 0px));
+		width: min(22rem, calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+		overflow-x: hidden;
+		overflow-y: auto;
 		padding: 1rem;
-		border-radius: 0.5rem;
+		padding-top: 2.5rem;
+		padding-right: max(0.65rem, calc(0.35rem + env(safe-area-inset-right, 0px)));
+		border-radius: 0.45rem 0 0 0.45rem;
 		border: 1px solid #d4d4d4;
-		background: #fff;
+		border-right: none;
+		background: rgb(255 255 255 / 1);
 		color: #171717;
-		box-shadow: 0 12px 40px rgb(0 0 0 / 0.18);
+		box-shadow: -8px 0 32px rgb(0 0 0 / 0.16);
 		font-size: 0.9rem;
+		z-index: 10000;
+	}
+
+	.rentalWysiwyg__panel--translucent {
+		background: rgb(255 255 255 / 0.2);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+	}
+
+	.rentalWysiwyg__seeThru {
+		position: absolute;
+		top: 0.45rem;
+		right: 0.5rem;
+		z-index: 2;
+		appearance: none;
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 650;
+		padding: 0.35rem 0.55rem;
+		border-radius: 0.35rem;
+		border: 1px solid #737373;
+		background: rgb(255 255 255 / 0.98);
+		color: #171717;
+		cursor: pointer;
+		line-height: 1.2;
+		box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+	}
+
+	.rentalWysiwyg__panel--translucent .rentalWysiwyg__seeThru {
+		background: rgb(255 255 255 / 0.55);
 	}
 
 	.rentalWysiwyg__title {
@@ -637,6 +866,62 @@
 		font-weight: 600;
 		font-size: 0.8rem;
 		color: #404040;
+	}
+
+	.rentalWysiwyg__field--tight {
+		margin-bottom: 0;
+	}
+
+	.rentalWysiwyg__check {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.5rem;
+		font-weight: 600;
+		font-size: 0.8rem;
+		color: #404040;
+		cursor: pointer;
+		margin-bottom: 0.35rem;
+	}
+
+	.rentalWysiwyg__check input {
+		margin-top: 0.15rem;
+	}
+
+	.rentalWysiwyg__subLabel {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: #525252;
+		margin-top: 0.35rem;
+	}
+
+	.rentalWysiwyg__micro {
+		font-size: 0.72rem;
+		color: #737373;
+		line-height: 1.3;
+	}
+
+	.rentalWysiwyg__linkish {
+		appearance: none;
+		font: inherit;
+		font-size: 0.78rem;
+		padding: 0;
+		margin-top: 0.25rem;
+		border: 0;
+		background: none;
+		color: #2563eb;
+		text-decoration: underline;
+		cursor: pointer;
+		text-align: left;
+	}
+
+	.rentalWysiwyg__textarea {
+		font: inherit;
+		font-size: 0.88rem;
+		padding: 0.35rem 0.45rem;
+		border: 1px solid #a3a3a3;
+		border-radius: 0.25rem;
+		resize: vertical;
+		min-height: 2.75rem;
 	}
 
 	.rentalWysiwyg__swatchRow {

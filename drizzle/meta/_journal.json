@@ -71,6 +71,13 @@
       "when": 1776000000000,
       "tag": "0009_hero_bg_position_y",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776100000000,
+      "tag": "0010_rental_wysiwyg_gradient_typography",
+      "breakpoints": true
     }
   ]
 }

@@ -25,14 +25,20 @@ export async function loadCityAppfolioLinks(slug: CitySlug) {
 			landingHeroBgPositionYPct: rentalLandingLinks.landingHeroBgPositionYPct,
 			landingHeadline: rentalLandingLinks.landingHeadline,
 			landingBody: rentalLandingLinks.landingBody,
+			sidebarTagline: rentalLandingLinks.sidebarTagline,
 			navWysiwygBg: rentalLandingLinks.navWysiwygBg,
 			navWysiwygFg: rentalLandingLinks.navWysiwygFg,
 			navWysiwygFont: rentalLandingLinks.navWysiwygFont,
 			navWysiwygMaxWidthPx: rentalLandingLinks.navWysiwygMaxWidthPx,
+			navWysiwygGradientFrom: rentalLandingLinks.navWysiwygGradientFrom,
+			navWysiwygGradientTo: rentalLandingLinks.navWysiwygGradientTo,
+			navWysiwygGradientAngleDeg: rentalLandingLinks.navWysiwygGradientAngleDeg,
+			navWysiwygFontSizePx: rentalLandingLinks.navWysiwygFontSizePx,
 			landingWysiwygBg: rentalLandingLinks.landingWysiwygBg,
 			landingWysiwygFg: rentalLandingLinks.landingWysiwygFg,
 			landingWysiwygFont: rentalLandingLinks.landingWysiwygFont,
-			landingWysiwygMaxWidthPx: rentalLandingLinks.landingWysiwygMaxWidthPx
+			landingWysiwygMaxWidthPx: rentalLandingLinks.landingWysiwygMaxWidthPx,
+			landingWysiwygFontSizePx: rentalLandingLinks.landingWysiwygFontSizePx
 		})
 		.from(rentalLandingLinks)
 		.where(eq(rentalLandingLinks.citySlug, slug))

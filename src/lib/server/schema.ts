@@ -45,16 +45,23 @@ export const rentalLandingLinks = pgTable('rental_landing_links', {
 	landingHeroBgPositionYPct: integer('landing_hero_bg_position_y_pct'),
 	landingHeadline: text('landing_headline'),
 	landingBody: text('landing_body'),
+	/** Optional subtitle under city title; null = use page default copy. */
+	sidebarTagline: text('sidebar_tagline'),
 	/** WYSIWYG preview: left nav column (hex / font stack / px). */
 	navWysiwygBg: text('nav_wysiwyg_bg'),
 	navWysiwygFg: text('nav_wysiwyg_fg'),
 	navWysiwygFont: text('nav_wysiwyg_font'),
 	navWysiwygMaxWidthPx: integer('nav_wysiwyg_max_width_px'),
+	navWysiwygGradientFrom: text('nav_wysiwyg_gradient_from'),
+	navWysiwygGradientTo: text('nav_wysiwyg_gradient_to'),
+	navWysiwygGradientAngleDeg: integer('nav_wysiwyg_gradient_angle_deg'),
+	navWysiwygFontSizePx: integer('nav_wysiwyg_font_size_px'),
 	/** WYSIWYG preview: landing main column text area. */
 	landingWysiwygBg: text('landing_wysiwyg_bg'),
 	landingWysiwygFg: text('landing_wysiwyg_fg'),
 	landingWysiwygFont: text('landing_wysiwyg_font'),
 	landingWysiwygMaxWidthPx: integer('landing_wysiwyg_max_width_px'),
+	landingWysiwygFontSizePx: integer('landing_wysiwyg_font_size_px'),
 	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
 

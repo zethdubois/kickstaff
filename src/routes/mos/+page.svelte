@@ -5,7 +5,7 @@
 	let { data } = $props();
 
 	const label = cityBySlug.mos;
-	const tagline = 'Heart of the Palouse';
+	const taglineDefault = 'Heart of the Palouse';
 </script>
 
 <svelte:head>
@@ -18,7 +18,7 @@
 		<RentalLandingGrid
 			links={data.links}
 			title={label}
-			{tagline}
+			{taglineDefault}
 			theme="mos"
 			listingEmbedUrl={data.listingEmbedUrl}
 			landingHeroImageUrl={data.links.landingHeroImageUrl}
