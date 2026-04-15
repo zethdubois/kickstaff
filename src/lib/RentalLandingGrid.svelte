@@ -4,12 +4,17 @@
   @faq: docs/guides/RentalLandingGrid.md
 -->
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import type { CityAppfolioLinks } from '$lib/cityAppfolioLinks';
 	import type { CitySlug } from '$lib/cities';
+	import { onMount } from 'svelte';
 	import RentalContactModal from '$lib/RentalContactModal.svelte';
 	import RentalLandingFrame from '$lib/RentalLandingFrame.svelte';
 	import RentalWysiwygGear from '$lib/RentalWysiwygGear.svelte';
+
+	const MOBILE_DRAWER_ID = 'rental-mobile-nav-drawer';
+	const MOBILE_MENU_BTN_ID = 'rental-mobile-menu-btn';
 
 	type TileKey = 'short' | 'long' | 'apply' | 'contact';
 
@@ -64,6 +69,12 @@
 	/** Iframe loads only after a nav tile click; null shows the landing frame in the main column. */
 	let iframeSrc = $state<string | null>(null);
 	let contactOpen = $state(false);
+	let mobileNavOpen = $state(false);
+	/** Matches layout breakpoint (52rem) for aria and body scroll lock. */
+	let isMobileLayout = $state(false);
+
+	let mobileMenuBtnEl = $state<HTMLButtonElement | null>(null);
+	let mobileDrawerCloseEl = $state<HTMLButtonElement | null>(null);
 
 	$effect(() => {
 		theme;
@@ -71,16 +82,77 @@
 		iframeSrc = null;
 	});
 
+	onMount(() => {
+		if (!browser) return;
+		const mq = window.matchMedia('(max-width: 52rem)');
+		const sync = () => {
+			const next = mq.matches;
+			isMobileLayout = next;
+			if (!next) mobileNavOpen = false;
+		};
+		sync();
+		mq.addEventListener('change', sync);
+		return () => mq.removeEventListener('change', sync);
+	});
+
+	$effect(() => {
+		if (!browser) return;
+		if (isMobileLayout && mobileNavOpen) {
+			const prev = document.body.style.overflow;
+			document.body.style.overflow = 'hidden';
+			return () => {
+				document.body.style.overflow = prev;
+			};
+		}
+	});
+
+	function closeMobileNav() {
+		const was = mobileNavOpen;
+		mobileNavOpen = false;
+		if (was && browser && isMobileLayout) {
+			queueMicrotask(() => mobileMenuBtnEl?.focus());
+		}
+	}
+
+	function toggleMobileNav() {
+		mobileNavOpen = !mobileNavOpen;
+		if (!browser || !isMobileLayout) return;
+		queueMicrotask(() => {
+			if (mobileNavOpen) mobileDrawerCloseEl?.focus();
+			else mobileMenuBtnEl?.focus();
+		});
+	}
+
 	function onTileClick(e: MouseEvent, href: string) {
 		if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 		e.preventDefault();
 		iframeSrc = href;
+		if (isMobileLayout) closeMobileNav();
 	}
 
 	function onContactClick(e: MouseEvent) {
 		if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 		e.preventDefault();
 		contactOpen = true;
+		if (isMobileLayout) closeMobileNav();
+	}
+
+	function onTenantPortalNavClick() {
+		if (isMobileLayout) closeMobileNav();
+	}
+
+	/** Plain click: show landing column again; modified clicks follow the real URL. */
+	function onTitleShowLanding(e: MouseEvent) {
+		if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+		e.preventDefault();
+		iframeSrc = null;
+		if (isMobileLayout) closeMobileNav();
+	}
+
+	function onMobileNavEscape(e: KeyboardEvent) {
+		if (e.key !== 'Escape' || !mobileNavOpen || contactOpen) return;
+		e.preventDefault();
+		closeMobileNav();
 	}
 
 	const isAdmin = $derived(page.data.user?.role === 'admin');
@@ -127,9 +199,57 @@
 	{/if}
 {/snippet}
 
-<div class="rentalLanding rentalLanding--{theme}">
+<svelte:window onkeydown={onMobileNavEscape} />
+
+<div
+	class="rentalLanding rentalLanding--{theme}"
+	class:rentalLanding--mobileNavOpen={mobileNavOpen}
+>
+	<div class="rentalLanding__mobileBar">
+		<button
+			id={MOBILE_MENU_BTN_ID}
+			class="rentalLanding__menuBtn"
+			type="button"
+			aria-expanded={mobileNavOpen}
+			aria-controls={MOBILE_DRAWER_ID}
+			bind:this={mobileMenuBtnEl}
+			onclick={toggleMobileNav}
+		>
+			<svg class="rentalLanding__menuIcon" viewBox="0 0 24 24" aria-hidden="true">
+				<path fill="currentColor" d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+			</svg>
+			<span class="rentalLanding__menuSr">
+				{mobileNavOpen ? 'Close rental menu' : 'Open rental menu'}
+			</span>
+		</button>
+		<a
+			class="rentalLanding__mobileBarTitle rentalLanding__titleLink"
+			href={page.url.pathname}
+			title="Show landing page"
+			onclick={onTitleShowLanding}
+		>
+			{title}
+		</a>
+	</div>
+
+	<button
+		type="button"
+		class="rentalLanding__backdrop"
+		aria-label="Close menu"
+		aria-hidden="true"
+		tabindex="-1"
+		onclick={closeMobileNav}
+	></button>
+
 	<div class="rentalLanding__layout">
-		<div class="rentalLanding__sidebarWrap">
+		<div
+			id={MOBILE_DRAWER_ID}
+			class="rentalLanding__sidebarWrap"
+			role={mobileNavOpen ? 'dialog' : undefined}
+			aria-modal={mobileNavOpen ? true : undefined}
+			aria-label={mobileNavOpen ? 'Rental navigation' : undefined}
+			inert={isMobileLayout && !mobileNavOpen}
+		>
 			{#if isAdmin}
 				<RentalWysiwygGear
 					variant="nav"
@@ -150,11 +270,30 @@
 					? `${links.wysiwyg.navFontSizePx}px`
 					: undefined}
 			>
+				<div class="rentalLanding__drawerHeader">
+					<button
+						type="button"
+						class="rentalLanding__drawerClose"
+						bind:this={mobileDrawerCloseEl}
+						onclick={closeMobileNav}
+					>
+						Close
+					</button>
+				</div>
 			<header class="rentalLanding__header">
 				{#if theme === 'cda'}
 					<p class="rentalLanding__eyebrow">Rentals</p>
 				{/if}
-				<h1 class="rentalLanding__title">{title}</h1>
+				<h1 class="rentalLanding__title">
+					<a
+						class="rentalLanding__titleLink"
+						href={page.url.pathname}
+						title="Show landing page"
+						onclick={onTitleShowLanding}
+					>
+						{title}
+					</a>
+				</h1>
 				<p class="rentalLanding__tagline">{tagline}</p>
 			</header>
 
@@ -208,6 +347,7 @@
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label="Tenant portal — opens in a new tab"
+							onclick={onTenantPortalNavClick}
 						>
 							<span class="rentalLanding__icon" aria-hidden="true">
 								<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
@@ -247,6 +387,24 @@
 <style>
 	.rentalLanding {
 		width: 100%;
+	}
+
+	.rentalLanding__mobileBar,
+	.rentalLanding__backdrop,
+	.rentalLanding__drawerHeader {
+		display: none;
+	}
+
+	.rentalLanding__menuSr {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		border: 0;
+		white-space: nowrap;
 	}
 
 	.rentalLanding__layout {
@@ -303,6 +461,35 @@
 		font-weight: 600;
 		line-height: 1.12;
 		letter-spacing: -0.02em;
+	}
+
+	/* Looks like plain title until hover; clears iframe / shows landing on click */
+	.rentalLanding__titleLink {
+		color: inherit;
+		font: inherit;
+		font-size: inherit;
+		font-weight: inherit;
+		line-height: inherit;
+		letter-spacing: inherit;
+		text-decoration: none;
+		cursor: default;
+		border-radius: 0.12em;
+	}
+
+	.rentalLanding__titleLink:hover {
+		cursor: pointer;
+		text-decoration: underline;
+		text-decoration-thickness: 1px;
+		text-underline-offset: 0.14em;
+	}
+
+	.rentalLanding__titleLink:focus {
+		outline: none;
+	}
+
+	.rentalLanding__titleLink:focus-visible {
+		outline: 2px solid currentColor;
+		outline-offset: 3px;
 	}
 
 	.rentalLanding__tagline {
@@ -408,15 +595,176 @@
 	}
 
 	@media (max-width: 52rem) {
+		.rentalLanding {
+			display: flex;
+			flex-direction: column;
+			min-height: calc(100dvh - var(--rental-viewport-offset, 0px));
+		}
+
+		/*
+		 * Self-contained contrast: city wrappers (e.g. .cda) set light page color; this bar
+		 * uses a light surface so we must not inherit — otherwise title + hamburger vanish.
+		 */
+		.rentalLanding__mobileBar {
+			--rental-mobile-bar-fg: #0f172a;
+			--rental-mobile-bar-bg: rgb(255 255 255 / 0.94);
+			--rental-mobile-bar-border: rgb(15 23 42 / 0.12);
+			--rental-mobile-bar-muted: rgb(51 65 85);
+
+			display: flex;
+			align-items: center;
+			gap: 0.65rem;
+			flex-shrink: 0;
+			position: sticky;
+			top: var(--rental-viewport-offset, 0px);
+			z-index: 60;
+			padding: 0.5rem max(0.65rem, env(safe-area-inset-right)) 0.5rem
+				max(0.65rem, env(safe-area-inset-left));
+			padding-top: max(0.45rem, env(safe-area-inset-top));
+			color: var(--rental-mobile-bar-fg);
+			background: var(--rental-mobile-bar-bg);
+			backdrop-filter: blur(10px);
+			-webkit-backdrop-filter: blur(10px);
+			border-bottom: 1px solid var(--rental-mobile-bar-border);
+		}
+
+		.rentalLanding__menuBtn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			flex-shrink: 0;
+			width: 2.5rem;
+			height: 2.5rem;
+			padding: 0;
+			border-radius: 0.35rem;
+			border: 1px solid rgb(15 23 42 / 0.22);
+			background: #fff;
+			color: var(--rental-mobile-bar-fg);
+			cursor: pointer;
+			box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+		}
+
+		.rentalLanding__menuBtn:focus-visible {
+			outline: 2px solid #0369a1;
+			outline-offset: 2px;
+		}
+
+		.rentalLanding__menuIcon {
+			width: 1.35rem;
+			height: 1.35rem;
+			display: block;
+		}
+
+		.rentalLanding__mobileBarTitle {
+			flex: 1;
+			min-width: 0;
+			font-size: 1rem;
+			font-weight: 650;
+			line-height: 1.25;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			color: var(--rental-mobile-bar-fg);
+		}
+
+		.rentalLanding__mobileBar .rentalLanding__titleLink {
+			color: var(--rental-mobile-bar-fg);
+		}
+
+		.rentalLanding__mobileBar .rentalLanding__titleLink:hover {
+			color: var(--rental-mobile-bar-muted);
+		}
+
+		.rentalLanding__backdrop {
+			display: block;
+			position: fixed;
+			inset: 0;
+			z-index: 50;
+			margin: 0;
+			padding: 0;
+			border: 0;
+			background: rgb(0 0 0 / 0.45);
+			cursor: pointer;
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.2s ease;
+		}
+
+		.rentalLanding--mobileNavOpen .rentalLanding__backdrop {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
 		.rentalLanding__layout {
-			grid-template-columns: 1fr;
-			grid-template-rows: auto minmax(22rem, 55vh);
-			min-height: unset;
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			grid-template-columns: unset;
+			grid-template-rows: unset;
+		}
+
+		.rentalLanding__sidebarWrap {
+			position: fixed;
+			top: calc(var(--rental-viewport-offset, 0px) + 2.875rem);
+			left: 0;
+			bottom: 0;
+			width: min(320px, 85vw);
+			z-index: 55;
+			max-height: calc(100dvh - var(--rental-viewport-offset, 0px) - 2.875rem);
+			overflow-y: auto;
+			overflow-x: hidden;
+			-webkit-overflow-scrolling: touch;
+			transform: translateX(-100%);
+			transition: transform 0.2s ease;
+			box-shadow: 4px 0 28px rgb(0 0 0 / 0.18);
+		}
+
+		.rentalLanding--mobileNavOpen .rentalLanding__sidebarWrap {
+			transform: translateX(0);
+		}
+
+		.rentalLanding__drawerHeader {
+			display: flex;
+			justify-content: flex-end;
+			padding: 0.5rem 0.65rem 0;
+			flex-shrink: 0;
+		}
+
+		.rentalLanding__drawerClose {
+			appearance: none;
+			font: inherit;
+			font-size: 0.85rem;
+			font-weight: 650;
+			padding: 0.35rem 0.65rem;
+			border-radius: 0.35rem;
+			border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+			background: color-mix(in srgb, currentColor 8%, transparent);
+			color: inherit;
+			cursor: pointer;
+		}
+
+		.rentalLanding__drawerClose:focus-visible {
+			outline: 2px solid currentColor;
+			outline-offset: 2px;
 		}
 
 		.rentalLanding__sidebar {
 			border-right: none;
-			border-bottom: 1px solid transparent;
+			border-bottom: none;
+		}
+
+		.rentalLanding__embed {
+			flex: 1 1 auto;
+			min-height: min(55vh, 28rem);
+			min-width: 0;
+		}
+	}
+
+	@media (max-width: 52rem) and (prefers-reduced-motion: reduce) {
+		.rentalLanding__sidebarWrap,
+		.rentalLanding__backdrop {
+			transition: none;
 		}
 	}
 
@@ -460,12 +808,6 @@
 		border: 1px dashed rgb(186 230 253 / 0.28);
 	}
 
-	@media (max-width: 52rem) {
-		.rentalLanding--cda .rentalLanding__sidebar {
-			border-bottom-color: rgb(186 230 253 / 0.22);
-		}
-	}
-
 	/* Sandpoint — green / dark */
 	.rentalLanding--spt .rentalLanding__sidebar {
 		border-right-color: rgb(167 243 208 / 0.18);
@@ -504,12 +846,6 @@
 		color: #ecfdf5;
 		background: rgb(255 255 255 / 0.03);
 		border: 1px dashed rgb(167 243 208 / 0.22);
-	}
-
-	@media (max-width: 52rem) {
-		.rentalLanding--spt .rentalLanding__sidebar {
-			border-bottom-color: rgb(167 243 208 / 0.18);
-		}
 	}
 
 	/* Moscow — light warm */
@@ -552,12 +888,6 @@
 
 	.rentalLanding--mos .rentalLanding__tile:not(.rentalLanding__tile--disabled):focus-visible {
 		outline-color: #c2410c;
-	}
-
-	@media (max-width: 52rem) {
-		.rentalLanding--mos .rentalLanding__sidebar {
-			border-bottom-color: #d6d3d1;
-		}
 	}
 
 	/* WYSIWYG nav: override city theme tiles when custom colors are set */
