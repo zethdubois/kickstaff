@@ -5,6 +5,7 @@
   import { env } from "$env/dynamic/public";
   import { onMount } from "svelte";
   import { cities } from "$lib/cities";
+  import UserRetroIdenticon from "$lib/UserRetroIdenticon.svelte";
   import { vanityPathForRootHost } from "$lib/vanityHosts";
 
   let { children } = $props();
@@ -25,6 +26,7 @@
 
   let useExternalLink = $state(false);
   let rentalMenuOpen = $state(false);
+  let userMenuOpen = $state(false);
 
   function vanityHostForSlug(slug: string): string | undefined {
     if (slug === "cda") return env.PUBLIC_VANITY_HOST_CDA?.trim() || undefined;
@@ -49,6 +51,7 @@
 
   function navigateToCity(slug: string) {
     rentalMenuOpen = false;
+    userMenuOpen = false;
 
     if (!useExternalLink) {
       void goto(`/${slug}`);
@@ -65,6 +68,7 @@
   }
 
   function toggleRentalMenu() {
+    userMenuOpen = false;
     rentalMenuOpen = !rentalMenuOpen;
   }
 
@@ -72,16 +76,25 @@
     rentalMenuOpen = false;
   }
 
+  function toggleUserMenu() {
+    rentalMenuOpen = false;
+    userMenuOpen = !userMenuOpen;
+  }
+
   onMount(() => {
     function onDocPointerDown(event: PointerEvent) {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest(".rentalMenu")) return;
+      if (target.closest(".rentalMenu") || target.closest(".userMenu")) return;
       rentalMenuOpen = false;
+      userMenuOpen = false;
     }
 
     function onDocKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") rentalMenuOpen = false;
+      if (event.key === "Escape") {
+        rentalMenuOpen = false;
+        userMenuOpen = false;
+      }
     }
 
     document.addEventListener("pointerdown", onDocPointerDown);
@@ -119,53 +132,85 @@
         <a class="nav__admin" href="/admin/rental-links">Admin</a>
       {/if}
 
-      <div class="nav__title" aria-label="Site section">Rental Sites:</div>
+      <div class="nav__trailing">
+        <div class="nav__title" aria-label="Site section">Rental Sites:</div>
 
-      <div class="rentalMenu">
-        <button
-          class="rentalMenu__button"
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={rentalMenuOpen}
-          onclick={toggleRentalMenu}
-        >
-          Rental Sites
-          <span class="rentalMenu__caret" aria-hidden="true"></span>
-        </button>
+        <div class="rentalMenu">
+          <button
+            class="rentalMenu__button"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={rentalMenuOpen}
+            onclick={toggleRentalMenu}
+          >
+            Rental Sites
+            <span class="rentalMenu__caret" aria-hidden="true"></span>
+          </button>
 
-        {#if rentalMenuOpen}
-          <div class="rentalMenu__panel" role="menu" aria-label="Rental Sites">
-            <div class="rentalMenu__row">
-              <label class="nav__external">
-                <input
-                  class="nav__externalBox"
-                  type="checkbox"
-                  bind:checked={useExternalLink}
-                />
-                <span class="nav__externalLabel">use external link</span>
-              </label>
-              <button
-                class="rentalMenu__close"
-                type="button"
-                onclick={closeRentalMenu}>Close</button
-              >
-            </div>
-
-            <div class="rentalMenu__items" role="presentation">
-              {#each cities as { slug, label } (slug)}
+          {#if rentalMenuOpen}
+            <div class="rentalMenu__panel" role="menu" aria-label="Rental Sites">
+              <div class="rentalMenu__row">
+                <label class="nav__external">
+                  <input
+                    class="nav__externalBox"
+                    type="checkbox"
+                    bind:checked={useExternalLink}
+                  />
+                  <span class="nav__externalLabel">use external link</span>
+                </label>
                 <button
-                  class="rentalMenuItem"
+                  class="rentalMenu__close"
                   type="button"
-                  role="menuitem"
-                  onclick={() => navigateToCity(slug)}
+                  onclick={closeRentalMenu}>Close</button
                 >
-                  <span class="rentalMenuItem__label">{label}</span>
-                  <span class="rentalMenuItem__tooltip" role="tooltip">
-                    {linkPreviewForSlug(slug)}
-                  </span>
-                </button>
-              {/each}
+              </div>
+
+              <div class="rentalMenu__items" role="presentation">
+                {#each cities as { slug, label } (slug)}
+                  <button
+                    class="rentalMenuItem"
+                    type="button"
+                    role="menuitem"
+                    onclick={() => navigateToCity(slug)}
+                  >
+                    <span class="rentalMenuItem__label">{label}</span>
+                    <span class="rentalMenuItem__tooltip" role="tooltip">
+                      {linkPreviewForSlug(slug)}
+                    </span>
+                  </button>
+                {/each}
+              </div>
             </div>
+          {/if}
+        </div>
+
+        {#if page.data.user}
+          <div class="userMenu">
+            <button
+              class="userMenu__badge"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              aria-label="Account menu"
+              onclick={toggleUserMenu}
+            >
+              <UserRetroIdenticon seed={page.data.user.id} size={28} />
+            </button>
+
+            {#if userMenuOpen}
+              <div class="userMenu__panel" role="menu" aria-label="Account">
+                <p class="userMenu__email">{page.data.user.email}</p>
+                <form method="POST" action="/logout" class="userMenu__signOut">
+                  <button
+                    class="userMenu__signOutBtn"
+                    type="submit"
+                    role="menuitem"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            {/if}
           </div>
         {/if}
       </div>
@@ -203,6 +248,87 @@
     max-width: 48rem;
     margin: 0 auto;
     font-size: 0.95rem;
+  }
+
+  .nav__trailing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-left: auto;
+  }
+
+  .userMenu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .userMenu__badge {
+    appearance: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+    border-radius: 3px;
+    background: color-mix(in srgb, Canvas 92%, transparent);
+    cursor: pointer;
+    line-height: 0;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  }
+
+  .userMenu__badge:hover {
+    border-color: color-mix(in srgb, currentColor 35%, transparent);
+    background: color-mix(in srgb, Canvas 88%, transparent);
+  }
+
+  .userMenu__badge:focus {
+    outline: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+    outline-offset: 2px;
+  }
+
+  .userMenu__panel {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    min-width: 14rem;
+    max-width: min(22rem, 85vw);
+    padding: 0.65rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+    background: color-mix(in srgb, Canvas 96%, transparent);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
+    z-index: 25;
+  }
+
+  .userMenu__email {
+    margin: 0 0 0.55rem;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    word-break: break-word;
+    color: color-mix(in srgb, currentColor 78%, transparent);
+  }
+
+  .userMenu__signOut {
+    margin: 0;
+  }
+
+  .userMenu__signOutBtn {
+    appearance: none;
+    font: inherit;
+    width: 100%;
+    text-align: center;
+    color: inherit;
+    padding: 0.4rem 0.55rem;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+    background: color-mix(in srgb, currentColor 3%, transparent);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .userMenu__signOutBtn:hover {
+    background: color-mix(in srgb, currentColor 7%, transparent);
   }
 
   .nav__home {

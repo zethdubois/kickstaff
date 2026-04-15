@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import {
     categoryBorder,
     categoryForeground,
@@ -11,25 +10,13 @@
 </script>
 
 <svelte:head>
-  <title>Kickass Ops</title>
+  <title>Kick Assets Ops</title>
 </svelte:head>
 
 <div class="dash">
   <header class="dash__header">
-    <div class="dash__headingRow">
-      <div>
-        <h1 class="dash__title">Internal Ops Dashboard</h1>
-        <p class="dash__subtitle">
-          Quick links for day-to-day operations.
-          {#if page.data.user}
-            Signed in as <strong>{page.data.user.email}</strong>.
-          {/if}
-        </p>
-      </div>
-      <form method="POST" action="/logout" class="dash__signOut">
-        <button class="dash__signOutBtn" type="submit">Sign out</button>
-      </form>
-    </div>
+    <h1 class="dash__title">Internal Ops Dashboard</h1>
+    <p class="dash__subtitle">Quick links for day-to-day operations.</p>
   </header>
 
   <section class="dash__section" aria-label="Resources">
@@ -89,35 +76,6 @@
 <style>
   .dash__header {
     margin-bottom: 1.25rem;
-  }
-
-  .dash__headingRow {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem 1rem;
-  }
-
-  .dash__signOut {
-    margin: 0;
-  }
-
-  .dash__signOutBtn {
-    appearance: none;
-    font: inherit;
-    color: inherit;
-    padding: 0.4rem 0.65rem;
-    border-radius: 10px;
-    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-    background: color-mix(in srgb, currentColor 3%, transparent);
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-  }
-
-  .dash__signOutBtn:hover {
-    background: color-mix(in srgb, currentColor 7%, transparent);
   }
 
   .dash__title {
