@@ -1,7 +1,18 @@
 <script lang="ts">
-        import { page } from '$app/state';
+        import TabBar from '$lib/components/TabBar.svelte';
+        import PanelCard from '$lib/components/PanelCard.svelte';
 
         let { children } = $props();
+
+        const tabs = [
+                {
+                        label: 'Bills',
+                        href: '/tools/bills',
+                        match: (p: string) => p === '/tools' || p.startsWith('/tools/bills')
+                },
+                { label: 'Units', href: '/tools/units' },
+                { label: 'Reports', href: '/tools/reports' }
+        ];
 </script>
 
 <svelte:head>
@@ -9,61 +20,16 @@
 </svelte:head>
 
 <div class="toolsLayout">
-        <nav class="toolsLayout__tabs" aria-label="Tools">
-                <a
-                        class="toolsLayout__tab"
-                        href="/tools/bills"
-                        aria-current={page.url.pathname.startsWith('/tools/bills') ? 'page' : undefined}
-                >
-                        Bills
-                </a>
-                <span class="toolsLayout__sep" aria-hidden="true">|</span>
-                <a
-                        class="toolsLayout__tab"
-                        href="/tools/units"
-                        aria-current={page.url.pathname.startsWith('/tools/units') ? 'page' : undefined}
-                >
-                        Units
-                </a>
-                <span class="toolsLayout__sep" aria-hidden="true">|</span>
-                <a
-                        class="toolsLayout__tab"
-                        href="/tools/reports"
-                        aria-current={page.url.pathname.startsWith('/tools/reports') ? 'page' : undefined}
-                >
-                        Reports
-                </a>
-        </nav>
-
-        {@render children()}
+        <TabBar {tabs} variant="primary" ariaLabel="Tools" />
+        <PanelCard>
+                {@render children()}
+        </PanelCard>
 </div>
 
 <style>
         .toolsLayout {
-                max-width: 56rem;
+                max-width: 64rem;
                 margin: 0 auto;
                 padding: 1.5rem 1.25rem 3rem;
-        }
-
-        .toolsLayout__tabs {
-                margin-bottom: 1rem;
-                font-size: 0.9rem;
-                color: color-mix(in srgb, currentColor 72%, transparent);
-        }
-
-        .toolsLayout__tab {
-                color: inherit;
-                text-decoration: underline;
-                text-underline-offset: 0.12em;
-        }
-
-        .toolsLayout__tab[aria-current='page'] {
-                font-weight: 700;
-                color: color-mix(in srgb, currentColor 90%, transparent);
-                text-decoration: none;
-        }
-
-        .toolsLayout__sep {
-                margin: 0 0.5rem;
         }
 </style>
