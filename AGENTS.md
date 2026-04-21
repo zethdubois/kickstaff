@@ -43,6 +43,7 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
 - **Repository standards** for Svelte structure and file headers: [`docs/sop-svelte-and-components.md`](docs/sop-svelte-and-components.md).
 - **Developer / agent guides** live under [`docs/guides/`](docs/guides/) — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
+- **Utility bill ETL scope** (email intake -> PDF parsing -> Appfolio CSV): [`docs/guides/utility-bill-etl-scope.md`](docs/guides/utility-bill-etl-scope.md).
 - **Docs index:** [`docs/README.md`](docs/README.md).
 
 ## Naming (summary)
