@@ -7,6 +7,9 @@
   import { cities } from "$lib/cities";
   import UserRetroIdenticon from "$lib/UserRetroIdenticon.svelte";
   import { vanityPathForRootHost } from "$lib/vanityHosts";
+  import Palette from "$lib/devConsole/Palette.svelte";
+  import KamConsole from "$lib/devConsole/KamConsole.svelte";
+  import { hydrateFromServer } from "$lib/devConsole/state.svelte";
 
   let { children } = $props();
 
@@ -99,6 +102,11 @@
 
     document.addEventListener("pointerdown", onDocPointerDown);
     document.addEventListener("keydown", onDocKeyDown);
+
+    if (isAdmin) {
+      void hydrateFromServer();
+    }
+
     return () => {
       document.removeEventListener("pointerdown", onDocPointerDown);
       document.removeEventListener("keydown", onDocKeyDown);
@@ -241,6 +249,9 @@
 >
   {@render children()}
 </main>
+
+<KamConsole />
+<Palette />
 
 <style>
   .site-header {

@@ -307,6 +307,30 @@ export const billMonthlyFileItems = pgTable(
 	})
 );
 
+/** Allowed klog levels. Stored as text; value array is the source of truth. */
+export const klogLevels = ['log', 'info', 'warn', 'error'] as const;
+export type KlogLevel = (typeof klogLevels)[number];
+
+/**
+ * Persistent dev-console log entries (KAM Console pane + command palette).
+ * Per-user audit with 30-day retention (pruned on write by the ingest endpoint).
+ */
+export const klogs = pgTable(
+	'klogs',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+		ts: timestamp('ts', { withTimezone: true }).defaultNow().notNull(),
+		level: text('level').notNull().default('log'),
+		message: text('message').notNull(),
+		source: text('source')
+	},
+	(t) => ({
+		userTsIdx: index('klogs_user_ts_idx').on(t.userId, t.ts),
+		tsIdx: index('klogs_ts_idx').on(t.ts)
+	})
+);
+
 export type User = typeof users.$inferSelect;
 export type RentalLandingLink = typeof rentalLandingLinks.$inferSelect;
 export type DashboardLink = typeof dashboardLinks.$inferSelect;
@@ -314,3 +338,4 @@ export type BillDocument = typeof billDocuments.$inferSelect;
 export type Unit = typeof units.$inferSelect;
 export type UnitBillAccount = typeof unitBillAccounts.$inferSelect;
 export type BillRun = typeof billRuns.$inferSelect;
+export type Klog = typeof klogs.$inferSelect;
