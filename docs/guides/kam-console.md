@@ -107,7 +107,7 @@ Any command can then declare it in its outcome:
 return { refresh: ["bills.recent-docs"], log: "reset complete" };
 ```
 
-Naming convention: `"<page>.<widget>"`, e.g. `bills.recent-docs`, `bill-runs.list`, `units.list`.
+Naming convention: `"<page>.<widget>"`, e.g. `bills.recent-docs`, `bills.postings.list`, `units.list`.
 
 Users do **not** type refresh targets. The old `--refresh <target>` user flag has been removed; refresh is always command-declared.
 

@@ -13,7 +13,7 @@ flowchart TD
 
     Bills --> B1["Tab: Documents /tools/bills"]
     Bills --> B2["Tab: Postings /tools/bills/postings"]
-    B2 --> B2a["Postings detail /tools/bills/postings/[id]"]
+    B2 --> B2a["Postings CSV download /tools/bills/postings/files/[id]/download"]
 
     Units --> U1["Units list /tools/units"]
     U1 --> U2["Unit detail /tools/units/[id]"]
