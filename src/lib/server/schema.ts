@@ -107,24 +107,40 @@ export const userDashboardLinkPreferences = pgTable(
 	})
 );
 
-/** Intake and parse status values for utility bill source PDFs. */
-export const utilityBillParseStatuses = ['received', 'parsed', 'failed', 'skipped'] as const;
-export type UtilityBillParseStatus = (typeof utilityBillParseStatuses)[number];
+/** Known bill categories. Kept as a typed union while the DB column stays open (text). */
+export const billCategories = [
+	'utility',
+	'insurance',
+	'tax',
+	'contractor',
+	'hoa',
+	'other'
+] as const;
+export type BillCategory = (typeof billCategories)[number];
+
+/** Intake and parse status values for bill source PDFs. */
+export const billParseStatuses = ['received', 'parsed', 'failed', 'skipped'] as const;
+export type BillParseStatus = (typeof billParseStatuses)[number];
 
 /** Monthly batch run status for CSV generation. */
-export const utilityBillRunStatuses = ['running', 'completed', 'completed_with_errors', 'failed'] as const;
-export type UtilityBillRunStatus = (typeof utilityBillRunStatuses)[number];
-
+export const billRunStatuses = [
+	'running',
+	'completed',
+	'completed_with_errors',
+	'failed'
+] as const;
+export type BillRunStatus = (typeof billRunStatuses)[number];
 
 /** Queue status for monthly CSV output files. */
-export const utilityBillMonthlyFileStatuses = ['pending', 'processing', 'done'] as const;
-export type UtilityBillMonthlyFileStatus = (typeof utilityBillMonthlyFileStatuses)[number];
+export const billMonthlyFileStatuses = ['pending', 'processing', 'done'] as const;
+export type BillMonthlyFileStatus = (typeof billMonthlyFileStatuses)[number];
 
 /** Source PDF intake + extracted fields; one row per unique document. */
-export const utilityBillDocuments = pgTable(
-	'utility_bill_documents',
+export const billDocuments = pgTable(
+	'bill_documents',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
+		category: text('category').notNull().default('utility'),
 		vendor: text('vendor').notNull(),
 		city: text('city').notNull(),
 		storageKey: text('storage_key').notNull().unique(),
@@ -145,26 +161,70 @@ export const utilityBillDocuments = pgTable(
 		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 	},
 	(t) => ({
-		vendorShaUniqueIdx: uniqueIndex('utility_bill_documents_vendor_sha256_uq').on(t.vendor, t.sha256),
-		vendorBillReferenceIdx: uniqueIndex('utility_bill_documents_vendor_bill_reference_uq').on(
+		vendorShaUniqueIdx: uniqueIndex('bill_documents_vendor_sha256_uq').on(t.vendor, t.sha256),
+		vendorBillReferenceIdx: uniqueIndex('bill_documents_vendor_bill_reference_uq').on(
 			t.vendor,
 			t.billReference
 		),
-		vendorStatusIdx: index('utility_bill_documents_vendor_parse_status_idx').on(t.vendor, t.parseStatus)
+		vendorStatusIdx: index('bill_documents_vendor_parse_status_idx').on(t.vendor, t.parseStatus)
 	})
 );
 
-/** Maps utility account number to Appfolio import defaults. */
-export const utilityAccountMappings = pgTable(
-	'utility_account_mappings',
+/**
+ * Real-estate units. The single source of truth for a physical address/unit and its
+ * Appfolio property identifiers. Reusable beyond bill pay as new features grow.
+ */
+export const units = pgTable(
+	'units',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
+		label: text('label').notNull(),
+		streetAddress: text('street_address'),
+		city: text('city'),
+		state: text('state'),
+		postalCode: text('postal_code'),
+		notes: text('notes'),
+		/** Optional primary utility account number for quick matching at unit level. */
+		utilityAccountNumber: text('utility_account_number'),
+		/** Appfolio property identifier (required for vendor bill imports). */
+		billPropertyCode: text('bill_property_code').notNull(),
+		/** Appfolio sub-unit name; nullable when the property is a single unit. */
+		billUnitName: text('bill_unit_name'),
+		/** Flex zone for experimental per-system fields before promoting to typed columns. */
+		attributes: jsonb('attributes').notNull().default({}),
+		active: boolean('active').notNull().default(true),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		propertyUnitUniqueIdx: uniqueIndex('units_bill_property_unit_uq').on(
+			t.billPropertyCode,
+			t.billUnitName
+		),
+		labelIdx: index('units_label_idx').on(t.label),
+		utilityAccountNumberUniqueIdx: uniqueIndex('units_utility_account_number_uq').on(
+			t.utilityAccountNumber
+		)
+	})
+);
+
+/**
+ * Vendor-specific bill accounts attached to a unit. A unit can have many (water,
+ * power, insurance, HOA, etc.). Cross-referenced by (vendor, service_account_number)
+ * during monthly batch generation; `category` tags the bill class (e.g. 'utility').
+ */
+export const unitBillAccounts = pgTable(
+	'unit_bill_accounts',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		unitId: uuid('unit_id')
+			.notNull()
+			.references(() => units.id, { onDelete: 'cascade' }),
+		category: text('category').notNull().default('utility'),
 		vendor: text('vendor').notNull(),
 		city: text('city').notNull(),
 		serviceAccountNumber: text('service_account_number').notNull(),
 		serviceAddressNormalized: text('service_address_normalized'),
-		billPropertyCode: text('bill_property_code').notNull(),
-		billUnitName: text('bill_unit_name'),
 		vendorPayeeName: text('vendor_payee_name').notNull(),
 		billAccount: text('bill_account').notNull(),
 		defaultDescriptionTemplate: text('default_description_template'),
@@ -174,16 +234,17 @@ export const utilityAccountMappings = pgTable(
 		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 	},
 	(t) => ({
-		vendorAccountUniqueIdx: uniqueIndex('utility_account_mappings_vendor_account_uq').on(
+		vendorAccountUniqueIdx: uniqueIndex('unit_bill_accounts_vendor_account_uq').on(
 			t.vendor,
 			t.serviceAccountNumber
-		)
+		),
+		unitIdx: index('unit_bill_accounts_unit_idx').on(t.unitId)
 	})
 );
 
-/** One row per monthly CSV generation run. */
-export const utilityBillRuns = pgTable(
-	'utility_bill_runs',
+/** One row per monthly batch generation run. */
+export const billRuns = pgTable(
+	'bill_runs',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		vendor: text('vendor').notNull(),
@@ -200,15 +261,13 @@ export const utilityBillRuns = pgTable(
 		notes: text('notes')
 	},
 	(t) => ({
-		vendorPeriodUniqueIdx: uniqueIndex('utility_bill_runs_vendor_period_uq').on(t.vendor, t.period)
+		vendorPeriodUniqueIdx: uniqueIndex('bill_runs_vendor_period_uq').on(t.vendor, t.period)
 	})
 );
 
-
-
-/** Monthly CSV files queued for bookkeeping workflow. */
-export const utilityBillMonthlyFiles = pgTable(
-	'utility_bill_monthly_files',
+/** Monthly CSV output files queued for bookkeeping workflow. */
+export const billMonthlyFiles = pgTable(
+	'bill_monthly_files',
 	{
 		id: uuid('id').primaryKey().defaultRandom(),
 		vendor: text('vendor').notNull(),
@@ -222,35 +281,36 @@ export const utilityBillMonthlyFiles = pgTable(
 		processedAt: timestamp('processed_at', { withTimezone: true })
 	},
 	(t) => ({
-		vendorPeriodUniqueIdx: uniqueIndex('utility_bill_monthly_files_vendor_period_uq').on(
+		vendorPeriodUniqueIdx: uniqueIndex('bill_monthly_files_vendor_period_uq').on(
 			t.vendor,
 			t.period
 		),
-		statusIdx: index('utility_bill_monthly_files_status_idx').on(t.status, t.createdAt)
+		statusIdx: index('bill_monthly_files_status_idx').on(t.status, t.createdAt)
 	})
 );
 
-/** Join table for documents included in a monthly CSV output file. */
-export const utilityBillMonthlyFileItems = pgTable(
-	'utility_bill_monthly_file_items',
+/** Join table for documents included in a monthly output file. */
+export const billMonthlyFileItems = pgTable(
+	'bill_monthly_file_items',
 	{
 		monthlyFileId: uuid('monthly_file_id')
 			.notNull()
-			.references(() => utilityBillMonthlyFiles.id, { onDelete: 'cascade' }),
+			.references(() => billMonthlyFiles.id, { onDelete: 'cascade' }),
 		documentId: uuid('document_id')
 			.notNull()
-			.references(() => utilityBillDocuments.id, { onDelete: 'cascade' }),
+			.references(() => billDocuments.id, { onDelete: 'cascade' }),
 		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 	},
 	(t) => ({
 		pk: primaryKey({ columns: [t.monthlyFileId, t.documentId] }),
-		documentUniqueIdx: uniqueIndex('utility_bill_monthly_file_items_document_uq').on(t.documentId)
+		documentUniqueIdx: uniqueIndex('bill_monthly_file_items_document_uq').on(t.documentId)
 	})
 );
 
 export type User = typeof users.$inferSelect;
 export type RentalLandingLink = typeof rentalLandingLinks.$inferSelect;
 export type DashboardLink = typeof dashboardLinks.$inferSelect;
-export type UtilityBillDocument = typeof utilityBillDocuments.$inferSelect;
-export type UtilityBillAccountMapping = typeof utilityAccountMappings.$inferSelect;
-export type UtilityBillRun = typeof utilityBillRuns.$inferSelect;
+export type BillDocument = typeof billDocuments.$inferSelect;
+export type Unit = typeof units.$inferSelect;
+export type UnitBillAccount = typeof unitBillAccounts.$inferSelect;
+export type BillRun = typeof billRuns.$inferSelect;

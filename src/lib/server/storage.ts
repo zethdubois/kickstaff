@@ -7,7 +7,7 @@ import {
 	S3Client
 } from '@aws-sdk/client-s3';
 
-type UtilityBillKeyKind = 'raw' | 'parsed' | 'output' | 'error';
+type BillKeyKind = 'raw' | 'parsed' | 'output' | 'error';
 
 let client: S3Client | undefined;
 
@@ -19,7 +19,7 @@ function getStorageConfig() {
 	const bucket = env.UTILITY_BILL_S3_BUCKET;
 	if (!endpoint || !accessKeyId || !secretAccessKey || !bucket) {
 		throw new Error(
-			'Utility bill storage env is missing. Set UTILITY_BILL_S3_ENDPOINT, UTILITY_BILL_S3_ACCESS_KEY_ID, UTILITY_BILL_S3_SECRET_ACCESS_KEY, and UTILITY_BILL_S3_BUCKET.'
+			'Bill storage env is missing. Set UTILITY_BILL_S3_ENDPOINT, UTILITY_BILL_S3_ACCESS_KEY_ID, UTILITY_BILL_S3_SECRET_ACCESS_KEY, and UTILITY_BILL_S3_BUCKET.'
 		);
 	}
 	return { endpoint, region, accessKeyId, secretAccessKey, bucket };
@@ -40,30 +40,38 @@ function getClient() {
 	return client;
 }
 
-export function buildUtilityBillStorageKey(params: {
-	kind: UtilityBillKeyKind;
+/**
+ * Build an S3 key for a bill artifact. New writes use the `bills/{category}/...`
+ * prefix; legacy `utility-bills/...` objects keep working because S3 keys are opaque
+ * — the application reads by stored key, never by reconstructing the prefix.
+ */
+export function buildBillStorageKey(params: {
+	kind: BillKeyKind;
+	category?: string;
 	vendor: string;
 	year: string;
 	month: string;
 	sourceMessageId?: string;
 	fileName: string;
 }) {
+	const category = (params.category || 'utility').toLowerCase();
 	const vendor = params.vendor.toLowerCase();
 	const cleanFileName = params.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+	const root = `bills/${category}`;
 	if (params.kind === 'raw') {
 		const sourceMessageId = (params.sourceMessageId || 'manual').replace(/[^a-zA-Z0-9._-]/g, '_');
-		return `utility-bills/raw/${vendor}/${params.year}/${params.month}/${sourceMessageId}/${cleanFileName}`;
+		return `${root}/raw/${vendor}/${params.year}/${params.month}/${sourceMessageId}/${cleanFileName}`;
 	}
 	if (params.kind === 'parsed') {
-		return `utility-bills/parsed/${vendor}/${params.year}/${params.month}/${cleanFileName}`;
+		return `${root}/parsed/${vendor}/${params.year}/${params.month}/${cleanFileName}`;
 	}
 	if (params.kind === 'output') {
-		return `utility-bills/output/${vendor}/${params.year}/${params.month}/${cleanFileName}`;
+		return `${root}/output/${vendor}/${params.year}/${params.month}/${cleanFileName}`;
 	}
-	return `utility-bills/errors/${vendor}/${params.year}/${params.month}/${cleanFileName}`;
+	return `${root}/errors/${vendor}/${params.year}/${params.month}/${cleanFileName}`;
 }
 
-export async function putUtilityBillObject(params: {
+export async function putBillObject(params: {
 	key: string;
 	body: Buffer | Uint8Array | string;
 	contentType: string;
@@ -81,7 +89,7 @@ export async function putUtilityBillObject(params: {
 	);
 }
 
-export async function getUtilityBillObject(key: string) {
+export async function getBillObject(key: string) {
 	const cfg = getStorageConfig();
 	const res = await getClient().send(
 		new GetObjectCommand({
@@ -96,7 +104,7 @@ export async function getUtilityBillObject(key: string) {
 	return Buffer.from(bytes);
 }
 
-export async function headUtilityBillObject(key: string) {
+export async function headBillObject(key: string) {
 	const cfg = getStorageConfig();
 	return getClient().send(
 		new HeadObjectCommand({
@@ -106,7 +114,7 @@ export async function headUtilityBillObject(key: string) {
 	);
 }
 
-export async function listUtilityBillObjects(prefix: string) {
+export async function listBillObjects(prefix: string) {
 	const cfg = getStorageConfig();
 	const res = await getClient().send(
 		new ListObjectsV2Command({

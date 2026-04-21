@@ -12,18 +12,26 @@
 	<nav class="toolsLayout__tabs" aria-label="Tools">
 		<a
 			class="toolsLayout__tab"
-			href="/tools/utility-bills"
-			aria-current={page.url.pathname === '/tools/utility-bills' ? 'page' : undefined}
+			href="/tools/bills"
+			aria-current={page.url.pathname.startsWith('/tools/bills') ? 'page' : undefined}
 		>
-			Utility bills
+			Bills
 		</a>
 		<span class="toolsLayout__sep" aria-hidden="true">|</span>
 		<a
 			class="toolsLayout__tab"
-			href="/tools/monthly"
-			aria-current={page.url.pathname === '/tools/monthly' ? 'page' : undefined}
+			href="/tools/bill-runs"
+			aria-current={page.url.pathname.startsWith('/tools/bill-runs') ? 'page' : undefined}
 		>
-			Monthly
+			Bill runs
+		</a>
+		<span class="toolsLayout__sep" aria-hidden="true">|</span>
+		<a
+			class="toolsLayout__tab"
+			href="/tools/units"
+			aria-current={page.url.pathname.startsWith('/tools/units') ? 'page' : undefined}
+		>
+			Units
 		</a>
 	</nav>
 

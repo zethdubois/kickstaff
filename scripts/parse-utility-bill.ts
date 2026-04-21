@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { parseUtilityBillDocumentById } from '../src/lib/server/utilityBills/parseDocument';
+import { parseBillDocumentById } from '../src/lib/server/bills/parseDocument';
 
 function arg(name: string) {
 	const direct = process.argv.find((x) => x.startsWith(`--${name}=`));
@@ -9,10 +9,10 @@ function arg(name: string) {
 async function main() {
 	const id = arg('id');
 	if (!id) {
-		console.error('Usage: pnpm utility:parse --id=<utility_bill_documents.id>');
+		console.error('Usage: pnpm utility:parse --id=<bill_documents.id>');
 		process.exit(1);
 	}
-	const result = await parseUtilityBillDocumentById(id);
+	const result = await parseBillDocumentById(id);
 	console.log(JSON.stringify(result, null, 2));
 }
 

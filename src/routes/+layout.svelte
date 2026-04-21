@@ -407,13 +407,6 @@
     object-fit: contain;
   }
 
-  .nav__title {
-    font-weight: 650;
-    letter-spacing: -0.01em;
-    margin-right: 0.25rem;
-    white-space: nowrap;
-  }
-
   .rentalMenu {
     position: relative;
     display: inline-flex;
