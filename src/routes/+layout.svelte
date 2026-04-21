@@ -130,7 +130,7 @@
       {/if}
 
       <div class="nav__trailing">
-        <div class="nav__title" aria-label="Site section">Rental Sites:</div>
+        <!-- <div class="nav__title" aria-label="Site section">Rental Sites:</div> -->
 
         <div class="rentalMenu">
           <button
@@ -145,7 +145,11 @@
           </button>
 
           {#if rentalMenuOpen}
-            <div class="rentalMenu__panel" role="menu" aria-label="Rental Sites">
+            <div
+              class="rentalMenu__panel"
+              role="menu"
+              aria-label="Rental Sites"
+            >
               <div class="rentalMenu__row">
                 <label class="nav__external">
                   <input
@@ -182,7 +186,7 @@
         </div>
 
         {#if isAdmin}
-          <div class="nav__title" aria-label="Site section">Tools:</div>
+          <!-- <div class="nav__title" aria-label="Site section">Tools:</div> -->
           <a class="nav__admin" href="/tools">Tools</a>
         {/if}
 
@@ -202,7 +206,11 @@
             {#if userMenuOpen}
               <div class="userMenu__panel" role="menu" aria-label="Account">
                 <p class="userMenu__email">{page.data.user.email}</p>
-                <a class="userMenu__link" href="/settings/dashboard" role="menuitem">
+                <a
+                  class="userMenu__link"
+                  href="/settings/dashboard"
+                  role="menuitem"
+                >
                   Settings
                 </a>
                 <form method="POST" action="/logout" class="userMenu__signOut">

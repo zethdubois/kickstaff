@@ -85,6 +85,13 @@
       "when": 1776755609439,
       "tag": "0011_parched_inertia",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1776760383092,
+      "tag": "0012_sticky_hammerhead",
+      "breakpoints": true
     }
   ]
 }

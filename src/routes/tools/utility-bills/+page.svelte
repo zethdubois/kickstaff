@@ -10,12 +10,6 @@
 </svelte:head>
 
 <div class="admin">
-	<nav class="admin__nav" aria-label="Tools">
-		<a class="admin__navLink" href="/tools">← Tools</a>
-		<span class="admin__navSep" aria-hidden="true">·</span>
-		<span class="admin__navCurrent">Utility bills</span>
-	</nav>
-
 	<h1 class="admin__title">Utility bills</h1>
 	<p class="admin__lead">Upload utility PDFs, then parse each document server-side.</p>
 
@@ -115,10 +109,6 @@
 
 <style>
 	.admin { max-width: 56rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
-	.admin__nav { margin-bottom: 1rem; font-size: 0.9rem; color: color-mix(in srgb, currentColor 72%, transparent); }
-	.admin__navLink { color: inherit; text-decoration: underline; text-underline-offset: 0.12em; }
-	.admin__navSep { margin: 0 0.35rem; }
-	.admin__navCurrent { font-weight: 600; color: color-mix(in srgb, currentColor 88%, transparent); }
 	.admin__title { margin: 0 0 0.35rem; font-size: 1.5rem; font-weight: 700; }
 	.admin__lead { margin: 0 0 1.25rem; color: color-mix(in srgb, currentColor 72%, transparent); font-size: 0.95rem; }
 	.admin__err { margin: 0 0 1rem; padding: 0.5rem 0.65rem; border-radius: 10px; background: color-mix(in srgb, #c0392b 12%, transparent); font-size: 0.9rem; }

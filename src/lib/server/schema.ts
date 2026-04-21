@@ -115,6 +115,11 @@ export type UtilityBillParseStatus = (typeof utilityBillParseStatuses)[number];
 export const utilityBillRunStatuses = ['running', 'completed', 'completed_with_errors', 'failed'] as const;
 export type UtilityBillRunStatus = (typeof utilityBillRunStatuses)[number];
 
+
+/** Queue status for monthly CSV output files. */
+export const utilityBillMonthlyFileStatuses = ['pending', 'processing', 'done'] as const;
+export type UtilityBillMonthlyFileStatus = (typeof utilityBillMonthlyFileStatuses)[number];
+
 /** Source PDF intake + extracted fields; one row per unique document. */
 export const utilityBillDocuments = pgTable(
 	'utility_bill_documents',
@@ -196,6 +201,50 @@ export const utilityBillRuns = pgTable(
 	},
 	(t) => ({
 		vendorPeriodUniqueIdx: uniqueIndex('utility_bill_runs_vendor_period_uq').on(t.vendor, t.period)
+	})
+);
+
+
+
+/** Monthly CSV files queued for bookkeeping workflow. */
+export const utilityBillMonthlyFiles = pgTable(
+	'utility_bill_monthly_files',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		vendor: text('vendor').notNull(),
+		city: text('city'),
+		period: text('period').notNull(),
+		status: text('status').notNull().default('pending'),
+		storageKey: text('storage_key').notNull(),
+		recordCount: integer('record_count').notNull().default(0),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+		processedAt: timestamp('processed_at', { withTimezone: true })
+	},
+	(t) => ({
+		vendorPeriodUniqueIdx: uniqueIndex('utility_bill_monthly_files_vendor_period_uq').on(
+			t.vendor,
+			t.period
+		),
+		statusIdx: index('utility_bill_monthly_files_status_idx').on(t.status, t.createdAt)
+	})
+);
+
+/** Join table for documents included in a monthly CSV output file. */
+export const utilityBillMonthlyFileItems = pgTable(
+	'utility_bill_monthly_file_items',
+	{
+		monthlyFileId: uuid('monthly_file_id')
+			.notNull()
+			.references(() => utilityBillMonthlyFiles.id, { onDelete: 'cascade' }),
+		documentId: uuid('document_id')
+			.notNull()
+			.references(() => utilityBillDocuments.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		pk: primaryKey({ columns: [t.monthlyFileId, t.documentId] }),
+		documentUniqueIdx: uniqueIndex('utility_bill_monthly_file_items_document_uq').on(t.documentId)
 	})
 );
 
