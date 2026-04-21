@@ -40,14 +40,7 @@ flowchart TD
 
 ### Compatibility redirects
 
-These exist so old bookmarks keep working. They are intentionally the **only** thing those paths do.
-
-| Old path                                       | New path (308)                                  |
-| ---------------------------------------------- | ----------------------------------------------- |
-| `/tools/bill-runs`                             | `/tools/bills/postings`                         |
-| `/tools/bill-runs/files/[id]/download`         | `/tools/bills/postings/files/[id]/download`     |
-
-If you are adding new functionality, do **not** add it under `/tools/bill-runs/*` — it is a redirect-only namespace and will be removed once the redirects can be retired.
+None. The `/tools/bill-runs/*` namespace previously held 308 redirects to the new Postings paths; it has been retired. If old bookmarks need to be preserved again, add a fresh entry here at the same time as the route.
 
 ## Naming decisions
 
@@ -60,4 +53,9 @@ These names were chosen deliberately. Renaming them is a coordination cost, so d
 
 ## Out-of-scope notes
 
-The Reports section is **scaffolding only** as of this doc's introduction — Operations and Monthly render placeholder "coming soon" panels. Real report content is tracked as separate tasks.
+The Reports section is live:
+
+- **Operations** exposes a per-vendor "re-parse parsed bills" action and a confirmed "re-parse ALL vendors" action. Both reset matching `bill_documents` rows from `parsed` back to `received` so the parser will re-run on the next pass.
+- **Monthly** loads document and posting metrics for the current month (and any historical YYYY-MM via the lookup form). Document counts are bucketed by `parse_status` over the UTC month window of `bill_documents.created_at`; posting counts are bucketed by `bill_monthly_files.status` filtered by `period`.
+
+Add new operations as additional `?/<action>` form actions on `src/routes/tools/reports/+page.server.ts`. Add new monthly metrics by extending `src/lib/server/bills/monthlyMetrics.ts` so both the current-month panel and the `[period]` lookup pick them up automatically.

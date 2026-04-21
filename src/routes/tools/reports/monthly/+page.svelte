@@ -1,8 +1,8 @@
 <script lang="ts">
-	const now = new Date();
-	const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+	import MonthlyMetricsView from '$lib/components/MonthlyMetricsView.svelte';
 
-	let lookup = $state(currentMonth);
+	let { data } = $props();
+	let lookup = $state(data.period);
 </script>
 
 <svelte:head>
@@ -16,10 +16,8 @@
 	</p>
 
 	<section class="monthly__panel" aria-label="Current month status">
-		<h2 class="monthly__h2">Current month — {currentMonth}</h2>
-		<div class="monthly__empty">
-			<p>Status panel coming soon.</p>
-		</div>
+		<h2 class="monthly__h2">Current month — {data.period}</h2>
+		<MonthlyMetricsView metrics={data.metrics} />
 	</section>
 
 	<section class="monthly__panel" aria-label="Historical month lookup">
@@ -37,10 +35,8 @@
 <style>
 	.monthly__title { margin: 0 0 0.35rem; font-size: 1.5rem; font-weight: 700; }
 	.monthly__lead { margin: 0 0 1.25rem; color: color-mix(in srgb, currentColor 72%, transparent); font-size: 0.95rem; }
-	.monthly__panel { margin-bottom: 1.5rem; }
+	.monthly__panel { margin-bottom: 1.75rem; }
 	.monthly__h2 { margin: 0 0 0.65rem; font-size: 1.05rem; }
-	.monthly__empty { padding: 1rem 1.25rem; border: 1px dashed color-mix(in srgb, currentColor 22%, transparent); border-radius: 12px; color: color-mix(in srgb, currentColor 65%, transparent); font-size: 0.9rem; }
-	.monthly__empty p { margin: 0; }
 	.monthly__form { display: grid; gap: 0.75rem; max-width: 20rem; }
 	.field { display: grid; gap: 0.25rem; }
 	.field__label { font-size: 0.82rem; font-weight: 600; }
