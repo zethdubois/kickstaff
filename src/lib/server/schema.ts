@@ -1,4 +1,17 @@
-import { boolean, integer, pgTable, primaryKey, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+	boolean,
+	date,
+	integer,
+	jsonb,
+	numeric,
+	pgTable,
+	primaryKey,
+	text,
+	timestamp,
+	uuid,
+	uniqueIndex,
+	index
+} from 'drizzle-orm/pg-core';
 
 /** Application roles; enforced in app code. DB stores lowercase text. */
 export const userRoles = ['admin', 'user'] as const;
@@ -94,6 +107,101 @@ export const userDashboardLinkPreferences = pgTable(
 	})
 );
 
+/** Intake and parse status values for utility bill source PDFs. */
+export const utilityBillParseStatuses = ['received', 'parsed', 'failed', 'skipped'] as const;
+export type UtilityBillParseStatus = (typeof utilityBillParseStatuses)[number];
+
+/** Monthly batch run status for CSV generation. */
+export const utilityBillRunStatuses = ['running', 'completed', 'completed_with_errors', 'failed'] as const;
+export type UtilityBillRunStatus = (typeof utilityBillRunStatuses)[number];
+
+/** Source PDF intake + extracted fields; one row per unique document. */
+export const utilityBillDocuments = pgTable(
+	'utility_bill_documents',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		vendor: text('vendor').notNull(),
+		city: text('city').notNull(),
+		storageKey: text('storage_key').notNull().unique(),
+		sha256: text('sha256').notNull(),
+		emailMessageId: text('email_message_id'),
+		sourceFilename: text('source_filename').notNull(),
+		serviceAccountNumber: text('service_account_number'),
+		billReference: text('bill_reference'),
+		billDate: date('bill_date'),
+		dueDate: date('due_date'),
+		servicePeriodStart: date('service_period_start'),
+		servicePeriodEnd: date('service_period_end'),
+		currentChargesAmount: numeric('current_charges_amount', { precision: 12, scale: 2 }),
+		parseStatus: text('parse_status').notNull().default('received'),
+		parseError: text('parse_error'),
+		rawParseJson: jsonb('raw_parse_json'),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		vendorShaUniqueIdx: uniqueIndex('utility_bill_documents_vendor_sha256_uq').on(t.vendor, t.sha256),
+		vendorBillReferenceIdx: uniqueIndex('utility_bill_documents_vendor_bill_reference_uq').on(
+			t.vendor,
+			t.billReference
+		),
+		vendorStatusIdx: index('utility_bill_documents_vendor_parse_status_idx').on(t.vendor, t.parseStatus)
+	})
+);
+
+/** Maps utility account number to Appfolio import defaults. */
+export const utilityAccountMappings = pgTable(
+	'utility_account_mappings',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		vendor: text('vendor').notNull(),
+		city: text('city').notNull(),
+		serviceAccountNumber: text('service_account_number').notNull(),
+		serviceAddressNormalized: text('service_address_normalized'),
+		billPropertyCode: text('bill_property_code').notNull(),
+		billUnitName: text('bill_unit_name'),
+		vendorPayeeName: text('vendor_payee_name').notNull(),
+		billAccount: text('bill_account').notNull(),
+		defaultDescriptionTemplate: text('default_description_template'),
+		cashAccount: text('cash_account'),
+		active: boolean('active').notNull().default(true),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		vendorAccountUniqueIdx: uniqueIndex('utility_account_mappings_vendor_account_uq').on(
+			t.vendor,
+			t.serviceAccountNumber
+		)
+	})
+);
+
+/** One row per monthly CSV generation run. */
+export const utilityBillRuns = pgTable(
+	'utility_bill_runs',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		vendor: text('vendor').notNull(),
+		city: text('city'),
+		period: text('period').notNull(),
+		startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+		finishedAt: timestamp('finished_at', { withTimezone: true }),
+		status: text('status').notNull().default('running'),
+		inputDocumentCount: integer('input_document_count').notNull().default(0),
+		successfulRecordCount: integer('successful_record_count').notNull().default(0),
+		failedDocumentCount: integer('failed_document_count').notNull().default(0),
+		outputStorageKey: text('output_storage_key'),
+		totalCurrentCharges: numeric('total_current_charges', { precision: 14, scale: 2 }),
+		notes: text('notes')
+	},
+	(t) => ({
+		vendorPeriodUniqueIdx: uniqueIndex('utility_bill_runs_vendor_period_uq').on(t.vendor, t.period)
+	})
+);
+
 export type User = typeof users.$inferSelect;
 export type RentalLandingLink = typeof rentalLandingLinks.$inferSelect;
 export type DashboardLink = typeof dashboardLinks.$inferSelect;
+export type UtilityBillDocument = typeof utilityBillDocuments.$inferSelect;
+export type UtilityBillAccountMapping = typeof utilityAccountMappings.$inferSelect;
+export type UtilityBillRun = typeof utilityBillRuns.$inferSelect;

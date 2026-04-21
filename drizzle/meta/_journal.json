@@ -78,6 +78,13 @@
       "when": 1776100000000,
       "tag": "0010_rental_wysiwyg_gradient_typography",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776755609439,
+      "tag": "0011_parched_inertia",
+      "breakpoints": true
     }
   ]
 }

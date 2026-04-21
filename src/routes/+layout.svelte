@@ -125,9 +125,6 @@
         />
       </a>
 
-      {#if page.data.user}
-        <a class="nav__settings" href="/settings/dashboard">Settings</a>
-      {/if}
       {#if isAdmin}
         <a class="nav__admin" href="/admin/rental-links">Admin</a>
       {/if}
@@ -184,6 +181,11 @@
           {/if}
         </div>
 
+        {#if isAdmin}
+          <div class="nav__title" aria-label="Site section">Tools:</div>
+          <a class="nav__admin" href="/tools">Tools</a>
+        {/if}
+
         {#if page.data.user}
           <div class="userMenu">
             <button
@@ -200,6 +202,9 @@
             {#if userMenuOpen}
               <div class="userMenu__panel" role="menu" aria-label="Account">
                 <p class="userMenu__email">{page.data.user.email}</p>
+                <a class="userMenu__link" href="/settings/dashboard" role="menuitem">
+                  Settings
+                </a>
                 <form method="POST" action="/logout" class="userMenu__signOut">
                   <button
                     class="userMenu__signOutBtn"
@@ -308,6 +313,24 @@
     color: color-mix(in srgb, currentColor 78%, transparent);
   }
 
+  .userMenu__link {
+    display: block;
+    margin: 0 0 0.5rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+    background: color-mix(in srgb, currentColor 3%, transparent);
+    color: inherit;
+    text-decoration: none;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .userMenu__link:hover {
+    background: color-mix(in srgb, currentColor 7%, transparent);
+  }
+
   .userMenu__signOut {
     margin: 0;
   }
@@ -344,8 +367,7 @@
     line-height: 0;
   }
 
-  .nav__admin,
-  .nav__settings {
+  .nav__admin {
     font: inherit;
     font-weight: 650;
     color: inherit;
@@ -356,8 +378,7 @@
     background: color-mix(in srgb, currentColor 2%, transparent);
   }
 
-  .nav__admin:hover,
-  .nav__settings:hover {
+  .nav__admin:hover {
     background: color-mix(in srgb, currentColor 6%, transparent);
   }
 
