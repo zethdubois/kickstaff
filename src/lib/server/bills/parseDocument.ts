@@ -2,15 +2,23 @@ import { eq } from 'drizzle-orm';
 import { getDb } from '../db';
 import { billDocuments } from '../schema';
 import { getBillObject } from '../storage';
+import {
+	billDocumentColumnsWithoutLinkedUnit,
+	supportsBillDocumentLinkedUnit
+} from './billDocumentsLinkedUnitSupport';
 import { resolveBillParser } from './parsers';
+import { resolveLinkedUnit } from './resolveLinkedUnit';
 
 export async function parseBillDocumentById(documentId: string) {
 	const db = getDb();
-	const rows = await db
-		.select()
-		.from(billDocuments)
-		.where(eq(billDocuments.id, documentId))
-		.limit(1);
+	const linkCol = await supportsBillDocumentLinkedUnit(db);
+	const rows = linkCol
+		? await db.select().from(billDocuments).where(eq(billDocuments.id, documentId)).limit(1)
+		: await db
+				.select(billDocumentColumnsWithoutLinkedUnit())
+				.from(billDocuments)
+				.where(eq(billDocuments.id, documentId))
+				.limit(1);
 	const doc = rows[0];
 	if (!doc) {
 		throw new Error(`Document "${documentId}" not found`);
@@ -20,23 +28,31 @@ export async function parseBillDocumentById(documentId: string) {
 
 	try {
 		const parsed = await parser.parse(pdf);
+		const linkedUnitId = await resolveLinkedUnit(db, {
+			category: doc.category,
+			vendor: doc.vendor,
+			serviceAccountNumber: parsed.serviceAccountNumber ?? null
+		});
+		const baseParsed = {
+			serviceAccountNumber: parsed.serviceAccountNumber,
+			billReference: parsed.billReference,
+			billDate: parsed.billDate,
+			dueDate: parsed.dueDate,
+			servicePeriodStart: parsed.servicePeriodStart,
+			servicePeriodEnd: parsed.servicePeriodEnd,
+			currentChargesAmount: parsed.currentChargesAmount,
+			parseStatus: 'parsed' as const,
+			parseError: null,
+			rawParseJson: {
+				serviceAddress: parsed.serviceAddress
+			},
+			updatedAt: new Date()
+		};
 		await db
 			.update(billDocuments)
-			.set({
-				serviceAccountNumber: parsed.serviceAccountNumber,
-				billReference: parsed.billReference,
-				billDate: parsed.billDate,
-				dueDate: parsed.dueDate,
-				servicePeriodStart: parsed.servicePeriodStart,
-				servicePeriodEnd: parsed.servicePeriodEnd,
-				currentChargesAmount: parsed.currentChargesAmount,
-				parseStatus: 'parsed',
-				parseError: null,
-				rawParseJson: {
-					serviceAddress: parsed.serviceAddress
-				},
-				updatedAt: new Date()
-			})
+			.set(
+				linkCol ? { ...baseParsed, linkedUnitId } : baseParsed
+			)
 			.where(eq(billDocuments.id, doc.id));
 
 		return { status: 'parsed' as const, parsed };
@@ -47,6 +63,7 @@ export async function parseBillDocumentById(documentId: string) {
 			.set({
 				parseStatus: 'failed',
 				parseError: message,
+				...(linkCol ? { linkedUnitId: null } : {}),
 				updatedAt: new Date()
 			})
 			.where(eq(billDocuments.id, doc.id));

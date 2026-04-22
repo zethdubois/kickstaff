@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { supportsBillDocumentLinkedUnit } from '$lib/server/bills/billDocumentsLinkedUnitSupport';
 import { getDb } from '$lib/server/db';
 import { billDocuments } from '$lib/server/schema';
 
@@ -27,6 +28,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const db = getDb();
+	const linkCol = await supportsBillDocumentLinkedUnit(db);
 	const result = await db
 		.update(billDocuments)
 		.set({
@@ -40,6 +42,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			servicePeriodEnd: null,
 			currentChargesAmount: null,
 			rawParseJson: null,
+			...(linkCol ? { linkedUnitId: null } : {}),
 			updatedAt: new Date()
 		})
 		.where(

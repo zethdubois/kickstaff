@@ -1,11 +1,49 @@
-/** PG / DNS errors are often nested under Drizzle's `cause`. */
-function deepErrorCode(e: unknown): string | undefined {
-	if (!e || typeof e !== 'object') return undefined;
-	const err = e as { code?: unknown; cause?: unknown };
-	if (err.code !== undefined) return String(err.code);
-	const c = err.cause;
-	if (c && typeof c === 'object' && 'code' in c) return String((c as { code: string }).code);
+/**
+ * PostgreSQL SQLSTATE values are 5 ASCII chars (e.g. 42P01, 42703).
+ * Node / DNS errors use string codes like ECONNREFUSED — exclude those when
+ * looking for a PG code so we do not mis-classify nested errors.
+ */
+function isPostgresSqlState(code: string): boolean {
+	return /^[0-9]{2}[0-9A-Z]{3}$/.test(code);
+}
+
+/** Walk `cause` chain; return first `.code` matching `predicate`. */
+function firstErrorCode(
+	e: unknown,
+	predicate: (code: string) => boolean
+): string | undefined {
+	let current: unknown = e;
+	const seen = new Set<unknown>();
+	for (let depth = 0; depth < 12 && current && typeof current === 'object'; depth++) {
+		if (seen.has(current)) break;
+		seen.add(current);
+		const err = current as { code?: unknown; cause?: unknown };
+		if (err.code !== undefined && err.code !== null) {
+			const c = String(err.code);
+			if (predicate(c)) return c;
+		}
+		current = err.cause;
+	}
 	return undefined;
+}
+
+/** First SQLSTATE from Postgres in the error chain (outer → inner). */
+export function deepPostgresSqlState(e: unknown): string | undefined {
+	return firstErrorCode(e, isPostgresSqlState);
+}
+
+/** Syscall / DNS style codes from the chain. */
+function deepSyscallErrorCode(e: unknown): string | undefined {
+	return firstErrorCode(
+		e,
+		(c) => c === 'ENOTFOUND' || c === 'ECONNREFUSED' || c === 'ETIMEDOUT'
+	);
+}
+
+/** Best-effort single-line detail for logs and error pages. */
+export function describeDbFailure(e: unknown): string {
+	if (e instanceof Error) return e.message;
+	return String(e);
 }
 
 /**
@@ -13,18 +51,24 @@ function deepErrorCode(e: unknown): string | undefined {
  * Typical case: DATABASE_URL uses Railway’s internal host while running `pnpm dev` locally.
  */
 export function messageForDbConnectionError(e: unknown): string | undefined {
-	const code = deepErrorCode(e);
+	const code = deepSyscallErrorCode(e);
 	if (code === 'ENOTFOUND' || code === 'ECONNREFUSED' || code === 'ETIMEDOUT') {
 		return 'Cannot reach the database. For local dev, use a public or TCP proxy Postgres URL—Railway’s internal host (*.railway.internal) only works inside Railway’s network.';
 	}
 	return undefined;
 }
 
-/** Covers connection issues and missing tables (migrations not applied). */
+/** Undefined table / undefined column — migrations not applied. */
+export function isSchemaMismatchError(e: unknown): boolean {
+	const pg = deepPostgresSqlState(e);
+	return pg === '42P01' || pg === '42703';
+}
+
+/** Covers connection issues and missing tables/columns (migrations not applied). */
 export function messageForDbError(e: unknown): string | undefined {
-	const code = deepErrorCode(e);
-	if (code === '42P01') {
-		return 'Database tables are missing. With DATABASE_URL set, run: pnpm db:migrate';
+	const pg = deepPostgresSqlState(e);
+	if (pg === '42P01' || pg === '42703') {
+		return 'Database schema is out of date for this code version. With DATABASE_URL set, run: pnpm db:migrate';
 	}
 	return messageForDbConnectionError(e);
 }

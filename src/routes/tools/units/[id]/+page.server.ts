@@ -3,6 +3,10 @@ import { error, fail } from '@sveltejs/kit';
 import { and, asc, eq } from 'drizzle-orm';
 import { getDb } from '$lib/server/db';
 import { requireAdmin } from '$lib/server/guards';
+import {
+	relinkParsedBillsForBillAccount,
+	relinkParsedUtilityBillsByUnitPrimaryAccount
+} from '$lib/server/bills/relinkParsedBills';
 import { billCategories, unitBillAccounts, units } from '$lib/server/schema';
 
 function str(form: FormData, key: string) {
@@ -54,6 +58,7 @@ export const actions: Actions = {
 
 		const db = getDb();
 		try {
+			const utilityAccountNumber = strOrNull(form, 'utility_account_number');
 			await db
 				.update(units)
 				.set({
@@ -62,7 +67,7 @@ export const actions: Actions = {
 					city: strOrNull(form, 'city'),
 					state: strOrNull(form, 'state'),
 					postalCode: strOrNull(form, 'postal_code'),
-					utilityAccountNumber: strOrNull(form, 'utility_account_number'),
+					utilityAccountNumber,
 					notes: strOrNull(form, 'notes'),
 					billPropertyCode,
 					billUnitName: strOrNull(form, 'bill_unit_name'),
@@ -70,6 +75,7 @@ export const actions: Actions = {
 					updatedAt: new Date()
 				})
 				.where(eq(units.id, params.id));
+			await relinkParsedUtilityBillsByUnitPrimaryAccount(db, params.id, utilityAccountNumber);
 			return { unitUpdated: true as const };
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
@@ -105,6 +111,12 @@ export const actions: Actions = {
 				defaultDescriptionTemplate: strOrNull(form, 'default_description_template'),
 				cashAccount: strOrNull(form, 'cash_account'),
 				active: form.get('active') !== null
+			});
+			await relinkParsedBillsForBillAccount(db, {
+				unitId: params.id,
+				category,
+				vendor,
+				serviceAccountNumber
 			});
 			return { accountAdded: true as const, serviceAccountNumber };
 		} catch (e) {
@@ -145,6 +157,12 @@ export const actions: Actions = {
 					updatedAt: new Date()
 				})
 				.where(and(eq(unitBillAccounts.id, accountId), eq(unitBillAccounts.unitId, params.id)));
+			await relinkParsedBillsForBillAccount(db, {
+				unitId: params.id,
+				category,
+				vendor,
+				serviceAccountNumber
+			});
 			return { accountUpdated: true as const, accountId };
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);

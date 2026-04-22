@@ -1,0 +1,3 @@
+ALTER TABLE "bill_documents" ADD COLUMN "linked_unit_id" uuid;--> statement-breakpoint
+ALTER TABLE "bill_documents" ADD CONSTRAINT "bill_documents_linked_unit_id_units_id_fk" FOREIGN KEY ("linked_unit_id") REFERENCES "public"."units"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "bill_documents_linked_unit_id_idx" ON "bill_documents" USING btree ("linked_unit_id");

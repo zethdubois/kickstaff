@@ -7,6 +7,10 @@ import {
 	unitBillAccounts,
 	units
 } from '$lib/server/schema';
+import {
+	billDocumentColumnsWithoutLinkedUnit,
+	supportsBillDocumentLinkedUnit
+} from '$lib/server/bills/billDocumentsLinkedUnitSupport';
 import { buildBillStorageKey, getBillObject, putBillObject } from '$lib/server/storage';
 import {
 	APPFOLIO_VENDOR_BILL_HEADERS,
@@ -53,7 +57,9 @@ function withTemplate(defaultTemplate: string | null, fallback: string, replacem
 	return template.replace(/\{(\w+)\}/g, (_, key: string) => replacements[key] ?? '');
 }
 
-function resolveCurrentChargesAmount(doc: typeof billDocuments.$inferSelect) {
+function resolveCurrentChargesAmount(
+	doc: Pick<typeof billDocuments.$inferSelect, 'currentChargesAmount' | 'rawParseJson'>
+) {
 	if (doc.currentChargesAmount != null) return String(doc.currentChargesAmount);
 	const raw = doc.rawParseJson as Record<string, unknown> | null;
 	if (!raw || typeof raw !== 'object') return null;
@@ -86,18 +92,32 @@ export async function generateMonthlyBatchFile(params: MonthlyGenerationParams) 
 		throw new Error(`Monthly file already exists for ${params.vendor} ${params.period} (${existing[0].status}).`);
 	}
 
-	const docs = await db
-		.select()
-		.from(billDocuments)
-		.where(
-			and(
-				eq(billDocuments.vendor, params.vendor),
-				eq(billDocuments.city, params.city),
-				eq(billDocuments.parseStatus, 'parsed'),
-				gte(billDocuments.dueDate, start),
-				lt(billDocuments.dueDate, next)
-			)
-		);
+	const linkCol = await supportsBillDocumentLinkedUnit(db);
+	const docs = linkCol
+		? await db
+				.select()
+				.from(billDocuments)
+				.where(
+					and(
+						eq(billDocuments.vendor, params.vendor),
+						eq(billDocuments.city, params.city),
+						eq(billDocuments.parseStatus, 'parsed'),
+						gte(billDocuments.dueDate, start),
+						lt(billDocuments.dueDate, next)
+					)
+				)
+		: await db
+				.select(billDocumentColumnsWithoutLinkedUnit())
+				.from(billDocuments)
+				.where(
+					and(
+						eq(billDocuments.vendor, params.vendor),
+						eq(billDocuments.city, params.city),
+						eq(billDocuments.parseStatus, 'parsed'),
+						gte(billDocuments.dueDate, start),
+						lt(billDocuments.dueDate, next)
+					)
+				);
 	if (docs.length === 0) {
 		throw new Error('No parsed documents found for the selected month (based on due date).');
 	}

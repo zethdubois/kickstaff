@@ -156,7 +156,13 @@
                                                                                 <dd>{d.currentChargesAmount ?? '—'}</dd>
                                                                         </div>
                                                                 </dl>
-                                                                <a class="row__mapLink" href={unitLinkFor(d)}>Assign this account to a unit</a>
+                                                                {#if d.linkedUnitId}
+                                                                        <a class="row__mapLink" href="/tools/units/{d.linkedUnitId}">
+                                                                                Linked: {d.linkedUnitLabel ?? 'Unit'}
+                                                                        </a>
+                                                                {:else if d.serviceAccountNumber}
+                                                                        <a class="row__mapLink" href={unitLinkFor(d)}>Add bill account (first time)</a>
+                                                                {/if}
                                                         {/if}
                                                         {#if d.parseError}
                                                                 <div class="row__error">{d.parseError}</div>

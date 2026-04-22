@@ -157,6 +157,8 @@ export const billDocuments = pgTable(
 		parseStatus: text('parse_status').notNull().default('received'),
 		parseError: text('parse_error'),
 		rawParseJson: jsonb('raw_parse_json'),
+		/** Resolved at parse time from unit_bill_accounts or units.utility_account_number. */
+		linkedUnitId: uuid('linked_unit_id').references(() => units.id, { onDelete: 'set null' }),
 		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 	},
@@ -166,7 +168,8 @@ export const billDocuments = pgTable(
 			t.vendor,
 			t.billReference
 		),
-		vendorStatusIdx: index('bill_documents_vendor_parse_status_idx').on(t.vendor, t.parseStatus)
+		vendorStatusIdx: index('bill_documents_vendor_parse_status_idx').on(t.vendor, t.parseStatus),
+		linkedUnitIdx: index('bill_documents_linked_unit_id_idx').on(t.linkedUnitId)
 	})
 );
 

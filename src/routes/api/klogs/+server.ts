@@ -1,7 +1,8 @@
 import { json } from '@sveltejs/kit';
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { desc, eq, lt, sql } from 'drizzle-orm';
 import type { RequestHandler } from './$types';
 import { getDb } from '$lib/server/db';
+import { isSchemaMismatchError, messageForDbError } from '$lib/server/dbErrors';
 import { klogLevels, klogs, type KlogLevel } from '$lib/server/schema';
 
 type IncomingEntry = {
@@ -66,15 +67,22 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const db = getDb();
-	await db.insert(klogs).values(rows);
-
 	try {
-		await db.delete(klogs).where(lt(klogs.ts, sql`now() - interval '30 days'`));
-	} catch {
-		/* best-effort prune; ignore failures */
-	}
+		await db.insert(klogs).values(rows);
 
-	return json({ ok: true as const, inserted: rows.length });
+		try {
+			await db.delete(klogs).where(lt(klogs.ts, sql`now() - interval '30 days'`));
+		} catch {
+			/* best-effort prune; ignore failures */
+		}
+
+		return json({ ok: true as const, inserted: rows.length });
+	} catch (err) {
+		if (isSchemaMismatchError(err)) {
+			return json({ ok: true as const, inserted: 0, persistent: false as const });
+		}
+		throw err;
+	}
 };
 
 export const GET: RequestHandler = async ({ locals, url }) => {
@@ -86,28 +94,41 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	const limit = Math.min(500, Math.max(1, Number.isFinite(requested) ? requested : 200));
 
 	const db = getDb();
-	const recent = await db
-		.select({
-			id: klogs.id,
-			ts: klogs.ts,
-			level: klogs.level,
-			message: klogs.message,
-			source: klogs.source
-		})
-		.from(klogs)
-		.where(and(eq(klogs.userId, locals.user.id)))
-		.orderBy(desc(klogs.ts))
-		.limit(limit);
+	try {
+		const recent = await db
+			.select({
+				id: klogs.id,
+				ts: klogs.ts,
+				level: klogs.level,
+				message: klogs.message,
+				source: klogs.source
+			})
+			.from(klogs)
+			.where(eq(klogs.userId, locals.user.id))
+			.orderBy(desc(klogs.ts))
+			.limit(limit);
 
-	const entries = recent
-		.map((r) => ({
-			id: r.id,
-			ts: r.ts instanceof Date ? r.ts.getTime() : new Date(r.ts).getTime(),
-			level: (klogLevels as readonly string[]).includes(r.level) ? (r.level as KlogLevel) : 'log',
-			message: r.message,
-			source: r.source
-		}))
-		.sort((a, b) => a.ts - b.ts);
+		const entries = recent
+			.map((r) => ({
+				id: r.id,
+				ts: r.ts instanceof Date ? r.ts.getTime() : new Date(r.ts).getTime(),
+				level: (klogLevels as readonly string[]).includes(r.level) ? (r.level as KlogLevel) : 'log',
+				message: r.message,
+				source: r.source
+			}))
+			.sort((a, b) => a.ts - b.ts);
 
-	return json({ entries });
+		return json({ entries });
+	} catch (err) {
+		if (isSchemaMismatchError(err)) {
+			return json({
+				entries: [] as { id: string; ts: number; level: KlogLevel; message: string; source: string | null }[],
+				warning: messageForDbError(err)
+			});
+		}
+		const detail = err instanceof Error ? err.message : String(err);
+		console.error('[GET /api/klogs]', detail, err);
+		const hint = messageForDbError(err);
+		return json({ message: hint ?? detail, entries: [] }, { status: 500 });
+	}
 };

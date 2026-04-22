@@ -10,6 +10,7 @@ Internal ops dashboard (authenticated home) plus rental marketing pages per city
 
 - **Package manager:** **pnpm** only (`packageManager` is pinned in `package.json`). Use `pnpm install`, `pnpm dev`, `pnpm build`, `pnpm check`.
 - Do not use npm/yarn for installs or commit a `package-lock.json`.
+- **Dev server URL:** `http://localhost:5000` — port is set in `vite.config.ts` (`server.port`, `strictPort`). If you change it, update Replit’s `.replit` port mapping so the preview still works.
 
 Common scripts: `pnpm dev`, `pnpm build`, `pnpm check`, `pnpm db:migrate`, `pnpm seed:admin`, `pnpm list:users`, `pnpm run env:vanity`.
 

@@ -1,7 +1,9 @@
 import type { Actions, PageServerLoad } from './$types';
-import { fail } from '@sveltejs/kit';
-import { desc, eq } from 'drizzle-orm';
+import { error, fail } from '@sveltejs/kit';
+import { eq } from 'drizzle-orm';
 import { getDb } from '$lib/server/db';
+import { loadBillDocumentsForAdmin } from '$lib/server/bills/billDocumentsLinkedUnitSupport';
+import { describeDbFailure, messageForDbError } from '$lib/server/dbErrors';
 import { requireAdmin } from '$lib/server/guards';
 import { billCategories, billDocuments } from '$lib/server/schema';
 import { ingestBillPdf } from '$lib/server/bills/intake';
@@ -10,12 +12,18 @@ import { parseBillDocumentById } from '$lib/server/bills/parseDocument';
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals.user);
 	const db = getDb();
-	const docs = await db
-		.select()
-		.from(billDocuments)
-		.orderBy(desc(billDocuments.createdAt))
-		.limit(100);
-	return { docs, categories: billCategories };
+	try {
+		const docs = await loadBillDocumentsForAdmin(db, 100);
+		return { docs, categories: billCategories };
+	} catch (e) {
+		console.error('[GET /tools/bills load]', e);
+		const hint = messageForDbError(e);
+		if (hint) {
+			const detail = describeDbFailure(e);
+			error(503, `${hint}\n\n${detail}`);
+		}
+		throw e;
+	}
 };
 
 export const actions: Actions = {
