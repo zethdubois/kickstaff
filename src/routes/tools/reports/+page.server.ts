@@ -1,3 +1,9 @@
+/**
+ * @docs-order
+ * 1) /home/golem/projects/publicweb/AGENTS.md
+ * 2) /home/golem/projects/publicweb/docs/guides/tools-architecture.md
+ * 3) /home/golem/projects/publicweb/docs/guides/tools-ui-map.md
+ */
 import { and, eq, sql } from 'drizzle-orm';
 import { fail, type Actions, type PageServerLoad } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';

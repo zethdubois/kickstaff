@@ -1,3 +1,9 @@
+/**
+ * @docs-order
+ * 1) /home/golem/projects/publicweb/AGENTS.md
+ * 2) /home/golem/projects/publicweb/docs/guides/tools-architecture.md
+ * 3) /home/golem/projects/publicweb/docs/guides/tools-ui-map.md
+ */
 import type { Actions, PageServerLoad } from './$types';
 import { error, fail } from '@sveltejs/kit';
 import { and, asc, eq } from 'drizzle-orm';

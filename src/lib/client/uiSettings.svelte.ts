@@ -1,14 +1,19 @@
 export const UI_SETTINGS_STORAGE_KEY = "publicweb.uiSettings";
-export const UI_SETTINGS_VERSION = 1;
+export const UI_SETTINGS_VERSION = 2;
+
+export const BILLS_TABS = ["transactions", "documents", "postings"] as const;
+export type BillsTabId = (typeof BILLS_TABS)[number];
 
 export type UISettings = {
   version: number;
   consoleOpen: boolean;
+  billsDefaultTab: BillsTabId;
 };
 
 export const DEFAULT_UI_SETTINGS: UISettings = {
   version: UI_SETTINGS_VERSION,
   consoleOpen: false,
+  billsDefaultTab: "transactions",
 };
 
 let cache: UISettings | null = null;
@@ -24,7 +29,12 @@ function cloneDefaults(): UISettings {
 function isValidShape(value: unknown): value is UISettings {
   if (!value || typeof value !== "object") return false;
   const o = value as Record<string, unknown>;
-  return typeof o.version === "number" && typeof o.consoleOpen === "boolean";
+  return (
+    typeof o.version === "number" &&
+    typeof o.consoleOpen === "boolean" &&
+    typeof o.billsDefaultTab === "string" &&
+    (BILLS_TABS as readonly string[]).includes(o.billsDefaultTab)
+  );
 }
 
 function persist(settings: UISettings): void {
@@ -73,6 +83,17 @@ export function setConsoleOpen(consoleOpen: boolean): UISettings {
     ...getUiSettings(),
     version: UI_SETTINGS_VERSION,
     consoleOpen,
+  };
+  cache = next;
+  persist(next);
+  return next;
+}
+
+export function setBillsDefaultTab(billsDefaultTab: BillsTabId): UISettings {
+  const next: UISettings = {
+    ...getUiSettings(),
+    version: UI_SETTINGS_VERSION,
+    billsDefaultTab,
   };
   cache = next;
   persist(next);

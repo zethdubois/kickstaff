@@ -24,6 +24,17 @@ Common scripts: `pnpm dev`, `pnpm build`, `pnpm check`, `pnpm db:migrate`, `pnpm
 
 Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `$effect()` instead of legacy `export let` and `$:` blocks. Run `pnpm check` before merging.
 
+## Client UI settings store
+
+- Shared client UI preferences live in `src/lib/client/uiSettings.svelte.ts`.
+- Current persisted shape includes:
+  - `consoleOpen` (KAM console visibility)
+  - `billsDefaultTab` (`transactions | documents | postings`)
+- Treat `UI_SETTINGS_VERSION` as the schema contract for localStorage.
+  - When adding/removing/changing fields, bump `UI_SETTINGS_VERSION`.
+  - Keep `DEFAULT_UI_SETTINGS` and validation (`isValidShape`) in sync with the new version.
+- `/tools/bills` uses this store to resolve the last selected Bills sub-tab; fallback default is the first tab (`transactions`).
+
 ## Environment file
 
 **Source of truth:** [`.env.example`](.env.example).
@@ -47,6 +58,29 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 - **Utility bill ETL scope** (email intake -> PDF parsing -> Appfolio CSV): [`docs/guides/utility-bill-etl-scope.md`](docs/guides/utility-bill-etl-scope.md).
 - **KAM dev console + command palette** (hotkey `Ctrl+/`, `klog`, commands, refresh targets, per-user klog persistence): [`docs/guides/kam-console.md`](docs/guides/kam-console.md).
 - **Docs index:** [`docs/README.md`](docs/README.md).
+
+## Route doc order (required)
+
+For any route work, read docs in this order:
+
+1. **Global coordinator:** this file ([`AGENTS.md`](AGENTS.md))
+2. **Route architecture doc:** `docs/guides/<route-scope>-architecture.md`
+3. **Route UI doc:** `docs/guides/<route-scope>-ui-map.md`
+
+Example for Tools > Bills:
+
+1. [`AGENTS.md`](AGENTS.md)
+2. [`docs/guides/tools-bills-architecture.md`](docs/guides/tools-bills-architecture.md)
+3. [`docs/guides/tools-bills-ui-map.md`](docs/guides/tools-bills-ui-map.md)
+
+## Route doc naming + depth
+
+- Use kebab-case route-scope names that mirror URL segments.
+- Route architecture docs: `docs/guides/<route-scope>-architecture.md`
+- Route UI docs: `docs/guides/<route-scope>-ui-map.md`
+- Optional area-level docs (cross-route only): `docs/guides/<area>-architecture.md`
+- Keep a two-tier system by default (global + route-level docs).
+- Add deeper sub-scope docs only when a route architecture doc grows too large or workflows become independently owned.
 
 ## Naming (summary)
 

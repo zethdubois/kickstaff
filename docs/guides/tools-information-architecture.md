@@ -7,11 +7,12 @@ This is the **single source of truth** for the layout of the `/tools` area. Upda
 ```mermaid
 flowchart TD
     Tools["/tools"]
-    Tools --> Bills["Bills /tools/bills"]
+    Tools --> Bills["Bills /tools/bills/documents"]
     Tools --> Units["Units /tools/units"]
     Tools --> Reports["Reports /tools/reports"]
 
-    Bills --> B1["Tab: Documents /tools/bills"]
+    Bills --> B0["Tab: Transactions /tools/bills/transactions"]
+    Bills --> B1["Tab: Documents /tools/bills/documents"]
     Bills --> B2["Tab: Postings /tools/bills/postings"]
     B2 --> B2a["Postings CSV download /tools/bills/postings/files/[id]/download"]
 
@@ -28,8 +29,10 @@ flowchart TD
 
 | Path                                            | Role                                                  |
 | ----------------------------------------------- | ----------------------------------------------------- |
-| `/tools`                                        | Redirects to `/tools/bills`                           |
-| `/tools/bills`                                  | Bills → **Documents** tab (uploaded/parsed PDFs)      |
+| `/tools`                                        | Redirects to `/tools/bills/documents`                 |
+| `/tools/bills`                                  | Redirects to `/tools/bills/documents`                 |
+| `/tools/bills/transactions`                     | Bills → **Transactions** tab (filter workspace)       |
+| `/tools/bills/documents`                        | Bills → **Documents** tab (uploaded/parsed PDFs)      |
 | `/tools/bills/postings`                         | Bills → **Postings** tab (Appfolio batch CSV queue)   |
 | `/tools/bills/postings/files/[id]/download`     | Postings batch CSV download                           |
 | `/tools/units`                                  | Units list                                            |
