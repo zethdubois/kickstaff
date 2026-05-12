@@ -228,6 +228,10 @@ export type RentalLandingFullParsed = {
 	longTermUrl: string | null;
 	applyUrl: string | null;
 	contactUrl: string | null;
+	shortTermNewTab: boolean;
+	longTermNewTab: boolean;
+	applyNewTab: boolean;
+	contactNewTab: boolean;
 	tenantPortalUrl: string | null;
 	listingPropertyGroup: string | null;
 	listingThemeColor: string | null;
@@ -297,6 +301,10 @@ export async function upsertRentalLandingFull(citySlug: CitySlug, row: RentalLan
 			longTermUrl: row.longTermUrl,
 			applyUrl: row.applyUrl,
 			contactUrl: row.contactUrl,
+			shortTermNewTab: row.shortTermNewTab,
+			longTermNewTab: row.longTermNewTab,
+			applyNewTab: row.applyNewTab,
+			contactNewTab: row.contactNewTab,
 			tenantPortalUrl: row.tenantPortalUrl,
 			listingPropertyGroup: row.listingPropertyGroup,
 			listingThemeColor: row.listingThemeColor,
@@ -327,6 +335,10 @@ export async function upsertRentalLandingFull(citySlug: CitySlug, row: RentalLan
 				longTermUrl: row.longTermUrl,
 				applyUrl: row.applyUrl,
 				contactUrl: row.contactUrl,
+				shortTermNewTab: row.shortTermNewTab,
+				longTermNewTab: row.longTermNewTab,
+				applyNewTab: row.applyNewTab,
+				contactNewTab: row.contactNewTab,
 				tenantPortalUrl: row.tenantPortalUrl,
 				listingPropertyGroup: row.listingPropertyGroup,
 				listingThemeColor: row.listingThemeColor,

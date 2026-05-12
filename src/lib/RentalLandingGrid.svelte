@@ -60,10 +60,10 @@
 	);
 
 	const tiles = $derived([
-		{ key: 'short' as const, href: links.shortTerm, label: 'Short-term rentals' },
-		{ key: 'long' as const, href: links.longTerm, label: 'Long-term rentals' },
-		{ key: 'apply' as const, href: links.apply, label: 'Apply today' },
-		{ key: 'contact' as const, href: links.contact, label: 'Contact us' }
+		{ key: 'short' as const, href: links.shortTerm, label: 'Short-term rentals', newTab: links.shortTermNewTab },
+		{ key: 'long' as const, href: links.longTerm, label: 'Long-term rentals', newTab: links.longTermNewTab },
+		{ key: 'apply' as const, href: links.apply, label: 'Apply today', newTab: links.applyNewTab },
+		{ key: 'contact' as const, href: links.contact, label: 'Contact us', newTab: links.contactNewTab }
 	]);
 
 	/** Iframe loads only after a nav tile click; null shows the landing frame in the main column. */
@@ -299,7 +299,7 @@
 
 			<div class="rentalLanding__sidebarBody">
 				<nav class="rentalLanding__nav" aria-label="Rental links">
-					{#each tiles as { key, href, label } (key)}
+					{#each tiles as { key, href, label, newTab } (key)}
 						{#if key === 'contact'}
 							<button
 								class="rentalLanding__tile rentalLanding__tile--btn"
@@ -313,17 +313,32 @@
 								<span class="rentalLanding__label">{label}</span>
 							</button>
 						{:else if href}
-							<a
-								class="rentalLanding__tile"
-								{href}
-								aria-label={label}
-								onclick={(e) => onTileClick(e, href)}
-							>
-								<span class="rentalLanding__icon" aria-hidden="true">
-									{@render tileIcon(key)}
-								</span>
-								<span class="rentalLanding__label">{label}</span>
-							</a>
+							{#if newTab}
+								<a
+									class="rentalLanding__tile"
+									{href}
+									target="_blank"
+									rel="noopener noreferrer"
+									aria-label="{label} — opens in a new tab"
+								>
+									<span class="rentalLanding__icon" aria-hidden="true">
+										{@render tileIcon(key)}
+									</span>
+									<span class="rentalLanding__label">{label}</span>
+								</a>
+							{:else}
+								<a
+									class="rentalLanding__tile"
+									{href}
+									aria-label={label}
+									onclick={(e) => onTileClick(e, href)}
+								>
+									<span class="rentalLanding__icon" aria-hidden="true">
+										{@render tileIcon(key)}
+									</span>
+									<span class="rentalLanding__label">{label}</span>
+								</a>
+							{/if}
 						{:else}
 							<span
 								class="rentalLanding__tile rentalLanding__tile--disabled"

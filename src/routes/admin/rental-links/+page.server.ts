@@ -34,6 +34,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 				longTermUrl: row?.longTermUrl ?? '',
 				applyUrl: row?.applyUrl ?? '',
 				contactUrl: row?.contactUrl ?? '',
+				shortTermNewTab: row?.shortTermNewTab ?? false,
+				longTermNewTab: row?.longTermNewTab ?? false,
+				applyNewTab: row?.applyNewTab ?? false,
+				contactNewTab: row?.contactNewTab ?? false,
 				tenantPortalUrl: row?.tenantPortalUrl ?? '',
 				listingPropertyGroup: row?.listingPropertyGroup ?? '',
 				listingThemeColor: row?.listingThemeColor ?? '',
@@ -63,6 +67,10 @@ export const actions: Actions = {
 		const ap = parseOptionalHttpsUrl(form.get('apply_url'));
 		const ct = parseOptionalHttpsUrl(form.get('contact_url'));
 		const tp = parseOptionalHttpsUrl(form.get('tenant_portal_url'));
+		const stNewTab = form.get('short_term_new_tab') === 'on';
+		const ltNewTab = form.get('long_term_new_tab') === 'on';
+		const apNewTab = form.get('apply_new_tab') === 'on';
+		const ctNewTab = form.get('contact_new_tab') === 'on';
 		const pg = parseOptionalPropertyGroup(form.get('listing_property_group'));
 		const tc = parseOptionalThemeColor(form.get('listing_theme_color'));
 		const ob = parseOptionalOrderBy(form.get('listing_order_by'));
@@ -96,6 +104,10 @@ export const actions: Actions = {
 			longTermUrl: lt.value,
 			applyUrl: ap.value,
 			contactUrl: ct.value,
+			shortTermNewTab: stNewTab,
+			longTermNewTab: ltNewTab,
+			applyNewTab: apNewTab,
+			contactNewTab: ctNewTab,
 			tenantPortalUrl: tp.value,
 			listingPropertyGroup: pg.value,
 			listingThemeColor: tc.value,

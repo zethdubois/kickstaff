@@ -27,6 +27,10 @@ export type CityAppfolioLinks = {
 	longTerm: string | null;
 	apply: string | null;
 	contact: string | null;
+	shortTermNewTab: boolean;
+	longTermNewTab: boolean;
+	applyNewTab: boolean;
+	contactNewTab: boolean;
 	tenantPortal: string | null;
 	/** AppFolio property group for embedded listings; null disables iframe. */
 	listingPropertyGroup: string | null;
@@ -110,6 +114,10 @@ export function cityAppfolioLinksFromRow(
 		longTermUrl: string | null;
 		applyUrl: string | null;
 		contactUrl: string | null;
+		shortTermNewTab: boolean;
+		longTermNewTab: boolean;
+		applyNewTab: boolean;
+		contactNewTab: boolean;
 		tenantPortalUrl: string | null;
 		listingPropertyGroup: string | null;
 		listingThemeColor: string | null;
@@ -140,6 +148,10 @@ export function cityAppfolioLinksFromRow(
 			longTerm: null,
 			apply: null,
 			contact: null,
+			shortTermNewTab: false,
+			longTermNewTab: false,
+			applyNewTab: false,
+			contactNewTab: false,
 			tenantPortal: null,
 			listingPropertyGroup: null,
 			listingThemeColor: null,
@@ -157,6 +169,10 @@ export function cityAppfolioLinksFromRow(
 		longTerm: optional(row.longTermUrl),
 		apply: optional(row.applyUrl),
 		contact: optional(row.contactUrl),
+		shortTermNewTab: row.shortTermNewTab ?? false,
+		longTermNewTab: row.longTermNewTab ?? false,
+		applyNewTab: row.applyNewTab ?? false,
+		contactNewTab: row.contactNewTab ?? false,
 		tenantPortal: optional(row.tenantPortalUrl),
 		listingPropertyGroup: optional(row.listingPropertyGroup),
 		listingThemeColor: optional(row.listingThemeColor),

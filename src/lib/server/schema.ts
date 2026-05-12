@@ -44,6 +44,14 @@ export const rentalLandingLinks = pgTable('rental_landing_links', {
 	longTermUrl: text('long_term_url'),
 	applyUrl: text('apply_url'),
 	contactUrl: text('contact_url'),
+	/** Open link in a new tab instead of the iframe. */
+	shortTermNewTab: boolean('short_term_new_tab').notNull().default(false),
+	/** Open link in a new tab instead of the iframe. */
+	longTermNewTab: boolean('long_term_new_tab').notNull().default(false),
+	/** Open link in a new tab instead of the iframe. */
+	applyNewTab: boolean('apply_new_tab').notNull().default(false),
+	/** Open link in a new tab instead of the iframe. */
+	contactNewTab: boolean('contact_new_tab').notNull().default(false),
 	/** Tenant-facing portal (HTTPS); shown at bottom of city rental column when set. */
 	tenantPortalUrl: text('tenant_portal_url'),
 	/** AppFolio property group name for embedded `/listings` iframe (filters[property_list]). */

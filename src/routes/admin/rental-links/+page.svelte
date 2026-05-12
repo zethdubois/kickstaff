@@ -128,6 +128,10 @@
 							placeholder="https://…"
 							value={c.shortTermUrl}
 						/>
+						<label class="field__checkbox">
+							<input type="checkbox" name="short_term_new_tab" value="on" checked={c.shortTermNewTab} />
+							<span>Open in new tab</span>
+						</label>
 					</label>
 					<label class="field">
 						<span class="field__label">Long-term listings</span>
@@ -140,6 +144,10 @@
 							placeholder="https://…"
 							value={c.longTermUrl}
 						/>
+						<label class="field__checkbox">
+							<input type="checkbox" name="long_term_new_tab" value="on" checked={c.longTermNewTab} />
+							<span>Open in new tab</span>
+						</label>
 					</label>
 					<label class="field">
 						<span class="field__label">Apply</span>
@@ -152,6 +160,10 @@
 							placeholder="https://…"
 							value={c.applyUrl}
 						/>
+						<label class="field__checkbox">
+							<input type="checkbox" name="apply_new_tab" value="on" checked={c.applyNewTab} />
+							<span>Open in new tab</span>
+						</label>
 					</label>
 					<label class="field">
 						<span class="field__label">Contact</span>
@@ -164,6 +176,10 @@
 							placeholder="https://…"
 							value={c.contactUrl}
 						/>
+						<label class="field__checkbox">
+							<input type="checkbox" name="contact_new_tab" value="on" checked={c.contactNewTab} />
+							<span>Open in new tab</span>
+						</label>
 					</label>
 					<label class="field">
 						<span class="field__label">Tenant Portal</span>
@@ -413,6 +429,15 @@
 		resize: vertical;
 		min-height: 6rem;
 		line-height: 1.45;
+	}
+
+	.field__checkbox {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		margin-top: 0.25rem;
+		font-size: 0.82rem;
+		cursor: pointer;
 	}
 
 	.btn {
