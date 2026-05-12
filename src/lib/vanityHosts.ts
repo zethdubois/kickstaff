@@ -1,7 +1,10 @@
 import { env } from '$env/dynamic/public';
 import type { CitySlug } from '$lib/cities';
 
-/** Hostname (lowercase) → city path. Uses PUBLIC_ vars so `reroute` can run on server and client. */
+function stripWww(hostname: string): string {
+	return hostname.replace(/^www\./, '');
+}
+
 function hostToCityPath(): Map<string, `/${CitySlug}`> {
 	const entries: [string | undefined, CitySlug][] = [
 		[env.PUBLIC_VANITY_HOST_CDA, 'cda'],
@@ -11,7 +14,7 @@ function hostToCityPath(): Map<string, `/${CitySlug}`> {
 	const map = new Map<string, `/${CitySlug}`>();
 	for (const [raw, slug] of entries) {
 		if (!raw?.trim()) continue;
-		map.set(raw.trim().toLowerCase(), `/${slug}`);
+		map.set(stripWww(raw.trim().toLowerCase()), `/${slug}`);
 	}
 	return map;
 }
@@ -20,5 +23,5 @@ function hostToCityPath(): Map<string, `/${CitySlug}`> {
  * If this host should show a city page at `/`, return that path (e.g. `/mos`).
  */
 export function vanityPathForRootHost(hostname: string): `/${CitySlug}` | undefined {
-	return hostToCityPath().get(hostname.toLowerCase());
+	return hostToCityPath().get(stripWww(hostname.toLowerCase()));
 }
