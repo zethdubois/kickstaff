@@ -6,8 +6,10 @@ export {
   klogError,
   klogWithSource,
   hydrateFromServer,
+  createKlogBroadcaster,
   type KlogEntry,
   type KlogLevel,
+  type KlogBroadcaster,
 } from "./state.svelte";
 export {
   registerCommand,

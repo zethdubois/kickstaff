@@ -10,6 +10,7 @@
   import Palette from "$lib/devConsole/Palette.svelte";
   import KamConsole from "$lib/devConsole/KamConsole.svelte";
   import { hydrateFromServer } from "$lib/devConsole/state.svelte";
+  import { registerKickagentHelloCommand } from "$lib/kickagent/registerHelloCommand";
 
   let { children } = $props();
 
@@ -105,6 +106,7 @@
 
     if (isAdmin) {
       void hydrateFromServer();
+      registerKickagentHelloCommand(page.data.user);
     }
 
     return () => {
@@ -133,69 +135,60 @@
         />
       </a>
 
-      {#if isAdmin}
-        <a class="nav__admin" href="/admin/rental-links">Admin</a>
-      {/if}
+      <div class="rentalMenu">
+        <button
+          class="rentalMenu__button"
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={rentalMenuOpen}
+          onclick={toggleRentalMenu}
+        >
+          Rental Sites
+          <span class="rentalMenu__caret" aria-hidden="true"></span>
+        </button>
+
+        {#if rentalMenuOpen}
+          <div class="rentalMenu__panel" role="menu" aria-label="Rental Sites">
+            <div class="rentalMenu__row">
+              <label class="nav__external">
+                <input
+                  class="nav__externalBox"
+                  type="checkbox"
+                  bind:checked={useExternalLink}
+                />
+                <span class="nav__externalLabel">use external link</span>
+              </label>
+              <button
+                class="rentalMenu__close"
+                type="button"
+                onclick={closeRentalMenu}>Close</button
+              >
+            </div>
+
+            <div class="rentalMenu__items" role="presentation">
+              {#each cities as { slug, label } (slug)}
+                <button
+                  class="rentalMenuItem"
+                  type="button"
+                  role="menuitem"
+                  onclick={() => navigateToCity(slug)}
+                >
+                  <span class="rentalMenuItem__label">{label}</span>
+                  <span class="rentalMenuItem__tooltip" role="tooltip">
+                    {linkPreviewForSlug(slug)}
+                  </span>
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
 
       <div class="nav__trailing">
-        <!-- <div class="nav__title" aria-label="Site section">Rental Sites:</div> -->
-
-        <div class="rentalMenu">
-          <button
-            class="rentalMenu__button"
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={rentalMenuOpen}
-            onclick={toggleRentalMenu}
-          >
-            Rental Sites
-            <span class="rentalMenu__caret" aria-hidden="true"></span>
-          </button>
-
-          {#if rentalMenuOpen}
-            <div
-              class="rentalMenu__panel"
-              role="menu"
-              aria-label="Rental Sites"
-            >
-              <div class="rentalMenu__row">
-                <label class="nav__external">
-                  <input
-                    class="nav__externalBox"
-                    type="checkbox"
-                    bind:checked={useExternalLink}
-                  />
-                  <span class="nav__externalLabel">use external link</span>
-                </label>
-                <button
-                  class="rentalMenu__close"
-                  type="button"
-                  onclick={closeRentalMenu}>Close</button
-                >
-              </div>
-
-              <div class="rentalMenu__items" role="presentation">
-                {#each cities as { slug, label } (slug)}
-                  <button
-                    class="rentalMenuItem"
-                    type="button"
-                    role="menuitem"
-                    onclick={() => navigateToCity(slug)}
-                  >
-                    <span class="rentalMenuItem__label">{label}</span>
-                    <span class="rentalMenuItem__tooltip" role="tooltip">
-                      {linkPreviewForSlug(slug)}
-                    </span>
-                  </button>
-                {/each}
-              </div>
-            </div>
-          {/if}
-        </div>
-
         {#if isAdmin}
           <!-- <div class="nav__title" aria-label="Site section">Tools:</div> -->
           <a class="nav__admin" href="/tools">Tools</a>
+          <a class="nav__admin" href="/admin/rental-links">Admin</a>
         {/if}
 
         {#if page.data.user}

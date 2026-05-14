@@ -20,10 +20,7 @@ export type KlogEntry = {
   source: string | null;
 };
 
-import {
-  getUiSettings,
-  setConsoleOpen,
-} from "../client/uiSettings.svelte";
+import { getUiSettings, setConsoleOpen } from "../client/uiSettings.svelte";
 
 const MAX_ENTRIES = 1000;
 const FLUSH_DEBOUNCE_MS = 800;
@@ -96,7 +93,12 @@ function formatArg(value: unknown): string {
 function push(
   level: KlogLevel,
   args: unknown[],
-  opts?: { source?: string | null; ts?: number; persist?: boolean; id?: number },
+  opts?: {
+    source?: string | null;
+    ts?: number;
+    persist?: boolean;
+    id?: number;
+  },
 ): void {
   const message = args.map(formatArg).join(" ");
   const entry: KlogEntry = {
@@ -218,4 +220,46 @@ export async function hydrateFromServer(limit = 200): Promise<void> {
   } catch {
     /* swallow */
   }
+}
+
+/**
+ * KlogBroadcaster is a simple logging interface that kickagent functions use
+ * to broadcast progress and results back to the KAM console.
+ *
+ * Usage in kickagent functions:
+ * ```ts
+ * const logger = createKlogBroadcaster();
+ * logger.info("Starting batch...");
+ * for (const item of items) {
+ *   logger.info(`Processing ${item}`);
+ * }
+ * logger.info("✓ Complete");
+ * ```
+ */
+export interface KlogBroadcaster {
+  log(msg: string): void;
+  info(msg: string): void;
+  warn(msg: string): void;
+  error(msg: string): void;
+}
+
+/**
+ * Create a KlogBroadcaster instance for kickagent functions.
+ * Tags all logs with a source prefix (e.g., "kickagent:bills").
+ */
+export function createKlogBroadcaster(source = "kickagent"): KlogBroadcaster {
+  return {
+    log(msg: string): void {
+      klogWithSource("log", source, msg);
+    },
+    info(msg: string): void {
+      klogWithSource("info", source, msg);
+    },
+    warn(msg: string): void {
+      klogWithSource("warn", source, msg);
+    },
+    error(msg: string): void {
+      klogWithSource("error", source, msg);
+    },
+  };
 }

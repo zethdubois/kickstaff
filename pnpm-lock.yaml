@@ -17,6 +17,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
+      kickagent:
+        specifier: file:../kickagent/kickagent
+        version: file:../kickagent/kickagent
       nodemailer:
         specifier: ^8.0.4
         version: 8.0.4
@@ -1543,6 +1546,9 @@ packages:
 
   is-reference@3.0.3:
     resolution: {integrity: sha512-ixkJoqQvAP88E6wLydLGGqCJsrFUnqoH6HnaczB8XmDH1oaWU+xxdptvikTgaEhtZ53Ky6YXiBuUI2WXLMCwjw==}
+
+  kickagent@file:../kickagent/kickagent:
+    resolution: {directory: ../kickagent/kickagent, type: directory}
 
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
@@ -3318,6 +3324,8 @@ snapshots:
   is-reference@3.0.3:
     dependencies:
       '@types/estree': 1.0.8
+
+  kickagent@file:../kickagent/kickagent: {}
 
   kleur@4.1.5: {}
 
