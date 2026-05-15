@@ -1,19 +1,24 @@
 export const UI_SETTINGS_STORAGE_KEY = "publicweb.uiSettings";
-export const UI_SETTINGS_VERSION = 2;
+export const UI_SETTINGS_VERSION = 3;
 
 export const BILLS_TABS = ["transactions", "documents", "postings"] as const;
 export type BillsTabId = (typeof BILLS_TABS)[number];
+
+export const KAM_MODES = ["default", "kickagent"] as const;
+export type KamMode = (typeof KAM_MODES)[number];
 
 export type UISettings = {
   version: number;
   consoleOpen: boolean;
   billsDefaultTab: BillsTabId;
+  kamMode: KamMode;
 };
 
 export const DEFAULT_UI_SETTINGS: UISettings = {
   version: UI_SETTINGS_VERSION,
   consoleOpen: false,
   billsDefaultTab: "transactions",
+  kamMode: "default",
 };
 
 let cache: UISettings | null = null;
@@ -33,7 +38,9 @@ function isValidShape(value: unknown): value is UISettings {
     typeof o.version === "number" &&
     typeof o.consoleOpen === "boolean" &&
     typeof o.billsDefaultTab === "string" &&
-    (BILLS_TABS as readonly string[]).includes(o.billsDefaultTab)
+    (BILLS_TABS as readonly string[]).includes(o.billsDefaultTab) &&
+    typeof o.kamMode === "string" &&
+    (KAM_MODES as readonly string[]).includes(o.kamMode)
   );
 }
 
@@ -94,6 +101,17 @@ export function setBillsDefaultTab(billsDefaultTab: BillsTabId): UISettings {
     ...getUiSettings(),
     version: UI_SETTINGS_VERSION,
     billsDefaultTab,
+  };
+  cache = next;
+  persist(next);
+  return next;
+}
+
+export function setKamMode(kamMode: KamMode): UISettings {
+  const next: UISettings = {
+    ...getUiSettings(),
+    version: UI_SETTINGS_VERSION,
+    kamMode,
   };
   cache = next;
   persist(next);

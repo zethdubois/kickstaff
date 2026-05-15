@@ -1,9 +1,9 @@
 import {
   klogWithSource,
-  registerCommand,
   type CommandOutcome,
   type KlogLevel,
 } from "$lib/devConsole";
+import { registerKickagentCommand } from "$lib/kickagent/commands";
 import { helloWorld, type KlogBroadcaster } from "kickagent";
 import type { SessionUser } from "$lib/server/auth";
 
@@ -21,7 +21,7 @@ function createDemoLogger(source: string): KlogBroadcaster {
 }
 
 export function registerKickagentHelloCommand(user: SessionUser): void {
-  registerCommand("kickagent:hello", async (): Promise<CommandOutcome> => {
+  registerKickagentCommand("hello", async (): Promise<CommandOutcome> => {
     const logger = createDemoLogger("kickagent:hello");
     const result = await helloWorld(user.id, user.email, logger);
     return {

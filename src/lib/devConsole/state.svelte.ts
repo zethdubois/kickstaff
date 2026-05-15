@@ -4,7 +4,7 @@
  * `klog(...)` is the proprietary logger that emits a "klog" entry into the
  * KAM Console pane. Use it from anywhere in the client codebase as a
  * dev-time alternative to console.log when you want the output visible in
- * the in-app console pane (toggled via the command palette: Ctrl+/  →  "console").
+ * the in-app console pane (toggled via the command palette: Ctrl+/ or ` (backtick) → focus console).
  *
  * Entries also persist to the server `klogs` table (per-user, 30-day retention)
  * via a debounced batch POST, and the pane hydrates from that table on mount.
@@ -20,7 +20,14 @@ export type KlogEntry = {
   source: string | null;
 };
 
-import { getUiSettings, setConsoleOpen } from "../client/uiSettings.svelte";
+import {
+  getUiSettings,
+  setConsoleOpen,
+  setKamMode,
+  type KamMode,
+} from "../client/uiSettings.svelte";
+
+export type { KamMode };
 
 const MAX_ENTRIES = 1000;
 const FLUSH_DEBOUNCE_MS = 800;
@@ -28,6 +35,7 @@ const FLUSH_BATCH_CAP = 20;
 
 let _paletteOpen = $state(false);
 let _consoleOpen = $state(getUiSettings().consoleOpen);
+let _kamMode = $state<KamMode>(getUiSettings().kamMode);
 let _entries = $state<KlogEntry[]>([]);
 let _nextId = 1;
 let _hydrated = false;
@@ -121,6 +129,9 @@ function push(
   }
 }
 
+/** Dispatched on `window` after `focusConsolePrompt()`; KamConsole focuses its input. */
+export const KAM_CONSOLE_FOCUS_INPUT_EVENT = "kam-console-focus-input";
+
 export const devConsole = {
   get paletteOpen(): boolean {
     return _paletteOpen;
@@ -135,6 +146,16 @@ export const devConsole = {
     _consoleOpen = value;
     setConsoleOpen(value);
   },
+  get kamMode(): KamMode {
+    return _kamMode;
+  },
+  set kamMode(value: KamMode) {
+    _kamMode = value;
+    setKamMode(value);
+  },
+  get kickagentModeActive(): boolean {
+    return _kamMode === "kickagent";
+  },
   get entries(): readonly KlogEntry[] {
     return _entries;
   },
@@ -143,6 +164,18 @@ export const devConsole = {
   },
   toggleConsole(): void {
     this.consoleOpen = !_consoleOpen;
+  },
+  /** Open the KAM Console pane, close the palette, focus the inline prompt. */
+  focusConsolePrompt(): void {
+    _paletteOpen = false;
+    if (!_consoleOpen) {
+      _consoleOpen = true;
+      setConsoleOpen(true);
+    }
+    if (!isBrowser()) return;
+    queueMicrotask(() => {
+      window.dispatchEvent(new CustomEvent(KAM_CONSOLE_FOCUS_INPUT_EVENT));
+    });
   },
   clear(): void {
     _entries = [];

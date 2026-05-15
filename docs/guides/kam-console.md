@@ -2,7 +2,7 @@
 
 A lightweight in-app dev console for admins. Two surfaces:
 
-- **Command palette** — modal one-shot command input; hotkey `Ctrl+/` (or `Cmd+/`).
+- **Command palette** — modal one-shot command input; **`Ctrl+/`** (or **`Cmd+/`**) to open/close. **`` ` `` (backtick)** focuses the KAM Console pane (left); **`Esc`** closes the palette when it is open.
 - **KAM Console pane** — left-side "terminal" that shows klog output and has its own inline prompt.
 
 Opening the palette and running `console` toggles the pane.
@@ -10,10 +10,16 @@ Opening the palette and running `console` toggles the pane.
 ## Quick start
 
 ```text
-Ctrl+/              → open palette
-console             → toggle the KAM Console pane
-help                → list commands + refresh targets + hotkeys
-reset --all-parsed  → move every parsed bill doc back to 'received' and clear parsed fields
+Ctrl+/   (or Cmd+/)   → open or close palette
+` (backtick)         → open KAM Console (if needed) and focus its prompt
+console              → toggle the KAM Console pane (command)
+help                 → list commands + refresh targets + hotkeys
+shell kickagent      → enter kickagent shell ([KA] mode)
+ka                   → shortcut only if defined: `alias kickagent ka` (stored in preferences)
+shell default        → leave kickagent shell (same when already default)
+:exit                → leave kickagent shell from inside [KA] mode (host escape)
+unalias --all        → remove every saved alias (or: alias --clear)
+reset --all-parsed   → move every parsed bill doc back to 'received' and clear parsed fields
 ```
 
 ## klog (the proprietary logger)
@@ -70,13 +76,63 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 
 ### Built-in commands
 
-| name      | purpose                                                                                                  |
-| --------- | -------------------------------------------------------------------------------------------------------- |
-| `console` | Toggle the KAM Console pane.                                                                             |
-| `clear`   | Clear the in-memory klog buffer in the pane (does not touch the persisted history).                      |
-| `help`    | Print available commands, refresh targets, and hotkey hint.                                              |
-| `echo`    | klog the remaining args.                                                                                 |
-| `reset`   | `reset <vendor>` or `reset --all-parsed` — reset matching parsed bill documents back to `received` and clear parsed fields; then refresh `bills.recent-docs`. |
+| name        | purpose                                                                                                  |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| `console`   | Toggle the KAM Console pane.                                                                             |
+| `clear`     | Clear the in-memory klog buffer in the pane (does not touch the persisted history).                      |
+| `help`      | Print available commands, refresh targets, and hotkey hint.                                              |
+| `echo`      | klog the remaining args.                                                                                 |
+| `exit`      | Leave kickagent shell when active (normally via `:exit`; see Kickagent shell).                             |
+| `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
+| `alias` / `unalias` | Persisted command aliases (`publicweb.consoleUi` in localStorage). See **Command aliases** below. |
+| `reset`     | `reset <vendor>` or `reset --all-parsed` — reset matching parsed bill documents back to `received` and clear parsed fields; then refresh `bills.recent-docs`. |
+
+### Command aliases
+
+Aliases rewrite the **first token** before resolution (chains up to 8 hops; cycles abort). For **`namespace:command`** tokens, only the **namespace** segment is alias-expanded when the chain yields a **single** head token (no injected words), e.g. **`ka:hello`** → **`kickagent:hello`** if **`ka` → `kickagent`**. A bare token that expands only to **`kickagent`** (same one-word expansion) **enters [KA]** like **`shell kickagent`**. The sugar **`alias kickagent ka`** stores **`shell kickagent`**, so bare **`ka`** also enters [KA] without typing **`shell`**.
+
+
+| Input | Effect |
+| ----- | ------ |
+| `alias` | List all aliases |
+| `alias kickagent <shortcut>` | `<shortcut>` expands to **`shell kickagent`** (e.g. `alias kickagent ka`) |
+| `alias <shortcut> <tokens…>` | `<shortcut>` expands to the remaining words (e.g. `alias h kickagent:hello`) |
+| `alias --clear` | Remove **all** saved aliases (same as `unalias --all`) |
+| `unalias <shortcut>` | Remove that alias |
+| `unalias --all` or `unalias *` | Remove **all** saved aliases |
+
+Shortcuts cannot match an existing host command name (e.g. you cannot **`alias clear …`** — use **`alias c clear`** if you want a letter that runs clear).
+
+Inside **[KA]** shell, use **`:alias`** / **`:unalias`** to reach the host commands.
+
+`alias` and `unalias` cannot be registered as shortcut names. Expansions may not start with **`alias`** or **`unalias`**.
+
+### Kickagent shell (KA mode)
+
+**Naming:** **`kickagent:hello`** is the **subscriber** namespace (`kickagent:` + command). **`shell kickagent`** (or a **user alias** that expands to it) enters the **[KA]** prompt where bare names resolve only under `kickagent:`. Using a meta command literally named `kickagent` would overload that word — the host uses **`shell`** instead.
+
+When **[KA]** is on, **bare** names resolve **only** under the `kickagent:` namespace (no silent fallback to publicweb). For example, `hello` runs `kickagent:hello`. `clear` does **not** run publicweb `clear` unless kickagent registers `kickagent:clear`.
+
+From **outside** [KA]: **`shell kickagent`**, or a shortcut you defined (e.g. **`ka`** after **`alias kickagent ka`**).
+
+From **inside** [KA]: use **:** to reach publicweb commands (`:shell default`, `:exit`, `:help`, …).
+
+| Input | Effect |
+| ----- | ------ |
+| `hello` | Runs `kickagent:hello` if registered |
+| `clear` | Unknown unless `kickagent:clear` exists |
+| `:clear` | Runs publicweb `clear` |
+| `:help` | Runs publicweb `help` |
+| `:exit` | Leaves kickagent shell (host `exit`) |
+| `:shell default` | Same as `:exit` (host `shell` with args) |
+| `kickagent:hello` | Always works (any mode; explicit qualified subscriber name) |
+| `:kickagent:hello` | Same as `kickagent:hello` (host escape with full key) |
+
+`:exit` (and `:shell …`) are the general **escape to publicweb host commands** from inside `[KA]` mode.
+
+`kamMode` is persisted in localStorage (`kamMode` in UI settings). When active, the command line shows **`[KA] >`** and a green accent bar on the prompt row (and palette modal).
+
+Register kickagent-scoped commands with `registerKickagentCommand("hello", handler)` from `$lib/devConsole` or `$lib/kickagent/commands` — it registers the full name `kickagent:hello`.
 
 ## Refresh targets (the bridge between pages and commands)
 
@@ -132,6 +188,7 @@ Endpoints at [src/routes/api/klogs/+server.ts](../../src/routes/api/klogs/+serve
 ## Files
 
 - [src/lib/devConsole/state.svelte.ts](../../src/lib/devConsole/state.svelte.ts) — pane state, `klog*` API, batched persistence, hydration.
+- [src/lib/client/consoleUi.svelte.ts](../../src/lib/client/consoleUi.svelte.ts) — persisted console UI prefs (`commandAliases`, etc.).
 - [src/lib/devConsole/commands.ts](../../src/lib/devConsole/commands.ts) — registry, `runCommand`, `CommandOutcome`, built-ins.
 - [src/lib/devConsole/refresh.ts](../../src/lib/devConsole/refresh.ts) — refresh target registry.
 - [src/lib/devConsole/Palette.svelte](../../src/lib/devConsole/Palette.svelte) — Ctrl+/ modal.

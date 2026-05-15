@@ -2,7 +2,9 @@
 
 Audience: kickagent repo developer.
 
-Purpose: define the minimum package contract for kickagent as a library-first module that `publicweb` can import and wrap in the KAM console.
+Purpose: define the minimum **Phase 1** package contract for kickagent as a library-first module that `publicweb` can import and wrap in the KAM console.
+
+For the longer-term **subscriber platform** (manifest, ESM plugin, API jobs), see the kickagent repo [platform spec](../../../kickagent/docs/kickagent-platform-spec.md). publicweb host expectations: [publicweb-kickagent-consumer.md](publicweb-kickagent-consumer.md).
 
 ## Core decision
 
@@ -37,6 +39,8 @@ export interface KlogBroadcaster {
   error(msg: string): void;
 }
 ```
+
+publicweb defines a matching interface in `src/lib/devConsole/state.svelte.ts` for its logger shim. There is no shared types package yet—keep the shapes in sync manually when either side changes.
 
 ## helloWorld behavior
 

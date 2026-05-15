@@ -1,9 +1,30 @@
 <script lang="ts">
-  import { devConsole } from "./state.svelte";
+  import { onMount, tick } from "svelte";
+  import {
+    devConsole,
+    KAM_CONSOLE_FOCUS_INPUT_EVENT,
+  } from "./state.svelte";
   import { runCommand } from "./commands";
 
   let bodyEl: HTMLDivElement | undefined = $state();
   let inlineInput = $state("");
+  let inlineInputEl: HTMLInputElement | undefined = $state();
+
+  const promptPrefix = $derived(
+    devConsole.kickagentModeActive ? "[KA] >" : "›",
+  );
+
+  const promptAriaLabel = $derived(
+    devConsole.kickagentModeActive
+      ? "KAM command input, kickagent mode active"
+      : "KAM command input",
+  );
+
+  const placeholder = $derived(
+    devConsole.kickagentModeActive
+      ? "hello · :help · :exit"
+      : "help · console · clear · Ctrl+/ palette",
+  );
 
   $effect(() => {
     if (!bodyEl) return;
@@ -28,11 +49,26 @@
   function close() {
     devConsole.consoleOpen = false;
   }
+
+  onMount(() => {
+    function onFocusConsoleInput() {
+      void tick().then(() => inlineInputEl?.focus());
+    }
+    window.addEventListener(KAM_CONSOLE_FOCUS_INPUT_EVENT, onFocusConsoleInput);
+    return () =>
+      window.removeEventListener(
+        KAM_CONSOLE_FOCUS_INPUT_EVENT,
+        onFocusConsoleInput,
+      );
+  });
 </script>
 
 {#if devConsole.consoleOpen}
   <aside class="kamConsole" aria-label="KAM Console">
-    <header class="head">
+    <header
+      class="head"
+      class:head--kickagent={devConsole.kickagentModeActive}
+    >
       <span class="title">KAM Console</span>
       <button
         type="button"
@@ -61,11 +97,19 @@
       {/each}
     </div>
 
-    <form class="prompt" onsubmit={submit}>
-      <span class="caret" aria-hidden="true">›</span>
+    <form
+      class="prompt"
+      class:prompt--kickagent={devConsole.kickagentModeActive}
+      aria-label={promptAriaLabel}
+      onsubmit={submit}
+    >
+      <span class="caret" class:caret--kickagent={devConsole.kickagentModeActive} aria-hidden="true"
+        >{promptPrefix}</span
+      >
       <input
+        bind:this={inlineInputEl}
         bind:value={inlineInput}
-        placeholder="run a command (try: help, reset --all-parsed)"
+        {placeholder}
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
@@ -99,6 +143,11 @@
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid #1d2129;
     background: #0f1218;
+  }
+
+  .head--kickagent {
+    border-left: 3px solid #62d4a3;
+    background: #0f1512;
   }
 
   .title {
@@ -194,9 +243,20 @@
     background: #0f1218;
   }
 
+  .prompt--kickagent {
+    border-left: 3px solid #62d4a3;
+    background: #0f1512;
+  }
+
   .caret {
-    color: #62d4a3;
+    color: #9aa3b3;
     font-weight: 700;
+    white-space: pre;
+  }
+
+  .caret--kickagent {
+    color: #62d4a3;
+    letter-spacing: 0.04em;
   }
 
   .prompt input {

@@ -7,13 +7,41 @@
   let error = $state("");
   let inputEl: HTMLInputElement | undefined = $state();
 
+  const promptPrefix = $derived(
+    devConsole.kickagentModeActive ? "[KA] >" : "›",
+  );
+
+  const placeholder = $derived(
+    devConsole.kickagentModeActive
+      ? "hello · :help · :exit"
+      : "help · console · clear",
+  );
+
+  const formAriaLabel = $derived(
+    devConsole.kickagentModeActive
+      ? "KAM command palette, kickagent mode active"
+      : "KAM command palette",
+  );
+
   function isPaletteHotkey(e: KeyboardEvent): boolean {
     if (e.key !== "/") return false;
     return e.ctrlKey || e.metaKey;
   }
 
+  function isConsoleFocusHotkey(e: KeyboardEvent): boolean {
+    return (
+      e.code === "Backquote" && !e.ctrlKey && !e.metaKey && !e.altKey
+    );
+  }
+
   onMount(() => {
     function onKey(e: KeyboardEvent) {
+      if (e.repeat) return;
+      if (isConsoleFocusHotkey(e)) {
+        e.preventDefault();
+        devConsole.focusConsolePrompt();
+        return;
+      }
       if (isPaletteHotkey(e)) {
         e.preventDefault();
         devConsole.togglePalette();
@@ -63,19 +91,29 @@
   >
     <div
       class="modal"
+      class:modal--kickagent={devConsole.kickagentModeActive}
       role="dialog"
       tabindex="-1"
       aria-modal="true"
       aria-label="KAM command palette"
       onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => e.stopPropagation()}
     >
-      <form onsubmit={submit}>
+      <form
+        class="prompt"
+        class:prompt--kickagent={devConsole.kickagentModeActive}
+        aria-label={formAriaLabel}
+        onsubmit={submit}
+      >
+        <span
+          class="caret"
+          class:caret--kickagent={devConsole.kickagentModeActive}
+          aria-hidden="true">{promptPrefix}</span
+        >
         <input
           bind:this={inputEl}
           bind:value={input}
           type="text"
-          placeholder="command — try: reset --all-parsed"
+          {placeholder}
           autocomplete="off"
           autocorrect="off"
           autocapitalize="off"
@@ -85,7 +123,9 @@
       {#if error}
         <p class="error">{error}</p>
       {/if}
-      <p class="hint">enter to run · esc to close · ctrl+/ to toggle</p>
+      <p class="hint">
+        Enter to run · Esc or Ctrl+/ (⌘+/) to close · ` opens the KAM Console pane
+      </p>
     </div>
   </div>
 {/if}
@@ -113,7 +153,35 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
-  input {
+  .modal--kickagent {
+    border-left: 3px solid #62d4a3;
+  }
+
+  .prompt {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .prompt--kickagent {
+    padding-left: 0.15rem;
+  }
+
+  .caret {
+    color: #9aa3b3;
+    font-weight: 700;
+    white-space: pre;
+    font-size: 1rem;
+    padding: 0.55rem 0;
+  }
+
+  .caret--kickagent {
+    color: #62d4a3;
+    letter-spacing: 0.04em;
+  }
+
+  .prompt input {
     width: 100%;
     background: transparent;
     color: inherit;

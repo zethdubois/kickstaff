@@ -1,0 +1,44 @@
+# Cross-repo contracts (publicweb ↔ kickagent)
+
+Integration docs for the sibling **kickagent** package (`../kickagent`, `file:../kickagent` in `package.json`). Files in this folder describe the **boundary** between repos.
+
+## Naming rule
+
+Filename prefix = **audience** (who should read it), not which repo wrote the file.
+
+| Prefix | Audience | Question it answers |
+|--------|----------|---------------------|
+| `kickagent-*` | Developer in the **kickagent** repo | What must kickagent publish/implement? |
+| `publicweb-*` | Developer in **publicweb** | How does the host wire and consume kickagent? |
+
+## Start here (publicweb developers)
+
+1. [publicweb-kickagent-consumer.md](publicweb-kickagent-consumer.md) — **host/subscriber** guide (phases, security, what PW owns).
+2. [publicweb-hello-world.md](publicweb-hello-world.md) — Phase 1 hello wiring in this codebase.
+3. [../kam-console.md](../kam-console.md) — KAM console, kickagent mode, `[KA] >`.
+
+## Kickagent platform (kickagent repo)
+
+Manifest, ESM plugin, API jobs, and CI live in the **kickagent** repo (sibling checkout at `../kickagent`):
+
+- [kickagent/docs/kickagent-platform-spec.md](../../../kickagent/docs/kickagent-platform-spec.md)
+
+## Phase 1 package contract
+
+| Doc | Role |
+|-----|------|
+| [kickagent-essentials-spec.md](kickagent-essentials-spec.md) | Library-first npm contract (`helloWorld`, logger, CLI) |
+| [kickagent-hello-world.md](kickagent-hello-world.md) | First-milestone scaffolding in kickagent repo |
+
+## Architecture (evolving)
+
+```text
+Phase 1 (current)   npm import + manual registerKickagentCommand; shell kickagent (optional `alias kickagent ka`) to enter [KA]
+Phase 2 (planned)   S3 manifest + ESM plugin + kam:reload-kickagent on host
+Phase 3 (planned)   kickagent API for jobs; PW proxies SSE → klog
+```
+
+- **Host (publicweb):** KAM shell; enter with **`shell kickagent`** (or shortcut after **`alias kickagent ka`**); `:` escape for host commands inside [KA]; `kickagent:` prefix for subscriber commands only.
+- **Publisher (kickagent):** functions today; versioned plugin + API tomorrow.
+
+Details: [publicweb-kickagent-consumer.md](publicweb-kickagent-consumer.md) and kickagent [platform spec](../../../kickagent/docs/kickagent-platform-spec.md).

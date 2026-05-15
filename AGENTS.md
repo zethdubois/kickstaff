@@ -30,7 +30,8 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 - Current persisted shape includes:
   - `consoleOpen` (KAM console visibility)
   - `billsDefaultTab` (`transactions | documents | postings`)
-- Treat `UI_SETTINGS_VERSION` as the schema contract for localStorage.
+  - `kamMode` (`default | kickagent` — **[KA]** shell; enter with `shell kickagent`, or shortcut like `ka` via `alias kickagent ka`)
+- KAM **command aliases** (`alias` / `unalias`; `publicweb.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see [`docs/guides/kam-console.md`](docs/guides/kam-console.md).
   - When adding/removing/changing fields, bump `UI_SETTINGS_VERSION`.
   - Keep `DEFAULT_UI_SETTINGS` and validation (`isValidShape`) in sync with the new version.
 - `/tools/bills` uses this store to resolve the last selected Bills sub-tab; fallback default is the first tab (`transactions`).
@@ -56,7 +57,8 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 - **Repository standards** for Svelte structure and file headers: [`docs/sop-svelte-and-components.md`](docs/sop-svelte-and-components.md).
 - **Developer / agent guides** live under [`docs/guides/`](docs/guides/) — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Utility bill ETL scope** (email intake -> PDF parsing -> Appfolio CSV): [`docs/guides/utility-bill-etl-scope.md`](docs/guides/utility-bill-etl-scope.md).
-- **KAM dev console + command palette** (hotkey `Ctrl+/`, `klog`, commands, refresh targets, per-user klog persistence): [`docs/guides/kam-console.md`](docs/guides/kam-console.md).
+- **KAM dev console + command palette** (palette: `Ctrl+/`; focus console pane: `` ` `` (backtick); `klog`, commands, refresh targets, per-user klog persistence): [`docs/guides/kam-console.md`](docs/guides/kam-console.md).
+- **kickagent cross-repo contracts** (sibling package `../kickagent`): [`docs/guides/contracts/README.md`](docs/guides/contracts/README.md); publicweb host guide [`docs/guides/contracts/publicweb-kickagent-consumer.md`](docs/guides/contracts/publicweb-kickagent-consumer.md).
 - **Human setup (local dev):** [README.md → Development](README.md#development).
 - **Production operations (operators):** [`docs/guides/production-operations.md`](docs/guides/production-operations.md).
 - **Docs index:** [`docs/guides/README.md`](docs/guides/README.md).
