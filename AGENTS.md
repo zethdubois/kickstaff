@@ -57,7 +57,9 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 - **Developer / agent guides** live under [`docs/guides/`](docs/guides/) — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Utility bill ETL scope** (email intake -> PDF parsing -> Appfolio CSV): [`docs/guides/utility-bill-etl-scope.md`](docs/guides/utility-bill-etl-scope.md).
 - **KAM dev console + command palette** (hotkey `Ctrl+/`, `klog`, commands, refresh targets, per-user klog persistence): [`docs/guides/kam-console.md`](docs/guides/kam-console.md).
-- **Docs index:** [`docs/README.md`](docs/README.md).
+- **Human setup (local dev):** [README.md → Development](README.md#development).
+- **Production operations (operators):** [`docs/guides/production-operations.md`](docs/guides/production-operations.md).
+- **Docs index:** [`docs/guides/README.md`](docs/guides/README.md).
 
 ## Route doc order (required)
 

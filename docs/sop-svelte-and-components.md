@@ -4,7 +4,8 @@ This document is the **single standard** for structuring `.svelte` files, wiring
 
 **Audience:** Everything in `docs/guides/` is **developer / agent** reference (implementation, behavior, file pointers). These are **not** end-user support FAQs, and agents are not expected to treat them as customer-facing copy.
 
-- Repo-wide context: [AGENTS.md](../AGENTS.md)
+- Human entry (setup, local dev): [README.md](../README.md#development)
+- Repo-wide context (agents): [AGENTS.md](../AGENTS.md)
 - Environment reference: [../.env.example](../.env.example)
 
 ## File layout (all `.svelte` files)

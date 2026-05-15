@@ -1,5 +1,9 @@
 node_modules
 
+# pnpm-only — do not commit npm/yarn lockfiles
+package-lock.json
+yarn.lock
+
 .obsidian
 
 # Output

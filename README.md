@@ -1,69 +1,16 @@
 # publicweb — Kick Asset Management
 
-Rental marketing pages for three cities (CDA, Moscow, Sandpoint) plus an internal ops dashboard, built with SvelteKit and PostgreSQL.
+SvelteKit app for **rental marketing pages** (CDA, Moscow, Sandpoint) with optional vanity hosts, an authenticated **ops hub**, **admin** tooling (`/admin`), and internal **tools** (`/tools`).
 
-*Current as of May 12, 2026.*
+## Tech stack
 
----
+- **Framework:** SvelteKit (Node adapter)
+- **Package manager:** pnpm
+- **Database:** PostgreSQL via Drizzle ORM
+- **Session auth:** Cookie-based with bcrypt password hashing
+- **Hosting:** Railway
 
-## Admin dashboard
-
-The internal dashboard lives at **https://www.kickassetmanagement.com**.
-
-Login with an admin account to access:
-
-- **Rental links editor** (`/admin/rental-links`) — configure per-city link destinations, landing page content, and WYSIWYG design overrides for all three rental sites.
-- **WYSIWYG theme panel** — click the gear icon on any city rental page to edit nav column colors/fonts, landing column typography, and hero image positioning. Changes auto-save.
-- **User management** (`/admin/users`) — manage admin accounts.
-
-## Rental sites — public URLs
-
-Each city has a vanity domain (apex + www both work as of May 2026):
-
-| City | Apex | www |
-|---|---|---|
-| Moscow | moscowidahorental.com | www.moscowidahorental.com |
-| CDA | cda-rental.com | www.cda-rental.com |
-| Sandpoint | rent-sandpoint.com | www.rent-sandpoint.com |
-
-## Link destinations
-
-### Long-term rentals
-
-All three sites point to their respective **AppFolio property group** via the embedded listings iframe. The AppFolio property group names match the city labels:
-
-| Site | Property group |
-|---|---|
-| CDA | `CDA` |
-| Moscow | `Moscow` |
-| Sandpoint | `Sandpoint` |
-
-### Short-term rentals
-
-Each city links to an external booking platform (not AppFolio):
-
-- **Moscow:** `https://186374_1.holidayfuture.com/`
-- **Sandpoint:** `https://resnexus.com/resnexus/reservations/book/58E27E80-9578-47E9-BF60-DCB4CC22E962`
-- **CDA:** *none configured*
-
-### Resnexus iFrame restriction & new-tab workaround
-
-Resnexus.com does **not** allow its pages to be served inside a third-party iframe (X-Frame-Options: DENY). To handle this, the admin panel includes an **"Open in new tab"** checkbox per link (added May 2026):
-
-- When checked, clicking the tile opens the destination URL in a new browser tab (`target="_blank"`)
-- When unchecked, the URL loads inside the site's embedded iframe (default behavior for compatible URLs)
-
-This checkbox is available for short-term, long-term, apply, and contact links individually.
-
-### Tenant portal
-
-The tenant portal link always opens in a new tab and is shown at the bottom of the sidebar when configured.
-
-## Contact form
-
-The "Contact us" tile opens an inline modal with name/email/message fields. Submissions POST to `/api/rental-contact` and are delivered to the configured admin email.
-
-## Site structure
+## Repository layout
 
 ```
 src/
@@ -83,10 +30,89 @@ src/
 └── hooks.server.ts      # Auth gate + vanity host bypass
 ```
 
-## Tech stack
+## Development
 
-- **Framework:** SvelteKit (Node adapter)
-- **Package manager:** pnpm
-- **Database:** PostgreSQL via Drizzle ORM
-- **Session auth:** Cookie-based with bcrypt password hashing
-- **Hosting:** Railway
+### Prerequisites
+
+| Requirement | Notes |
+|-------------|--------|
+| **Node.js** | LTS 20+ or 22+ |
+| **pnpm** | Pinned in `package.json` (`packageManager`). Use [Corepack](https://pnpm.io/installation): `corepack enable` |
+| **PostgreSQL** | Local instance or remote URL (e.g. Railway `DATABASE_PUBLIC_URL`) |
+| **kickagent** | Sibling repo at `../kickagent` (required before `pnpm install`) |
+
+Do **not** use npm or yarn; do not commit `package-lock.json`.
+
+### First-time setup
+
+```bash
+pnpm install
+cp .env.example .env
+# Edit .env — at minimum DATABASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD for seed
+pnpm db:migrate
+pnpm seed:admin
+```
+
+**Database URL** — local example: `postgresql://USER:PASSWORD@localhost:5432/publicweb` (create the DB first). After pulling migrations, run `pnpm db:migrate` again.
+
+**Admin seed** — `pnpm seed:admin` creates the user from `ADMIN_EMAIL` / `ADMIN_PASSWORD`; sign in at `/login`. List users: `pnpm list:users`.
+
+Full environment reference: [`.env.example`](.env.example).
+
+### Run locally
+
+```bash
+pnpm dev
+```
+
+- **URL:** [http://localhost:5000](http://localhost:5000) (port `5000` in `vite.config.ts`)
+- Restart the dev server after any `.env` change
+
+| URL | Purpose |
+|-----|---------|
+| `http://localhost:5000/` | Ops hub (requires login) |
+| `http://localhost:5000/login` | Sign in |
+| `http://localhost:5000/cda`, `/mos`, `/spt` | City rental pages |
+| `http://localhost:5000/admin/rental-links` | Rental links editor |
+| `http://localhost:5000/tools/bills` | Utility bills (authenticated) |
+
+### Common commands
+
+| Command | Purpose |
+|---------|---------|
+| `pnpm dev` | Dev server |
+| `pnpm build` | Production build |
+| `pnpm start` | Run production build |
+| `pnpm check` | Typecheck / Svelte check |
+| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:studio` | Drizzle Studio |
+| `pnpm seed:admin` | Create/update seed admin |
+| `pnpm list:users` | List DB users |
+| `pnpm run env:vanity` | Print vanity host env |
+
+### Optional local setup
+
+- **Vanity hosts** — set `PUBLIC_VANITY_HOST_*` in `.env` (e.g. `PUBLIC_VANITY_HOST_MOS=moscow.localhost`), run `pnpm run env:vanity`, open `http://moscow.localhost:5000/`
+- **Mail** — `MAIL_DEV_ONLY=true` logs mail to the console; otherwise configure `SMTP_*` in `.env`
+- **Agent impersonation** — non-production only: set `AGENT_EMAIL`, visit `http://localhost:5000/?as_agent=1`
+- **Utility bills S3** — set `UTILITY_BILL_S3_*` in `.env` when working on `/tools/bills` storage
+
+### Troubleshooting
+
+| Symptom | Check |
+|---------|--------|
+| `pnpm install` fails on `kickagent` | `../kickagent` exists |
+| Login 500 / DATABASE_URL | `.env`, Postgres up, `pnpm db:migrate` |
+| Port in use | Free port `5000` or change `vite.config.ts` |
+| Vanity host wrong page | `pnpm run env:vanity`; hostname matches env |
+| Stale config | Restart `pnpm dev` after `.env` edits |
+
+## Documentation
+
+- **[AGENTS.md](AGENTS.md)** — Cursor agents and contributors: conventions, env summary, route-doc pipeline, Svelte 5 runes
+- **[docs/guides/README.md](docs/guides/README.md)** — index of route architecture, admin dev guides, ETL, KAM console
+- **[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)** — Svelte file headers and guide naming
+
+## Production
+
+Live ops hub: **https://www.kickassetmanagement.com**. Operator guide (vanity domains, AppFolio links, admin workflows): **[docs/guides/production-operations.md](docs/guides/production-operations.md)**.
