@@ -3,6 +3,7 @@ import type {
   KickagentRegistry,
   CommandHandler as KickagentCommandHandler,
 } from "kickagent";
+import { env } from "$env/dynamic/public";
 
 import { createKlogBroadcaster } from "$lib/devConsole/state.svelte";
 import {
@@ -89,8 +90,7 @@ export async function reloadKickagentPluginFromManifest(options?: {
   force?: boolean;
 }): Promise<ReloadKickagentResult> {
   const force = options?.force === true;
-  const manifestUrlRaw =
-    import.meta.env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim() ?? "";
+  const manifestUrlRaw = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim() ?? "";
 
   if (!manifestUrlRaw) {
     return {

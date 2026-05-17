@@ -55,7 +55,7 @@
     if (lastKickagentBootUserId === user.id) return;
     lastKickagentBootUserId = user.id;
 
-    const manifestUrl = import.meta.env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
+    const manifestUrl = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
     if (manifestUrl) {
       void reloadKickagentPluginFromManifest({ force: true }).then((r) => {
         if (r.ok) {
