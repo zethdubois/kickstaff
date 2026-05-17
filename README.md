@@ -38,7 +38,7 @@ src/
 |-------------|--------|
 | **Node.js** | LTS 20+ or 22+ |
 | **pnpm** | Pinned in `package.json` (`packageManager`). Use [Corepack](https://pnpm.io/installation): `corepack enable` |
-| **Docker** | Engine + [Compose](https://docs.docker.com/compose/install/) (`docker compose` or `docker-compose`; Ubuntu: `sudo apt install docker-compose-v2`) |
+| **Docker** | Engine required; Compose optional (`pnpm db:up` falls back to `docker run`). Install Compose: `sudo apt install docker-compose-v2` |
 | **PostgreSQL** | Prod URL in `DATABASE_URL`; local dev uses `DATABASE_URL_DEV` |
 | **kickagent** | Sibling repo at `../kickagent` (required before `pnpm install`) |
 
@@ -55,7 +55,15 @@ pnpm db:migrate
 pnpm seed:admin
 ```
 
-**Database** — local dev uses Docker Postgres (`DATABASE_URL_DEV`, default in the app). Production deploy uses `DATABASE_URL` only. After pulling migrations, run `pnpm db:migrate` again. Check active target: `pnpm db:status` or KAM `db status`.
+**Database** — local dev uses Docker Postgres on **host port `5043`** (`DATABASE_URL_DEV` in `.env`; container listens on 5432 internally). Part of the KAM **50xx** port family (see kickdesk `docs/DEV_PORTS.md`). Production deploy uses `DATABASE_URL` only. After pulling migrations, run `pnpm db:migrate` again. Check active target: `pnpm db:status` or KAM `db status`.
+
+### Dev ports (50xx family)
+
+| Role | Port |
+|------|------|
+| HTTP (Vite) | 5000 |
+| Postgres (host) | 5043 |
+| kickagent manifest (sibling) | 7099 |
 
 **Admin seed** — `pnpm seed:admin` creates the user from `ADMIN_EMAIL` / `ADMIN_PASSWORD`; sign in at `/login`. List users: `pnpm list:users`.
 
@@ -109,7 +117,8 @@ pnpm dev
 |---------|--------|
 | `pnpm install` fails on `kickagent` | `../kickagent` exists |
 | `ERR_MODULE_NOT_FOUND` … `kickagent/dist/plugin.js` | In sibling repo: `pnpm build`. Dependency is `link:../kickagent`; run `pnpm install` if lock/package.json changed. Without sibling checkout both repos fail at install — expected |
-| Login 500 / DATABASE_URL | `.env`, Postgres up, `pnpm db:migrate` |
+| Login 500 / DATABASE_URL | `.env`, `pnpm db:up`, `DATABASE_URL_DEV` uses port **5043**, `pnpm db:migrate` |
+| Port 5432 already in use | Dev DB uses **5043** — match `DATABASE_URL_DEV` in `.env` to `.env.example` |
 | Port in use | Free port `5000` or change `vite.config.ts` |
 | Vanity host wrong page | `pnpm run env:vanity`; hostname matches env |
 | Stale config | Restart `pnpm dev` after `.env` edits |

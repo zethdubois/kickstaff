@@ -18,6 +18,7 @@
     "db:status": "tsx scripts/db-status.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/drizzle-migrate.ts",
+    "db:migrate:status": "tsx scripts/migrate-status.ts",
     "db:migrate:prod": "tsx scripts/drizzle-migrate.ts prod",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",

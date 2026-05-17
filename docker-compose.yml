@@ -1,8 +1,9 @@
+# Host port 5043 — KAM 50xx family (+43 Postgres slot). Container still listens on 5432 inside.
 services:
   postgres:
     image: postgres:16
     ports:
-      - "5432:5432"
+      - "5043:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

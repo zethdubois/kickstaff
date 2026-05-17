@@ -50,7 +50,7 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
 ## Database
 
-- **Local dev:** `pnpm db:up` (Docker Postgres), `DATABASE_URL_DEV` in `.env`; app defaults to dev. **Prod:** `DATABASE_URL` on Railway only.
+- **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env` (e.g. `localhost:5043/publicweb_dev`); app defaults to dev. **Prod:** `DATABASE_URL` on Railway only. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
 - Apply migrations after pulling: `pnpm db:migrate` (dev). `pnpm db:migrate:prod` hits production — use with care.
 - First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`, `ADMIN_PASSWORD`). Active target: `pnpm db:status` or KAM `db status`.
 - Super-only runtime switch (local dev): KAM `db use prod` / `db use dev` — see [`docs/guides/kam-console.md`](docs/guides/kam-console.md).

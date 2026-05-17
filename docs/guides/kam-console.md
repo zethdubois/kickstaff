@@ -93,7 +93,7 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 
 ### Database routing (local dev)
 
-- **Default:** app and CLI use `DATABASE_URL_DEV` (Docker Postgres from `pnpm db:up`) when set.
+- **Default:** app and CLI use `DATABASE_URL_DEV` (Docker Postgres from `pnpm db:up`, host port **5043**) when set.
 - **Console header:** shows `dev` or `prod` badge with full label on hover.
 - **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`publicweb_db_target`).
 - **Production:** switching disabled; only `DATABASE_URL` is used.
