@@ -22,7 +22,12 @@ declare module '$env/dynamic/public' {
 		PUBLIC_VANITY_HOST_CDA?: string;
 		PUBLIC_VANITY_HOST_MOS?: string;
 		PUBLIC_VANITY_HOST_SPT?: string;
+		PUBLIC_KICKAGENT_MANIFEST_URL?: string;
 	};
+}
+
+interface ImportMetaEnv {
+	readonly PUBLIC_KICKAGENT_MANIFEST_URL?: string;
 }
 
 export {};

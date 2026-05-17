@@ -121,7 +121,7 @@ publicweb depends on the sibling checkout:
 ```json
 {
   "dependencies": {
-    "kickagent": "file:../kickagent"
+    "kickagent": "link:../kickagent"
   }
 }
 ```

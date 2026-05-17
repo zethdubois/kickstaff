@@ -102,6 +102,7 @@ pnpm dev
 | Symptom | Check |
 |---------|--------|
 | `pnpm install` fails on `kickagent` | `../kickagent` exists |
+| `ERR_MODULE_NOT_FOUND` … `kickagent/dist/plugin.js` | In sibling repo: `pnpm build`. Dependency is `link:../kickagent`; run `pnpm install` if lock/package.json changed. Without sibling checkout both repos fail at install — expected |
 | Login 500 / DATABASE_URL | `.env`, Postgres up, `pnpm db:migrate` |
 | Port in use | Free port `5000` or change `vite.config.ts` |
 | Vanity host wrong page | `pnpm run env:vanity`; hostname matches env |

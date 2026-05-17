@@ -16,6 +16,7 @@ export {
 export {
   registerCommand,
   registerKickagentCommand,
+  clearKickagentCommands,
   runCommand,
   listCommands,
   listKickagentShortNames,

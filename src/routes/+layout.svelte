@@ -9,8 +9,15 @@
   import { vanityPathForRootHost } from "$lib/vanityHosts";
   import Palette from "$lib/devConsole/Palette.svelte";
   import KamConsole from "$lib/devConsole/KamConsole.svelte";
-  import { hydrateFromServer } from "$lib/devConsole/state.svelte";
+  import {
+    hydrateFromServer,
+    klogError,
+    klogInfo,
+  } from "$lib/devConsole/state.svelte";
+  import { browser } from "$app/environment";
   import { registerKickagentHelloCommand } from "$lib/kickagent/registerHelloCommand";
+  import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
+  import { setKickagentPluginSessionUser } from "$lib/kickagent/pluginSession";
 
   let { children } = $props();
 
@@ -31,6 +38,36 @@
   let useExternalLink = $state(false);
   let rentalMenuOpen = $state(false);
   let userMenuOpen = $state(false);
+  let lastKickagentBootUserId = $state<string | null>(null);
+
+  $effect(() => {
+    if (!browser) return;
+    const user = page.data.user;
+
+    if (!user || user.role !== "admin") {
+      setKickagentPluginSessionUser(null);
+      lastKickagentBootUserId = null;
+      return;
+    }
+
+    setKickagentPluginSessionUser({ id: user.id, email: user.email });
+
+    if (lastKickagentBootUserId === user.id) return;
+    lastKickagentBootUserId = user.id;
+
+    const manifestUrl = import.meta.env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
+    if (manifestUrl) {
+      void reloadKickagentPluginFromManifest({ force: true }).then((r) => {
+        if (r.ok) {
+          klogInfo(`kickagent ${r.version} loaded from manifest`);
+        } else {
+          klogError(`kickagent manifest load: ${r.error}`);
+        }
+      });
+    } else {
+      registerKickagentHelloCommand(user);
+    }
+  });
 
   function vanityHostForSlug(slug: string): string | undefined {
     if (slug === "cda") return env.PUBLIC_VANITY_HOST_CDA?.trim() || undefined;
@@ -104,9 +141,8 @@
     document.addEventListener("pointerdown", onDocPointerDown);
     document.addEventListener("keydown", onDocKeyDown);
 
-    if (isAdmin) {
+    if (page.data.user?.role === "admin") {
       void hydrateFromServer();
-      registerKickagentHelloCommand(page.data.user);
     }
 
     return () => {

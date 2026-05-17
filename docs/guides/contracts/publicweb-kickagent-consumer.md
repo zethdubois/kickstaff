@@ -19,24 +19,27 @@ publicweb does **not** design kickagent’s LLM pipelines or batch workers here;
 
 ## Integration phases
 
-### Phase 1 — Static package (current)
+### Phase 1 — Static package (default when manifest URL unset)
 
-- Dependency: `"kickagent": "file:../kickagent"` in [package.json](../../../package.json).
+- Dependency: `"kickagent": "link:../kickagent"` in [package.json](../../../package.json) (symlinks the sibling repo so `dist/` updates immediately after `pnpm build` in kickagent).
+
 - Each command is wired in TypeScript, e.g. [registerHelloCommand.ts](../../../src/lib/kickagent/registerHelloCommand.ts).
 - Uses `registerKickagentCommand("hello", handler)` → full name `kickagent:hello`.
 - Handlers call imported functions from the `kickagent` package directly.
 - **Deploy:** bump kickagent + rebuild/redeploy publicweb to pick up new commands.
 
-### Phase 2 — Dynamic plugin load (planned)
+When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is set, layout bootstraps **Phase 2** instead (see below) and does **not** register the static hello handler on first load.
 
-- kickagent CI publishes `manifest.json` + ESM to a pinned CDN/S3 origin.
-- publicweb host command **`kam:reload-kickagent`** (or auto-poll manifest hash):
-  - Fetch manifest over HTTPS.
-  - Verify `sha256` (and pinned origin).
-  - `import(manifest.moduleUrl)`.
-  - Call plugin `register(registry, ctx)`.
-  - **Unregister** previous kickagent-scoped handlers on success.
-- **Deploy:** new kickagent commands without full publicweb rebuild (client/plugin artifact only).
+### Phase 2 — Dynamic plugin load (implemented for client-side demo)
+
+**Kickagent entry doc:** [publicweb-integration.md](../../../kickagent/docs/publicweb-integration.md) · **Host steps:** [plugin-manifest-and-reload.md](../../../kickagent/docs/guides/plugin-manifest-and-reload.md).
+
+- Set **`PUBLIC_KICKAGENT_MANIFEST_URL`** (e.g. `http://127.0.0.1:7099/manifest.json` when kickagent runs `serve-publish` on 7099). Documented in [`.env.example`](../../../.env.example).
+- On **admin** login, publicweb runs [`loadPluginFromManifest.ts`](../../../src/lib/kickagent/loadPluginFromManifest.ts): fetch manifest → fetch module bytes → verify **`sha256`** → dynamic `import()` via blob URL → **`register(registry, ctx)`** from the bundle → wraps handlers with current session (`pluginSession`).
+- Host command **`kam:reload-kickagent`** — `clearKickagentCommands()`, then the same load flow (**forced**, reapplies same version).
+- **Deploy:** new kickagent artifacts without bumping publicweb’s `kickagent` npm dependency (reload picks up new manifest/module URLs).
+
+Production hardening (HTTPS-only module origins beyond localhost, server-side execution, auto-poll) remains optional follow-up.
 
 ### Phase 3 — Remote jobs (planned)
 
@@ -58,9 +61,11 @@ These are **host** concerns — not registered by the kickagent plugin:
 | Command registry | [commands.ts](../../../src/lib/devConsole/commands.ts) |
 | Kickagent mode (`[KA] >`, prefix resolution) | [commands.ts](../../../src/lib/devConsole/commands.ts), [kam-console.md](../kam-console.md) |
 | Meta: `shell`, `exit` (`:shell default`, `:exit` from inside KA shell) | Built-in host commands |
-| Meta: `alias` / `unalias` (`ka` ↔ `shell kickagent` via `alias kickagent ka`) | Persisted in [`consoleUi.svelte.ts`](../../../src/lib/client/consoleUi.svelte.ts); see [kam-console.md](../kam-console.md) |
 | Meta: `help`, `console`, `clear`, `echo`, `reset` | Built-in host commands |
-| Admin-only registration | [+layout.svelte](../../../src/routes/+layout.svelte) `onMount` when `isAdmin` |
+| Meta: `alias` / `unalias` (`ka` ↔ `shell kickagent` via `alias kickagent ka`) | Persisted in [`consoleUi.svelte.ts`](../../../src/lib/client/consoleUi.svelte.ts); see [kam-console.md](../kam-console.md) |
+| Meta: `kam:reload-kickagent` | Phase 2 reload ([commands.ts](../../../src/lib/devConsole/commands.ts)); requires manifest URL |
+| Phase 2 manifest bootstrap | [loadPluginFromManifest.ts](../../../src/lib/kickagent/loadPluginFromManifest.ts), [pluginSession.ts](../../../src/lib/kickagent/pluginSession.ts); [+layout.svelte](../../../src/routes/+layout.svelte) (`$effect` when admin + `PUBLIC_KICKAGENT_MANIFEST_URL`) |
+| Admin-only registration | [+layout.svelte](../../../src/routes/+layout.svelte): hydrate + kickagent bootstrap when `isAdmin` |
 | klog persistence | `/api/klogs`, [state.svelte.ts](../../../src/lib/devConsole/state.svelte.ts) |
 | `kamMode` persistence | [uiSettings.svelte.ts](../../../src/lib/client/uiSettings.svelte.ts) |
 
@@ -94,11 +99,10 @@ Helper re-export: [src/lib/kickagent/commands.ts](../../../src/lib/kickagent/com
 - No import of publicweb or SvelteKit in kickagent.
 - CLI for standalone testing.
 
-### Soon (Phase 2)
+### Manifest plugin (Phase 2 — host load)
 
-- Versioned **`manifest.json`** + **`kickagent-{version}.esm.js`** at a trusted URL.
-- Default export or named export: `register(registry, ctx)`.
-- Command metadata in manifest for richer `help` (optional).
+- **`manifest.json`** + ESM bundle at configured URL; **`register(registry, ctx)`** in the bundle.
+- publicweb verifies **`sha256`** and loads in the browser (demo); production may move execution server-side later.
 
 ### Later (Phase 3)
 
@@ -107,18 +111,25 @@ Helper re-export: [src/lib/kickagent/commands.ts](../../../src/lib/kickagent/com
 
 ---
 
-## Planned publicweb work (not all implemented)
+## Planned publicweb work (remaining)
 
 | Item | Purpose |
 |------|---------|
-| `unregisterCommand` / `clearKickagentCommands()` | Safe reload without duplicate handlers |
-| `kam:reload-kickagent` | Admin meta-command to load manifest + plugin |
-| Env: `PUBLIC_KICKAGENT_MANIFEST_URL` | Per-environment manifest pointer |
-| Optional auto-poll | Compare manifest hash on interval; klog when updated |
+| Optional auto-poll manifest hash | klog when updated |
 | `/api/kickagent/jobs` + SSE | Phase 3 proxy to KA API |
-| Single loader module | Replace per-command files with one `loadKickagentPlugin()` |
+| Server-side plugin execution | Align with kickagent security guidance for production |
 
-Track implementation against Phase 2/3 in this repo; do not duplicate KA CI/S3 docs here once relocated.
+<details>
+<summary>Implemented (was “planned”)</summary>
+
+- `clearKickagentCommands()` — [commands.ts](../../../src/lib/devConsole/commands.ts)
+- `kam:reload-kickagent` — same file
+- Env: `PUBLIC_KICKAGENT_MANIFEST_URL` — [.env.example](../../../.env.example)
+- Loader module — [loadPluginFromManifest.ts](../../../src/lib/kickagent/loadPluginFromManifest.ts)
+
+</details>
+
+Track Phase 3 and production hardening in this repo; publisher-side truth stays in kickagent.
 
 ---
 
@@ -140,11 +151,17 @@ Track implementation against Phase 2/3 in this repo; do not duplicate KA CI/S3 d
 2. `pnpm install` in publicweb.
 3. Sign in as admin, **`shell kickagent`** (or define **`alias kickagent ka`** once, then **`ka`**), run **`hello`** or **`kickagent:hello`**.
 
-### After Phase 2
+### After Phase 2 (local)
 
-1. kickagent CI publishes manifest to dev/staging/prod URL.
+1. In kickagent: `pnpm build`, `publish` + `serve-publish` (see kickagent [plugin-manifest-and-reload.md](../../../kickagent/docs/guides/plugin-manifest-and-reload.md)).
+2. In publicweb `.env`: `PUBLIC_KICKAGENT_MANIFEST_URL=http://127.0.0.1:7099/manifest.json` (restart dev server).
+3. Sign in as admin — plugin loads from manifest; use **`kam:reload-kickagent`** after republishing.
+
+### After Phase 2 (production)
+
+1. kickagent CI publishes manifest + bundle to your CDN/origin.
 2. Set `PUBLIC_KICKAGENT_MANIFEST_URL` in publicweb `.env`.
-3. In KAM: `kam:reload-kickagent` (or reload on login if auto-poll enabled).
+3. In KAM: **`kam:reload-kickagent`** when you want to pin a new artifact (or after login if you add auto-poll later).
 
 ---
 

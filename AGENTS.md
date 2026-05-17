@@ -44,6 +44,7 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 - **Seed script only:** `ADMIN_EMAIL`, `ADMIN_PASSWORD` (password not read by the running app after seeding).
 - **Mail:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`; optional `SMTP_SECURE`; `ADMIN_EMAIL` as From; optional `MAIL_DEV_ONLY=true` to skip SMTP and log only; optional `PUBLIC_BASE_URL` for absolute links in emails.
 - **Vanity hosts:** `PUBLIC_VANITY_HOST_CDA`, `PUBLIC_VANITY_HOST_MOS`, `PUBLIC_VANITY_HOST_SPT` as documented there.
+- **Kickagent Phase 2 (optional):** `PUBLIC_KICKAGENT_MANIFEST_URL` — URL of `manifest.json` for browser plugin load; unset keeps Phase 1 static `registerKickagentHelloCommand` only ([`.env.example`](.env.example)).
 
 Copy `.env.example` to `.env` and fill values; never commit real secrets.
 

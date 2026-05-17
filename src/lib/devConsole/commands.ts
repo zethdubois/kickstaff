@@ -68,6 +68,15 @@ export function registerKickagentCommand(
   registerCommand(`${KICKAGENT_NS}${shortName}`, handler);
 }
 
+/** Remove all `kickagent:*` handlers (before Phase 2 reload). */
+export function clearKickagentCommands(): void {
+  for (const key of [...commands.keys()]) {
+    if (key.startsWith(KICKAGENT_NS)) {
+      commands.delete(key);
+    }
+  }
+}
+
 export function listCommands(): string[] {
   return [...commands.keys()].sort();
 }
@@ -469,5 +478,19 @@ registerCommand("reset", async (args): Promise<CommandOutcome> => {
   return {
     refresh: ["bills.recent-docs"],
     log: `reset complete for ${scope} — ${safeCount} document(s) moved parsed -> received`,
+  };
+});
+
+registerCommand("kam:reload-kickagent", async (): Promise<CommandOutcome> => {
+  const { reloadKickagentPluginFromManifest } = await import(
+    "$lib/kickagent/loadPluginFromManifest"
+  );
+  const r = await reloadKickagentPluginFromManifest({ force: true });
+  if (!r.ok) {
+    throw new Error(r.error);
+  }
+  return {
+    log: `kickagent plugin reloaded (manifest v${r.version})`,
+    level: "info",
   };
 });

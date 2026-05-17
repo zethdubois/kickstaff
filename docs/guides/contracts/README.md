@@ -1,6 +1,6 @@
 # Cross-repo contracts (publicweb ↔ kickagent)
 
-Integration docs for the sibling **kickagent** package (`../kickagent`, `file:../kickagent` in `package.json`). Files in this folder describe the **boundary** between repos.
+Integration docs for the sibling **kickagent** package (`../kickagent`, `link:../kickagent` in `package.json`). Files in this folder describe the **boundary** between repos.
 
 ## Naming rule
 
@@ -21,6 +21,8 @@ Filename prefix = **audience** (who should read it), not which repo wrote the fi
 
 Manifest, ESM plugin, API jobs, and CI live in the **kickagent** repo (sibling checkout at `../kickagent`):
 
+- [kickagent/docs/publicweb-integration.md](../../../kickagent/docs/publicweb-integration.md) — **entry point for publicweb** engineers (links to manifest reload + platform spec).
+- [kickagent/docs/guides/plugin-manifest-and-reload.md](../../../kickagent/docs/guides/plugin-manifest-and-reload.md) — concrete host load steps.
 - [kickagent/docs/kickagent-platform-spec.md](../../../kickagent/docs/kickagent-platform-spec.md)
 
 ## Phase 1 package contract
@@ -33,8 +35,8 @@ Manifest, ESM plugin, API jobs, and CI live in the **kickagent** repo (sibling c
 ## Architecture (evolving)
 
 ```text
-Phase 1 (current)   npm import + manual registerKickagentCommand; shell kickagent (optional `alias kickagent ka`) to enter [KA]
-Phase 2 (planned)   S3 manifest + ESM plugin + kam:reload-kickagent on host
+Phase 1   npm import + manual registerKickagentCommand when no manifest URL; shell kickagent (optional alias) to enter [KA]
+Phase 2   PUBLIC_KICKAGENT_MANIFEST_URL + browser load + kam:reload-kickagent; bump artifact on kickagent side + reload
 Phase 3 (planned)   kickagent API for jobs; PW proxies SSE → klog
 ```
 

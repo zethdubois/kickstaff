@@ -86,11 +86,11 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
 | `alias` / `unalias` | Persisted command aliases (`publicweb.consoleUi` in localStorage). See **Command aliases** below. |
 | `reset`     | `reset <vendor>` or `reset --all-parsed` — reset matching parsed bill documents back to `received` and clear parsed fields; then refresh `bills.recent-docs`. |
+| `kam:reload-kickagent` | Phase 2: refetch `PUBLIC_KICKAGENT_MANIFEST_URL`, verify `sha256`, reload plugin (`kickagent:*` commands). No-op message if env unset. |
 
 ### Command aliases
 
 Aliases rewrite the **first token** before resolution (chains up to 8 hops; cycles abort). For **`namespace:command`** tokens, only the **namespace** segment is alias-expanded when the chain yields a **single** head token (no injected words), e.g. **`ka:hello`** → **`kickagent:hello`** if **`ka` → `kickagent`**. A bare token that expands only to **`kickagent`** (same one-word expansion) **enters [KA]** like **`shell kickagent`**. The sugar **`alias kickagent ka`** stores **`shell kickagent`**, so bare **`ka`** also enters [KA] without typing **`shell`**.
-
 
 | Input | Effect |
 | ----- | ------ |
@@ -193,5 +193,7 @@ Endpoints at [src/routes/api/klogs/+server.ts](../../src/routes/api/klogs/+serve
 - [src/lib/devConsole/refresh.ts](../../src/lib/devConsole/refresh.ts) — refresh target registry.
 - [src/lib/devConsole/Palette.svelte](../../src/lib/devConsole/Palette.svelte) — Ctrl+/ modal.
 - [src/lib/devConsole/KamConsole.svelte](../../src/lib/devConsole/KamConsole.svelte) — left-side pane.
-- [src/routes/+layout.svelte](../../src/routes/+layout.svelte) — mounts both surfaces; calls `hydrateFromServer()` for admins on mount.
+- [src/routes/+layout.svelte](../../src/routes/+layout.svelte) — mounts both surfaces; admin `hydrateFromServer()` on mount + kickagent Phase 1/2 bootstrap (`$effect`).
+- [src/lib/kickagent/loadPluginFromManifest.ts](../../src/lib/kickagent/loadPluginFromManifest.ts) — Phase 2 manifest fetch, `sha256`, dynamic `import`, `register(registry, ctx)`.
+- [src/lib/kickagent/pluginSession.ts](../../src/lib/kickagent/pluginSession.ts) — current user snapshot for plugin `KickagentHostContext`.
 - [src/routes/api/klogs/+server.ts](../../src/routes/api/klogs/+server.ts) — persistence endpoints.
