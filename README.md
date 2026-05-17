@@ -38,7 +38,8 @@ src/
 |-------------|--------|
 | **Node.js** | LTS 20+ or 22+ |
 | **pnpm** | Pinned in `package.json` (`packageManager`). Use [Corepack](https://pnpm.io/installation): `corepack enable` |
-| **PostgreSQL** | Local instance or remote URL (e.g. Railway `DATABASE_PUBLIC_URL`) |
+| **Docker** | Engine + [Compose](https://docs.docker.com/compose/install/) (`docker compose` or `docker-compose`; Ubuntu: `sudo apt install docker-compose-v2`) |
+| **PostgreSQL** | Prod URL in `DATABASE_URL`; local dev uses `DATABASE_URL_DEV` |
 | **kickagent** | Sibling repo at `../kickagent` (required before `pnpm install`) |
 
 Do **not** use npm or yarn; do not commit `package-lock.json`.
@@ -48,12 +49,13 @@ Do **not** use npm or yarn; do not commit `package-lock.json`.
 ```bash
 pnpm install
 cp .env.example .env
-# Edit .env — at minimum DATABASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD for seed
+# Edit .env — DATABASE_URL (prod), DATABASE_URL_DEV (local), ADMIN_EMAIL, ADMIN_PASSWORD
+pnpm db:up
 pnpm db:migrate
 pnpm seed:admin
 ```
 
-**Database URL** — local example: `postgresql://USER:PASSWORD@localhost:5432/publicweb` (create the DB first). After pulling migrations, run `pnpm db:migrate` again.
+**Database** — local dev uses Docker Postgres (`DATABASE_URL_DEV`, default in the app). Production deploy uses `DATABASE_URL` only. After pulling migrations, run `pnpm db:migrate` again. Check active target: `pnpm db:status` or KAM `db status`.
 
 **Admin seed** — `pnpm seed:admin` creates the user from `ADMIN_EMAIL` / `ADMIN_PASSWORD`; sign in at `/login`. List users: `pnpm list:users`.
 
@@ -84,7 +86,11 @@ pnpm dev
 | `pnpm build` | Production build |
 | `pnpm start` | Run production build |
 | `pnpm check` | Typecheck / Svelte check |
-| `pnpm db:migrate` | Apply migrations |
+| `pnpm db:up` | Start local Docker Postgres |
+| `pnpm db:down` | Stop local Docker Postgres |
+| `pnpm db:status` | Show active DB target + connectivity |
+| `pnpm db:migrate` | Apply migrations (dev DB by default) |
+| `pnpm db:migrate:prod` | Apply migrations to prod URL (dangerous) |
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm seed:admin` | Create/update seed admin |
 | `pnpm list:users` | List DB users |

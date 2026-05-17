@@ -69,7 +69,18 @@
       class="head"
       class:head--kickagent={devConsole.kickagentModeActive}
     >
-      <span class="title">KAM Console</span>
+      <div class="headMain">
+        <span class="title">KAM Console</span>
+        {#if devConsole.dbStatus}
+          <span
+            class="dbBadge"
+            class:dbBadge--prod={devConsole.dbStatus.target === "prod"}
+            title={devConsole.dbStatus.label}
+          >
+            {devConsole.dbStatus.target}
+          </span>
+        {/if}
+      </div>
       <button
         type="button"
         class="close"
@@ -150,12 +161,41 @@
     background: #0f1512;
   }
 
+  .headMain {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
   .title {
     font-weight: 600;
     letter-spacing: 0.06em;
     font-size: 0.78rem;
     color: #9aa3b3;
     text-transform: uppercase;
+  }
+
+  .dbBadge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.4rem;
+    border-radius: 4px;
+    background: #1a2a3d;
+    color: #8ab4f8;
+    border: 1px solid #2a4a6a;
+    max-width: 12rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dbBadge--prod {
+    background: #3a2218;
+    color: #f0a060;
+    border-color: #6a4020;
   }
 
   .close {

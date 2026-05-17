@@ -4,7 +4,7 @@
  * Usage (from repo root, with .env or env vars):
  *   pnpm seed:admin
  *
- * Requires: DATABASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD
+ * Requires: DATABASE_URL_DEV or DATABASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD
  */
 import 'dotenv/config';
 import { hash } from '@node-rs/argon2';
@@ -12,18 +12,21 @@ import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from '../src/lib/server/schema.ts';
+import {
+	getCliDbDisplayInfo,
+	getDefaultCliDbTarget,
+	resolveCliConnectionString
+} from './lib/dbCli.ts';
 
 const { users } = schema;
 
 async function main() {
-	const url = process.env.DATABASE_URL;
+	const target = getDefaultCliDbTarget();
+	const url = resolveCliConnectionString(target);
 	const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 	const password = process.env.ADMIN_PASSWORD;
 
-	if (!url) {
-		console.error('DATABASE_URL is required');
-		process.exit(1);
-	}
+	console.log('Database:', getCliDbDisplayInfo(target).label);
 	if (!email || !password) {
 		console.error('ADMIN_EMAIL and ADMIN_PASSWORD are required');
 		process.exit(1);

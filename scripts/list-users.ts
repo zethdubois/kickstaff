@@ -3,23 +3,25 @@
  *
  *   pnpm list:users
  *
- * If the email you expect is missing, your DATABASE_URL may point at a different DB than
- * where you ran seed:admin or created users in /admin/users.
+ * If the email you expect is missing, check active target with `pnpm db:status`.
  */
 import 'dotenv/config';
 import { asc } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from '../src/lib/server/schema.ts';
+import {
+	getCliDbDisplayInfo,
+	getDefaultCliDbTarget,
+	resolveCliConnectionString
+} from './lib/dbCli.ts';
 
 const { users } = schema;
 
 async function main() {
-	const url = process.env.DATABASE_URL;
-	if (!url) {
-		console.error('DATABASE_URL is required');
-		process.exit(1);
-	}
+	const target = getDefaultCliDbTarget();
+	const url = resolveCliConnectionString(target);
+	console.log('Database:', getCliDbDisplayInfo(target).label);
 
 	const pool = new pg.Pool({ connectionString: url });
 	const db = drizzle(pool, { schema });

@@ -20,6 +20,8 @@ shell default        → leave kickagent shell (same when already default)
 :exit                → leave kickagent shell from inside [KA] mode (host escape)
 unalias --all        → remove every saved alias (or: alias --clear)
 reset --all-parsed   → move every parsed bill doc back to 'received' and clear parsed fields
+db status            → show active database target (dev Docker vs prod)
+db use prod          → super only — switch runtime DB (local dev; warns on prod)
 ```
 
 ## klog (the proprietary logger)
@@ -87,6 +89,15 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `alias` / `unalias` | Persisted command aliases (`publicweb.consoleUi` in localStorage). See **Command aliases** below. |
 | `reset`     | `reset <vendor>` or `reset --all-parsed` — reset matching parsed bill documents back to `received` and clear parsed fields; then refresh `bills.recent-docs`. |
 | `kam:reload-kickagent` | Phase 2: refetch `PUBLIC_KICKAGENT_MANIFEST_URL`, verify `sha256`, reload plugin (`kickagent:*` commands). No-op message if env unset. |
+| `db` | `db status` — active target and host/db name. `db use dev` \| `db use prod` — **super user only** (`ADMIN_EMAIL`), non-production, when `DATABASE_URL_DEV` is set. |
+
+### Database routing (local dev)
+
+- **Default:** app and CLI use `DATABASE_URL_DEV` (Docker Postgres from `pnpm db:up`) when set.
+- **Console header:** shows `dev` or `prod` badge with full label on hover.
+- **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`publicweb_db_target`).
+- **Production:** switching disabled; only `DATABASE_URL` is used.
+- **CLI:** `pnpm db:status`, `pnpm db:migrate` (dev), `pnpm db:migrate:prod` (dangerous).
 
 ### Command aliases
 

@@ -20,6 +20,7 @@ import {
 } from "../client/consoleUi.svelte";
 import {
   devConsole,
+  fetchDbStatus,
   klogError,
   klogWithSource,
   type KlogLevel,
@@ -301,6 +302,7 @@ registerCommand("help", (): CommandOutcome => {
   blocks.push(
     "Hotkey: Ctrl+/ (⌘+/) — palette · ` (backtick) — KAM Console pane",
   );
+  blocks.push("Database: db status · db use dev|prod (super only, local dev)");
   const targets = listRefreshTargets();
   if (targets.length > 0) {
     blocks.push(`Refresh targets: ${targets.join(", ")}`);
@@ -479,6 +481,100 @@ registerCommand("reset", async (args): Promise<CommandOutcome> => {
     refresh: ["bills.recent-docs"],
     log: `reset complete for ${scope} — ${safeCount} document(s) moved parsed -> received`,
   };
+});
+
+type DbApiStatus = {
+  target: "dev" | "prod";
+  label: string;
+  host: string;
+  database: string;
+  canSwitch: boolean;
+};
+
+async function fetchDbApiStatus(): Promise<DbApiStatus> {
+  const res = await fetch("/api/dev/database", { credentials: "same-origin" });
+  let payload: unknown = null;
+  try {
+    payload = await res.json();
+  } catch {
+    /* handled below */
+  }
+  if (!res.ok) {
+    const msg =
+      payload && typeof payload === "object" && "message" in payload
+        ? String((payload as { message?: unknown }).message ?? "db status failed")
+        : "db status failed (sign in required)";
+    throw new Error(msg);
+  }
+  return payload as DbApiStatus;
+}
+
+registerCommand("db", async (args): Promise<CommandOutcome> => {
+  const sub = args[0]?.toLowerCase();
+
+  if (!sub || sub === "status") {
+    const status = await fetchDbApiStatus();
+    await fetchDbStatus();
+    const lines = [
+      `target: ${status.target}`,
+      `label: ${status.label}`,
+      `host: ${status.host}`,
+      `database: ${status.database}`,
+      status.canSwitch
+        ? "switch: db use dev | db use prod (super only)"
+        : "switch: disabled (production or DATABASE_URL_DEV unset)",
+    ];
+    return {
+      log: lines.join("\n"),
+      level: status.target === "prod" ? "warn" : "info",
+    };
+  }
+
+  if (sub === "use") {
+    const target = args[1]?.toLowerCase();
+    if (target !== "dev" && target !== "prod") {
+      throw new Error("usage: db use dev | db use prod");
+    }
+
+    const warnLines: string[] = [];
+    if (target === "prod") {
+      warnLines.push(
+        "⚠ switching to PRODUCTION database — migrations and writes affect live data",
+      );
+    }
+
+    const res = await fetch("/api/dev/database", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ target }),
+    });
+
+    let payload: unknown = null;
+    try {
+      payload = await res.json();
+    } catch {
+      /* handled below */
+    }
+
+    if (!res.ok) {
+      const msg =
+        payload && typeof payload === "object" && "message" in payload
+          ? String((payload as { message?: unknown }).message ?? "db switch failed")
+          : "db switch failed";
+      throw new Error(msg);
+    }
+
+    const status = payload as DbApiStatus;
+    await fetchDbStatus();
+    return {
+      refresh: ["app.db"],
+      log: [...warnLines, `database: ${status.label}`].filter(Boolean),
+      level: target === "prod" ? "warn" : "info",
+    };
+  }
+
+  throw new Error("usage: db status | db use dev | db use prod");
 });
 
 registerCommand("kam:reload-kickagent", async (): Promise<CommandOutcome> => {

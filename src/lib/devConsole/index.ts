@@ -7,6 +7,8 @@ export {
   klogError,
   klogWithSource,
   hydrateFromServer,
+  fetchDbStatus,
+  type DbStatus,
   createKlogBroadcaster,
   type KlogEntry,
   type KlogLevel,

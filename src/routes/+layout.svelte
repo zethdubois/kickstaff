@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import { page } from "$app/state";
-  import { goto } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import { env } from "$env/dynamic/public";
   import { onMount } from "svelte";
   import { cities } from "$lib/cities";
@@ -10,10 +10,15 @@
   import Palette from "$lib/devConsole/Palette.svelte";
   import KamConsole from "$lib/devConsole/KamConsole.svelte";
   import {
+    fetchDbStatus,
     hydrateFromServer,
     klogError,
     klogInfo,
   } from "$lib/devConsole/state.svelte";
+  import {
+    registerRefreshTarget,
+    unregisterRefreshTarget,
+  } from "$lib/devConsole/refresh";
   import { browser } from "$app/environment";
   import { registerKickagentHelloCommand } from "$lib/kickagent/registerHelloCommand";
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
@@ -39,6 +44,13 @@
   let rentalMenuOpen = $state(false);
   let userMenuOpen = $state(false);
   let lastKickagentBootUserId = $state<string | null>(null);
+
+  $effect(() => {
+    if (!browser) return;
+    if (page.data.user) {
+      void fetchDbStatus();
+    }
+  });
 
   $effect(() => {
     if (!browser) return;
@@ -145,9 +157,15 @@
       void hydrateFromServer();
     }
 
+    registerRefreshTarget("app.db", async () => {
+      await fetchDbStatus();
+      await invalidateAll();
+    });
+
     return () => {
       document.removeEventListener("pointerdown", onDocPointerDown);
       document.removeEventListener("keydown", onDocKeyDown);
+      unregisterRefreshTarget("app.db");
     };
   });
 </script>

@@ -40,6 +40,16 @@ let _entries = $state<KlogEntry[]>([]);
 let _nextId = 1;
 let _hydrated = false;
 
+export type DbStatus = {
+  target: "dev" | "prod";
+  label: string;
+  host: string;
+  database: string;
+  canSwitch: boolean;
+};
+
+let _dbStatus = $state<DbStatus | null>(null);
+
 type PendingEntry = {
   ts: number;
   level: KlogLevel;
@@ -159,6 +169,9 @@ export const devConsole = {
   get entries(): readonly KlogEntry[] {
     return _entries;
   },
+  get dbStatus(): DbStatus | null {
+    return _dbStatus;
+  },
   togglePalette(): void {
     _paletteOpen = !_paletteOpen;
   },
@@ -211,6 +224,22 @@ export function klogWithSource(
  * Fetch the last N klogs for the current user and merge them into the pane
  * as non-persisting history entries. Call once per page load (from +layout).
  */
+/** Load active database target for the console header (authenticated users). */
+export async function fetchDbStatus(): Promise<void> {
+  if (!isBrowser()) return;
+  try {
+    const res = await fetch("/api/dev/database", { credentials: "same-origin" });
+    if (!res.ok) {
+      _dbStatus = null;
+      return;
+    }
+    const payload = (await res.json()) as DbStatus;
+    _dbStatus = payload;
+  } catch {
+    _dbStatus = null;
+  }
+}
+
 export async function hydrateFromServer(limit = 200): Promise<void> {
   if (!isBrowser() || _hydrated) return;
   _hydrated = true;

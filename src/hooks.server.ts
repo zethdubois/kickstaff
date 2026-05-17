@@ -7,6 +7,10 @@ import {
   getUserFromSessionToken,
   isPasswordChangeExemptPath,
 } from "$lib/server/auth";
+import {
+  DB_TARGET_COOKIE,
+  syncDbTargetFromCookie,
+} from "$lib/server/dbTarget";
 
 /**
  * Auth gate: only the **main-host** `/` (ops hub) requires a session.
@@ -14,6 +18,8 @@ import {
  * Vanity domains: `/` maps to a city route without requiring login (see `hooks.ts` reroute).
  */
 export const handle: Handle = async ({ event, resolve }) => {
+  await syncDbTargetFromCookie(event.cookies.get(DB_TARGET_COOKIE));
+
   const vanityTarget = vanityPathForRootHost(event.url.hostname);
   const isRootPath = event.url.pathname === "/" || event.url.pathname === "";
   if (isRootPath && vanityTarget) {
