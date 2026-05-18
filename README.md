@@ -1,6 +1,6 @@
 # publicweb — Kick Asset Management
 
-SvelteKit app for **rental marketing pages** (CDA, Moscow, Sandpoint) with optional vanity hosts, an authenticated **ops hub**, **admin** tooling (`/admin`), and the **KAM** console (command palette + kickagent integration). Legacy **`/tools/*`** prototypes are being replaced by **kickagent** + future **KAM-UI** dashboards — see [platform overview](docs/guides/platform-overview.md).
+SvelteKit app for **rental marketing pages** (CDA, Moscow, Sandpoint) with optional vanity hosts, an authenticated **ops hub**, **admin** tooling (`/admin`), **settings** (dashboard links), and the **KAM** console (command palette + kickagent integration). Office operations (bills, units) move to **kickagent** — see [platform overview](docs/guides/platform-overview.md) and [upgrade primers](docs/upgrade/README.md).
 
 ## Tech stack
 
@@ -19,7 +19,6 @@ src/
 │   ├── mos/             # Moscow rental page
 │   ├── spt/             # Sandpoint rental page
 │   ├── admin/           # Admin tooling (rental links, users)
-│   └── tools/           # Legacy ops prototypes (sunset; see platform-overview.md)
 ├── lib/
 │   ├── client/          # Client-side stores (UI settings)
 │   ├── server/          # DB schema, auth, guards, upsert logic
@@ -84,7 +83,6 @@ pnpm dev
 | `http://localhost:5000/login` | Sign in |
 | `http://localhost:5000/cda`, `/mos`, `/spt` | City rental pages |
 | `http://localhost:5000/admin/rental-links` | Rental links editor |
-| `http://localhost:5000/tools/bills` | Utility bills (authenticated) |
 
 ### Common commands
 
@@ -109,7 +107,7 @@ pnpm dev
 - **Vanity hosts** — set `PUBLIC_VANITY_HOST_*` in `.env` (e.g. `PUBLIC_VANITY_HOST_MOS=moscow.localhost`), run `pnpm run env:vanity`, open `http://moscow.localhost:5000/`
 - **Mail** — `MAIL_DEV_ONLY=true` logs mail to the console; otherwise configure `SMTP_*` in `.env`
 - **Agent impersonation** — non-production only: set `AGENT_EMAIL`, visit `http://localhost:5000/?as_agent=1`
-- **Utility bills S3** — set `UTILITY_BILL_S3_*` in `.env` when working on `/tools/bills` storage
+- **Utility bills S3** — set `UTILITY_BILL_S3_*` in `.env` for bill pipeline work (see [docs/upgrade](docs/upgrade/README.md))
 
 ### Troubleshooting
 
@@ -126,6 +124,7 @@ pnpm dev
 ## Documentation
 
 - **[docs/guides/platform-overview.md](docs/guides/platform-overview.md)** — publicweb vs kickagent, Postgres schemas, storage, KAM / KAM-UI
+- **[docs/upgrade/README.md](docs/upgrade/README.md)** — handoff primers for bills/units/reports (ex–`/tools`)
 - **[AGENTS.md](AGENTS.md)** — Cursor agents and contributors: conventions, env summary, route-doc pipeline, Svelte 5 runes
 - **[docs/guides/README.md](docs/guides/README.md)** — index of route architecture, admin dev guides, ETL, KAM console
 - **[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)** — Svelte file headers and guide naming

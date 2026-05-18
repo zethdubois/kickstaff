@@ -31,13 +31,10 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 - Shared client UI preferences live in `src/lib/client/uiSettings.svelte.ts`.
 - Current persisted shape includes:
   - `consoleOpen` (KAM console visibility)
-  - `billsDefaultTab` (`transactions | documents | postings`)
   - `kamMode` (`default | kickagent` — **[KA]** shell; enter with `shell kickagent`, or shortcut like `ka` via `alias kickagent ka`)
 - KAM **command aliases** (`alias` / `unalias`; `publicweb.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see [`docs/guides/kam-console.md`](docs/guides/kam-console.md).
   - When adding/removing/changing fields, bump `UI_SETTINGS_VERSION`.
   - Keep `DEFAULT_UI_SETTINGS` and validation (`isValidShape`) in sync with the new version.
-- `/tools/bills` uses this store to resolve the last selected Bills sub-tab; fallback default is the first tab (`transactions`).
-
 ## Environment file
 
 **Source of truth:** [`.env.example`](.env.example).
@@ -77,11 +74,7 @@ For any route work, read docs in this order:
 2. **Route architecture doc:** `docs/guides/<route-scope>-architecture.md`
 3. **Route UI doc:** `docs/guides/<route-scope>-ui-map.md`
 
-Example for Tools > Bills:
-
-1. [`AGENTS.md`](AGENTS.md)
-2. [`docs/guides/tools-bills-architecture.md`](docs/guides/tools-bills-architecture.md)
-3. [`docs/guides/tools-bills-ui-map.md`](docs/guides/tools-bills-ui-map.md)
+**Operations handoff (kickagent):** [`docs/upgrade/README.md`](docs/upgrade/README.md) — bills/units/reports primers after `/tools` removal.
 
 ## Route doc naming + depth
 

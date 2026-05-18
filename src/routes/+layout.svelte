@@ -240,8 +240,6 @@
 
       <div class="nav__trailing">
         {#if isAdmin}
-          <!-- <div class="nav__title" aria-label="Site section">Tools:</div> -->
-          <a class="nav__admin" href="/tools">Tools</a>
           <a class="nav__admin" href="/admin/rental-links">Admin</a>
         {/if}
 

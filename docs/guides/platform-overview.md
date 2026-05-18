@@ -93,7 +93,7 @@ S3 credentials (`UTILITY_BILL_S3_*` in [`.env.example`](../../.env.example)) are
 |---------|------------|--------|
 | **KAM** | CLI: command palette (`Ctrl+/`), KAM Console pane, `kickagent:*` commands, manifest reload (`kam:reload-kickagent`), klog | Implemented — [kam-console.md](kam-console.md) |
 | **KAM-UI** | Configurable dashboards for the same kickagent capabilities (control + feedback) | **Planned** — primary future publicweb design work |
-| **`/tools/*`** | Legacy prototype pages (bills, units, reports) | **Sunset** — remove when KAM-UI + kickagent API cover workflows; see legacy banners on tools guides |
+| **`/tools/*`** | *(removed)* | Replaced by kickagent + KAM-UI; behavior captured in [upgrade primers](../upgrade/README.md) |
 
 KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only in **presentation** (terminal vs dashboards).
 
@@ -108,7 +108,7 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 | Auth (`users`, `sessions`) | **Yes** | Required for admin access |
 | Hub dashboard links | Incubating / internal | Safe to evolve |
 | KAM console | Incubating | Active development |
-| `/tools/*` | **Not** long-term | Prototype only; do not extend as the primary ops UI |
+| `/tools/*` | **Removed** | See [docs/upgrade/](../upgrade/README.md) for handoff to kickagent |
 | Bills / units / reports logic | Incubating | Moves to kickagent + KAM-UI |
 
 ---
@@ -119,7 +119,7 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 2. **Schema migration** — Drizzle `pgSchema('publicweb')` / `pgSchema('operations')`; `ALTER TABLE … SET SCHEMA`; kickagent repo owns `operations` migrations long-term.
 3. **kickagent API (Phase 3)** — server-side jobs; publicweb `/api/kickagent/*` proxy; SSE → klog.
 4. **KAM-UI v0** — e.g. document queue + job status widgets calling the same API as CLI commands.
-5. **Retire `/tools`** — delete routes and nav after parity checklist.
+5. **Retire `/tools`** — done in publicweb; implement parity in kickagent + KAM-UI.
 
 ---
 
@@ -131,6 +131,7 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 | [contracts/README.md](contracts/README.md) | Cross-repo contract index |
 | [kam-console.md](kam-console.md) | KAM UX, aliases, kickagent mode |
 | [utility-bill-etl-scope.md](utility-bill-etl-scope.md) | Bills pipeline scope and S3 keys |
+| [../upgrade/README.md](../upgrade/README.md) | Handoff primers (bills, units, reports) after `/tools` removal |
 | [production-operations.md](production-operations.md) | Operators: vanity, rental links |
 | [kickagent/docs/publicweb-integration.md](../../../kickagent/docs/publicweb-integration.md) | Kickagent-side entry for publicweb devs |
 | [kickagent/docs/platform-overview.md](../../../kickagent/docs/platform-overview.md) | Kickagent-focused summary (same architecture) |

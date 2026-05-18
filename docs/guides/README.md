@@ -16,17 +16,15 @@
 
 Environment source of truth: `[.env.example](../../.env.example)`.
 
+## Operations handoff (kickagent)
+
+| Doc | Purpose |
+|-----|---------|
+| [../upgrade/README.md](../upgrade/README.md) | Index — bills, units, reports primers (ex–`/tools/*`) |
+
 ## Route architecture (paired docs)
 
 Read in order: **AGENTS.md** → `***-architecture.md`** → `***-ui-map.md**` for the route you are changing.
-
-
-| Area             | Architecture                                                           | UI map                                         |
-| ---------------- | ---------------------------------------------------------------------- | ---------------------------------------------- |
-| Tools (overview) | [tools-architecture.md](tools-architecture.md)                         | [tools-ui-map.md](tools-ui-map.md)             |
-| Tools → Bills    | [tools-bills-architecture.md](tools-bills-architecture.md)             | [tools-bills-ui-map.md](tools-bills-ui-map.md) |
-| Tools IA         | [tools-information-architecture.md](tools-information-architecture.md) | —                                              |
-
 
 ## Admin routes
 
