@@ -1,5 +1,7 @@
 # Tools UI Map
 
+> **Status: legacy / sunset.** `/tools/*` routes are prototypes. Target replacement is **KAM-UI + kickagent**. See [platform-overview.md](platform-overview.md). **Do not** delete route code until parity is reached.
+
 Canonical UI map for `Tools` route-level containers and tab shells.
 
 ## Scope

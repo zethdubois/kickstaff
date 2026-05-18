@@ -1,6 +1,6 @@
 # publicweb — Kick Asset Management
 
-SvelteKit app for **rental marketing pages** (CDA, Moscow, Sandpoint) with optional vanity hosts, an authenticated **ops hub**, **admin** tooling (`/admin`), and internal **tools** (`/tools`).
+SvelteKit app for **rental marketing pages** (CDA, Moscow, Sandpoint) with optional vanity hosts, an authenticated **ops hub**, **admin** tooling (`/admin`), and the **KAM** console (command palette + kickagent integration). Legacy **`/tools/*`** prototypes are being replaced by **kickagent** + future **KAM-UI** dashboards — see [platform overview](docs/guides/platform-overview.md).
 
 ## Tech stack
 
@@ -19,7 +19,7 @@ src/
 │   ├── mos/             # Moscow rental page
 │   ├── spt/             # Sandpoint rental page
 │   ├── admin/           # Admin tooling (rental links, users)
-│   └── tools/           # Internal ops tools (bills, reports)
+│   └── tools/           # Legacy ops prototypes (sunset; see platform-overview.md)
 ├── lib/
 │   ├── client/          # Client-side stores (UI settings)
 │   ├── server/          # DB schema, auth, guards, upsert logic
@@ -125,6 +125,7 @@ pnpm dev
 
 ## Documentation
 
+- **[docs/guides/platform-overview.md](docs/guides/platform-overview.md)** — publicweb vs kickagent, Postgres schemas, storage, KAM / KAM-UI
 - **[AGENTS.md](AGENTS.md)** — Cursor agents and contributors: conventions, env summary, route-doc pipeline, Svelte 5 runes
 - **[docs/guides/README.md](docs/guides/README.md)** — index of route architecture, admin dev guides, ETL, KAM console
 - **[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)** — Svelte file headers and guide naming

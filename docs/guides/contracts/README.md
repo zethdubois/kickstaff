@@ -14,8 +14,9 @@ Filename prefix = **audience** (who should read it), not which repo wrote the fi
 ## Start here (publicweb developers)
 
 1. [publicweb-kickagent-consumer.md](publicweb-kickagent-consumer.md) — **host/subscriber** guide (phases, security, what PW owns).
-2. [publicweb-hello-world.md](publicweb-hello-world.md) — Phase 1 hello wiring in this codebase.
-3. [../kam-console.md](../kam-console.md) — KAM console, kickagent mode, `[KA] >`.
+2. [../platform-overview.md](../platform-overview.md) — **data, storage, and product boundaries** (one DB, two schemas).
+3. [publicweb-hello-world.md](publicweb-hello-world.md) — Phase 1 hello wiring in this codebase.
+4. [../kam-console.md](../kam-console.md) — KAM console, kickagent mode, `[KA] >`.
 
 ## Kickagent platform (kickagent repo)
 

@@ -1,5 +1,7 @@
 # Tools Bills Architecture
 
+> **Status: legacy / sunset.** `/tools/bills` is a prototype. Target replacement is **KAM-UI + kickagent**. See [platform-overview.md](platform-overview.md). **Do not** delete route code until parity is reached.
+
 Architecture guide for the `Tools > Bills` route family.
 
 ## Read order

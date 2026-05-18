@@ -4,7 +4,9 @@ Entry point for **Cursor agents** and developers working in this repository.
 
 ## Project overview
 
-Internal ops dashboard (authenticated home) plus rental marketing pages per city (`/cda`, `/mos`, `/spt`), vanity hosts, and admin tooling. Built with **SvelteKit** (Node adapter), **PostgreSQL** via **Drizzle ORM**, cookie sessions, and role-based access.
+Authenticated **product shell**: production rental marketing (`/cda`, `/mos`, `/spt`), team hub, admin for rental config, **KAM** host (command palette + console), and planned **KAM-UI** dashboards. **kickagent** (sibling repo) owns office operations logic and the **`operations`** Postgres schema target. Built with **SvelteKit** (Node adapter), **PostgreSQL** via **Drizzle ORM**, cookie sessions, and role-based access.
+
+**Platform split:** [docs/guides/platform-overview.md](docs/guides/platform-overview.md).
 
 ## Tooling
 
@@ -57,6 +59,7 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
 ## Documentation pipeline
 
+- **Platform overview** (publicweb vs kickagent, one DB / two schemas, storage, KAM vs KAM-UI): [`docs/guides/platform-overview.md`](docs/guides/platform-overview.md).
 - **Repository standards** for Svelte structure and file headers: [`docs/sop-svelte-and-components.md`](docs/sop-svelte-and-components.md).
 - **Developer / agent guides** live under [`docs/guides/`](docs/guides/) — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Utility bill ETL scope** (email intake -> PDF parsing -> Appfolio CSV): [`docs/guides/utility-bill-etl-scope.md`](docs/guides/utility-bill-etl-scope.md).

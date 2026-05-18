@@ -1,5 +1,7 @@
 # Tools — Information Architecture
 
+> **Status: legacy / sunset.** `/tools/*` nav and URLs are prototypes. Target replacement is **KAM-UI + kickagent**. See [platform-overview.md](platform-overview.md). **Do not** delete route code until parity is reached.
+
 This is the **single source of truth** for the layout of the `/tools` area. Update this doc first whenever you change the top-level Tools nav, sub-tabs, or canonical URLs; then change the code to match.
 
 ## Top-level layout

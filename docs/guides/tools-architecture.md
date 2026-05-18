@@ -1,5 +1,7 @@
 # Tools Architecture
 
+> **Status: legacy / sunset.** `/tools/*` routes are prototypes. Target replacement is **KAM-UI + kickagent** (commands today, API/jobs planned). See [platform-overview.md](platform-overview.md). **Do not** delete route code until parity is reached.
+
 Canonical architecture guide for the `/tools` route family.
 
 ## Read order

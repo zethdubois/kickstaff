@@ -1,5 +1,7 @@
 # Tools Bills UI Map
 
+> **Status: legacy / sunset.** `/tools/bills` is a prototype. Target replacement is **KAM-UI + kickagent**. See [platform-overview.md](platform-overview.md). **Do not** delete route code until parity is reached.
+
 This guide defines shared UI terms for `Tools > Bills` so prompts can target consistent component regions.
 
 ## Naming Conventions

@@ -7,6 +7,7 @@
 
 | Doc                                                                | Purpose                                                                    |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [platform-overview.md](platform-overview.md)                         | **Architecture** — publicweb vs kickagent, one DB / two schemas, KAM / KAM-UI |
 | [README.md](../../README.md#development)                           | **Local dev setup** — install, DB, seed, `pnpm dev`, troubleshooting       |
 | [AGENTS.md](../../AGENTS.md)                                       | Stack, tooling, env summary, route-doc pipeline, naming                    |
 | [production-operations.md](production-operations.md)               | **Production operators** — vanity domains, AppFolio links, admin workflows |
