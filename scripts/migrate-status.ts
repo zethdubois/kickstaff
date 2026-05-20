@@ -1,11 +1,13 @@
 /**
  * Report pending Drizzle migrations (kickdesk migrate-status contract).
+ * Writes the same one-line status to ~/.config/publicweb/migrate-status.
  *
  *   pnpm db:migrate:status
  */
 import 'dotenv/config';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
 import pg from 'pg';
 import { getDefaultCliDbTarget, resolveCliConnectionString } from './lib/dbCli.ts';
 
@@ -13,15 +15,14 @@ type Journal = {
 	entries: { idx: number; when: number; tag: string }[];
 };
 
-async function main() {
+async function computeStatusLine(): Promise<string> {
 	try {
 		const url = resolveCliConnectionString(getDefaultCliDbTarget());
 		const journalPath = resolve(process.cwd(), 'drizzle/meta/_journal.json');
 		const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as Journal;
 		const entries = journal.entries ?? [];
 		if (entries.length === 0) {
-			console.log('ok');
-			return;
+			return 'ok';
 		}
 
 		const pool = new pg.Pool({ connectionString: url });
@@ -45,20 +46,29 @@ async function main() {
 				}
 			}
 			const pending = entries.filter((entry) => entry.when > maxApplied).length;
-			if (pending > 0) {
-				console.log(`pending:${pending}`);
-			} else {
-				console.log('ok');
-			}
+			return pending > 0 ? `pending:${pending}` : 'ok';
 		} finally {
 			await pool.end();
 		}
 	} catch {
-		console.log('unavailable');
+		return 'unavailable';
 	}
 }
 
+function writeMigrateStatusFile(line: string) {
+	const configDir = join(homedir(), '.config', 'publicweb');
+	mkdirSync(configDir, { recursive: true });
+	writeFileSync(join(configDir, 'migrate-status'), `${line}\n`, 'utf8');
+}
+
+async function main() {
+	const line = await computeStatusLine();
+	writeMigrateStatusFile(line);
+	console.log(line);
+}
+
 main().catch(() => {
+	writeMigrateStatusFile('unavailable');
 	console.log('unavailable');
 	process.exit(0);
 });

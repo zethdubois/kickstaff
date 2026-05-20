@@ -45,11 +45,12 @@ Paired guides match component filenames (see SOP):
 | [RentalLandingGrid.md](RentalLandingGrid.md) | `RentalLandingGrid.svelte` |
 
 
-## KAM console & kickagent
+## Kickdesk & KAM
 
 
 | Guide                                                                                  | Topic                                                           |
 | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [kickdesk-manifest.md](kickdesk-manifest.md)                                           | Kickdesk subscriber setup (once); day-to-day when-to-run: [README § Kickdesk](../../README.md#kickdesk-local-cockpit) |
 | [kam-console.md](kam-console.md)                                                       | Dev console, `Ctrl+/`, klog, command palette                    |
 | [contracts/README.md](contracts/README.md)                                             | Cross-repo contract index and reading order                     |
 | [contracts/publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consumer.md) | publicweb host/subscriber (phases, security, PW-owned commands) |
@@ -57,17 +58,6 @@ Paired guides match component filenames (see SOP):
 | [contracts/kickagent-essentials-spec.md](contracts/kickagent-essentials-spec.md)       | Phase 1 kickagent npm package contract                          |
 | [contracts/kickagent-hello-world.md](contracts/kickagent-hello-world.md)               | Hello-world milestone (kickagent repo)                          |
 | [contracts/publicweb-hello-world.md](contracts/publicweb-hello-world.md)               | Hello-world integration (publicweb repo)                        |
-
-
-## Utility bill ETL
-
-
-| Guide                                                                              | Purpose                                               |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| [utility-bill-etl-scope.md](utility-bill-etl-scope.md)                             | Full scope: email intake → PDF parsing → Appfolio CSV |
-| [utility-bill-etl-execution-checklist.md](utility-bill-etl-execution-checklist.md) | Phase-by-phase checklist and release gates            |
-| [utility-bill-phase-1-pr-checklist.md](utility-bill-phase-1-pr-checklist.md)       | Phase 1 PR sequencing                                 |
-| [bill-pay-field-matrix.md](bill-pay-field-matrix.md)                               | Bill pay field matrix                                 |
 
 
 ## Other notes in `docs/`

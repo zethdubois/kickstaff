@@ -62,11 +62,11 @@ flowchart TB
 
 Use **one Postgres instance** (one `DATABASE_URL`) with **two schemas** for clear ownership. Cross-schema SQL joins are possible but **application code should treat schemas as boundaries**—publicweb does not own `operations` tables; kickagent does not own `publicweb` tables.
 
-| Schema | Owner repo | Tables (current names in [`src/lib/server/schema.ts`](../../src/lib/server/schema.ts)) | Notes |
-|--------|------------|----------------------------------------------------------------------------------------|--------|
+| Schema | Owner repo | Tables in [`src/lib/server/schema.ts`](../../src/lib/server/schema.ts) | Notes |
+|--------|------------|---------------------------------------------------------------------------|--------|
 | **`publicweb`** | publicweb | `users`, `sessions`, `rental_landing_links`, `dashboard_links`, `user_dashboard_link_preferences`, `klogs` | **Production-critical:** `rental_landing_links` must not be broken by migrations |
-| **`operations`** | kickagent | `units`, `unit_bill_accounts`, `bill_documents`, `bill_runs`, `bill_monthly_files`, `bill_monthly_file_items` | Today these tables live in the public schema via publicweb Drizzle; **target** is kickagent-owned migrations under `operations` |
-| **Cross-boundary** | convention | `user_id` UUID on ops audit rows and `klogs` | Reference by id only; **no cross-schema foreign keys** in the target design |
+| **`operations`** | kickagent | *(not in publicweb)* — rebuild in KA (`operations` schema target) | Legacy ops tables were dropped from publicweb DB via migration `0019`; see [upgrade primers](../upgrade/README.md) |
+| **Cross-boundary** | convention | `user_id` on `klogs` (and future ops audit in KA) | Reference by id only; **no cross-schema FKs** in target design |
 
 Future **KAM-UI** layout and widget preferences will live in **`publicweb`** (tables TBD).
 
@@ -77,13 +77,13 @@ Future **KAM-UI** layout and widget preferences will live in **`publicweb`** (ta
 | Layer | Technology | Role |
 |-------|------------|------|
 | **Kickagent** | Postgres (`operations` schema) | System of record for units, bills, runs, audit |
-| **Kickagent** | S3-compatible object store | PDF intake, parse snapshots, Appfolio CSV outputs — see [utility-bill-etl-scope.md](utility-bill-etl-scope.md) |
+| **Kickagent** | S3-compatible object store | PDF intake, parse snapshots, Appfolio CSV outputs — see [upgrade/utility-bill-etl-scope.md](../upgrade/utility-bill-etl-scope.md) |
 | **Kickagent** | Redis (optional, future) | Queue, coordination, or integration with an existing third-party Redis data ecosystem — **not in scope for initial schema work**; document only |
 | **Publicweb** | Postgres (`publicweb` schema) | Users, rental config, dashboard links, klogs, future KAM-UI prefs — modest volume |
 
-Env: `DATABASE_URL` (and `DATABASE_URL_DEV` locally) serves **both** schemas on the same server. A separate `OPERATIONS_DATABASE_URL` is only needed if we later split physical databases.
+Env: `DATABASE_URL` (and `DATABASE_URL_DEV` locally) is the publicweb app database. Kickagent will use the same server with an **`operations`** schema when implemented.
 
-S3 credentials (`UTILITY_BILL_S3_*` in [`.env.example`](../../.env.example)) are **operations** concerns even when configured in the publicweb deploy today.
+S3 and bill pipeline env live in **kickagent** deploy config, not publicweb [`.env.example`](../../.env.example).
 
 ---
 
@@ -109,14 +109,14 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 | Hub dashboard links | Incubating / internal | Safe to evolve |
 | KAM console | Incubating | Active development |
 | `/tools/*` | **Removed** | See [docs/upgrade/](../upgrade/README.md) for handoff to kickagent |
-| Bills / units / reports logic | Incubating | Moves to kickagent + KAM-UI |
+| Bills / units / reports logic | **Removed from PW** | Rebuild in kickagent + KAM-UI |
 
 ---
 
 ## Phased roadmap (not commitments)
 
 1. **Documentation** (this guide) — shared boundaries.
-2. **Schema migration** — Drizzle `pgSchema('publicweb')` / `pgSchema('operations')`; `ALTER TABLE … SET SCHEMA`; kickagent repo owns `operations` migrations long-term.
+2. **Operations schema in kickagent** — Drizzle `pgSchema('operations')`; new tables/migrations owned by kickagent (publicweb dropped legacy ops tables).
 3. **kickagent API (Phase 3)** — server-side jobs; publicweb `/api/kickagent/*` proxy; SSE → klog.
 4. **KAM-UI v0** — e.g. document queue + job status widgets calling the same API as CLI commands.
 5. **Retire `/tools`** — done in publicweb; implement parity in kickagent + KAM-UI.
@@ -130,7 +130,7 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 | [contracts/publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consumer.md) | Host/subscriber phases, security, commands |
 | [contracts/README.md](contracts/README.md) | Cross-repo contract index |
 | [kam-console.md](kam-console.md) | KAM UX, aliases, kickagent mode |
-| [utility-bill-etl-scope.md](utility-bill-etl-scope.md) | Bills pipeline scope and S3 keys |
+| [../upgrade/utility-bill-etl-scope.md](../upgrade/utility-bill-etl-scope.md) | Bills pipeline scope (KA reference) |
 | [../upgrade/README.md](../upgrade/README.md) | Handoff primers (bills, units, reports) after `/tools` removal |
 | [production-operations.md](production-operations.md) | Operators: vanity, rental links |
 | [kickagent/docs/publicweb-integration.md](../../../kickagent/docs/publicweb-integration.md) | Kickagent-side entry for publicweb devs |

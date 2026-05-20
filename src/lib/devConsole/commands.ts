@@ -265,7 +265,7 @@ registerCommand("help", (): CommandOutcome => {
   const blocks: string[] = [];
   if (devConsole.kamMode === "kickagent") {
     blocks.push(
-      "kickagent shell: on — bare names are kickagent: only; use :help, :exit, :shell default, :clear for publicweb (e.g. :reset --all-parsed)",
+      "kickagent shell: on — bare names are kickagent: only; use :help, :exit, :shell default, :clear for publicweb",
     );
     const globals = listCommands().filter((c) => !c.startsWith(KICKAGENT_NS));
     blocks.push(
@@ -438,49 +438,6 @@ registerCommand("shell", (args): CommandOutcome => {
   }
   devConsole.kamMode = "default";
   return { log: "shell: default (left KA mode)", level: "info" };
-});
-
-registerCommand("reset", async (args): Promise<CommandOutcome> => {
-  const target = args[0]?.trim();
-  if (!target) {
-    throw new Error("usage: reset <vendor> | reset --all-parsed");
-  }
-
-  const allParsed = target === "--all-parsed";
-  const vendor = allParsed ? "" : target;
-
-  const res = await fetch("/api/admin/bills/reset", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(allParsed ? { allParsed: true } : { vendor }),
-  });
-
-  let payload: unknown = null;
-  try {
-    payload = await res.json();
-  } catch {
-    /* ignore; handled below */
-  }
-
-  if (!res.ok) {
-    const msg =
-      payload && typeof payload === "object" && "message" in payload
-        ? String((payload as { message?: unknown }).message ?? "reset failed")
-        : "reset failed";
-    throw new Error(msg);
-  }
-
-  const updatedCount =
-    payload && typeof payload === "object" && "updatedCount" in payload
-      ? Number((payload as { updatedCount?: unknown }).updatedCount ?? 0)
-      : 0;
-  const safeCount = Number.isFinite(updatedCount) ? updatedCount : 0;
-
-  const scope = allParsed ? "all parsed documents" : `vendor "${vendor}"`;
-  return {
-    refresh: ["bills.recent-docs"],
-    log: `reset complete for ${scope} — ${safeCount} document(s) moved parsed -> received`,
-  };
 });
 
 type DbApiStatus = {

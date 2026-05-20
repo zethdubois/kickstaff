@@ -1,0 +1,15 @@
+{
+  "appId": "publicweb",
+  "configDir": "~/.config/publicweb",
+  "kickdeskSpec": {
+    "root": "${KICKDESK_ROOT:-../kickdesk}",
+    "readonlyFiles": [
+      "docs/MANIFEST.md",
+      "examples/manifest.sample.json"
+    ]
+  },
+  "publish": {
+    "manifest": "pnpm kickdesk:publish-manifest",
+    "migrateStatus": "pnpm db:migrate:status"
+  }
+}

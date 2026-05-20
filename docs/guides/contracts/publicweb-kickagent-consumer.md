@@ -21,11 +21,9 @@ publicweb does **not** design kickagent’s LLM pipelines or batch workers here;
 
 Canonical architecture: [platform-overview.md](../platform-overview.md).
 
-- **One Postgres database, two schemas:** `publicweb` (users, rental, dashboard, klogs) and `operations` (units, bills, runs) — kickagent owns **`operations`** migrations long-term.
-- **publicweb does not** own operations tables as system of record; it hosts UI and proxies admin-authenticated calls to kickagent (Phase 3 API).
-- **S3** (`UTILITY_BILL_S3_*`) and future **Redis** integration are operations-side concerns; see platform overview for the split.
-
-Today, operations tables still live in [`src/lib/server/schema.ts`](../../../src/lib/server/schema.ts) under the default schema until a migration moves them to `operations`.
+- **Postgres:** publicweb owns only core product tables in [`src/lib/server/schema.ts`](../../../src/lib/server/schema.ts) (`users`, `sessions`, `rental_landing_links`, `dashboard_links`, `user_dashboard_link_preferences`, `klogs`). Legacy ops tables were **dropped** from the publicweb database; kickagent will recreate under **`operations`** schema.
+- **publicweb does not** run bill/units ETL or expose `/api/admin/bills/*`; Phase 3 will proxy kickagent jobs only.
+- **S3** and future **Redis** are kickagent deploy concerns — see [docs/upgrade/README.md](../../upgrade/README.md).
 
 ---
 

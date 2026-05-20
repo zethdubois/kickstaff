@@ -56,6 +56,20 @@ pnpm seed:admin
 
 **Database** — local dev uses Docker Postgres on **host port `5043`** (`DATABASE_URL_DEV` in `.env`; container listens on 5432 internally). Part of the KAM **50xx** port family (see kickdesk `docs/DEV_PORTS.md`). Production deploy uses `DATABASE_URL` only. After pulling migrations, run `pnpm db:migrate` again. Check active target: `pnpm db:status` or KAM `db status`.
 
+### Kickdesk (local cockpit)
+
+Kickdesk reads **`~/.config/publicweb/`** (not files in this repo). First-time subscriber wiring: [docs/guides/kickdesk-manifest.md](docs/guides/kickdesk-manifest.md).
+
+**When to run** (day-to-day):
+
+| You did… | Run |
+|----------|-----|
+| Changed dev ports, compose host port, workflow keys, or manifest command strings (`scripts/kickdesk-manifest.ts`) | `pnpm kickdesk:publish-manifest` |
+| DB up, `pnpm db:migrate`, or pulled new migrations | `pnpm db:migrate:status` |
+| Fresh machine / clone (once) | Both — publish manifest, then migrate-status with DB up |
+
+`pnpm db:migrate` does **not** require publish-manifest unless you also changed the Kickdesk manifest source.
+
 ### Dev ports (50xx family)
 
 | Role | Port |
@@ -101,13 +115,14 @@ pnpm dev
 | `pnpm seed:admin` | Create/update seed admin |
 | `pnpm list:users` | List DB users |
 | `pnpm run env:vanity` | Print vanity host env |
+| `pnpm kickdesk:publish-manifest` | Publish Kickdesk manifest to `~/.config/publicweb/` |
+| `pnpm db:migrate:status` | Migration status for Kickdesk (`ok` / `pending:N`); also writes `~/.config/publicweb/migrate-status` |
 
 ### Optional local setup
 
 - **Vanity hosts** — set `PUBLIC_VANITY_HOST_*` in `.env` (e.g. `PUBLIC_VANITY_HOST_MOS=moscow.localhost`), run `pnpm run env:vanity`, open `http://moscow.localhost:5000/`
 - **Mail** — `MAIL_DEV_ONLY=true` logs mail to the console; otherwise configure `SMTP_*` in `.env`
 - **Agent impersonation** — non-production only: set `AGENT_EMAIL`, visit `http://localhost:5000/?as_agent=1`
-- **Utility bills S3** — set `UTILITY_BILL_S3_*` in `.env` for bill pipeline work (see [docs/upgrade](docs/upgrade/README.md))
 
 ### Troubleshooting
 

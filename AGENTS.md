@@ -47,6 +47,19 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 
 Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
+## Kickdesk
+
+This app is a **Kickdesk subscriber** (local dev cockpit). First-time setup: [`docs/guides/kickdesk-manifest.md`](docs/guides/kickdesk-manifest.md). **Day-to-day when-to-run:** [README.md → Kickdesk](README.md#kickdesk-local-cockpit).
+
+| You did… | Run |
+|----------|-----|
+| Changed ports, compose, workflow keys, or `scripts/kickdesk-manifest.ts` | `pnpm kickdesk:publish-manifest` |
+| DB up, migrate, or pulled migrations | `pnpm db:migrate:status` |
+
+- **Registration:** [`kickdesk.registration.json`](kickdesk.registration.json)
+- **Schema (readonly):** sibling `../kickdesk/docs/MANIFEST.md` and `examples/manifest.sample.json` (or `KICKDESK_ROOT`)
+- **Values source:** [`scripts/kickdesk-manifest.ts`](scripts/kickdesk-manifest.ts) — do not copy KD sample manifest verbatim
+
 ## Database
 
 - **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env` (e.g. `localhost:5043/publicweb_dev`); app defaults to dev. **Prod:** `DATABASE_URL` on Railway only. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
@@ -59,11 +72,12 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 - **Platform overview** (publicweb vs kickagent, one DB / two schemas, storage, KAM vs KAM-UI): [`docs/guides/platform-overview.md`](docs/guides/platform-overview.md).
 - **Repository standards** for Svelte structure and file headers: [`docs/sop-svelte-and-components.md`](docs/sop-svelte-and-components.md).
 - **Developer / agent guides** live under [`docs/guides/`](docs/guides/) — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
-- **Utility bill ETL scope** (email intake -> PDF parsing -> Appfolio CSV): [`docs/guides/utility-bill-etl-scope.md`](docs/guides/utility-bill-etl-scope.md).
+- **Operations handoff (kickagent):** [`docs/upgrade/README.md`](docs/upgrade/README.md) — primers + ETL reference (no bill code in this repo).
 - **KAM dev console + command palette** (palette: `Ctrl+/`; focus console pane: `` ` `` (backtick); `klog`, commands, refresh targets, per-user klog persistence): [`docs/guides/kam-console.md`](docs/guides/kam-console.md).
 - **kickagent cross-repo contracts** (sibling package `../kickagent`): [`docs/guides/contracts/README.md`](docs/guides/contracts/README.md); publicweb host guide [`docs/guides/contracts/publicweb-kickagent-consumer.md`](docs/guides/contracts/publicweb-kickagent-consumer.md).
 - **Human setup (local dev):** [README.md → Development](README.md#development).
 - **Production operations (operators):** [`docs/guides/production-operations.md`](docs/guides/production-operations.md).
+- **Kickdesk subscriber:** [`docs/guides/kickdesk-manifest.md`](docs/guides/kickdesk-manifest.md).
 - **Docs index:** [`docs/guides/README.md`](docs/guides/README.md).
 
 ## Route doc order (required)

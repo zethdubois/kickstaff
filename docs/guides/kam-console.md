@@ -19,7 +19,6 @@ ka                   → shortcut only if defined: `alias kickagent ka` (stored 
 shell default        → leave kickagent shell (same when already default)
 :exit                → leave kickagent shell from inside [KA] mode (host escape)
 unalias --all        → remove every saved alias (or: alias --clear)
-reset --all-parsed   → move every parsed bill doc back to 'received' and clear parsed fields
 db status            → show active database target (dev Docker vs prod)
 db use prod          → super only — switch runtime DB (local dev; warns on prod)
 ```
@@ -87,7 +86,6 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `exit`      | Leave kickagent shell when active (normally via `:exit`; see Kickagent shell).                             |
 | `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
 | `alias` / `unalias` | Persisted command aliases (`publicweb.consoleUi` in localStorage). See **Command aliases** below. |
-| `reset`     | `reset <vendor>` or `reset --all-parsed` — reset matching parsed bill documents back to `received` and clear parsed fields; then refresh `bills.recent-docs`. |
 | `kam:reload-kickagent` | Phase 2: refetch `PUBLIC_KICKAGENT_MANIFEST_URL`, verify `sha256`, reload plugin (`kickagent:*` commands). No-op message if env unset. |
 | `db` | `db status` — active target and host/db name. `db use dev` \| `db use prod` — **super user only** (`ADMIN_EMAIL`), non-production, when `DATABASE_URL_DEV` is set. |
 
@@ -147,7 +145,7 @@ Register kickagent-scoped commands with `registerKickagentCommand("hello", handl
 
 ## Refresh targets (the bridge between pages and commands)
 
-A page component registers a named refresh callback:
+A layout or page registers a named refresh callback. Today the host registers **`app.db`** in [`src/routes/+layout.svelte`](../../src/routes/+layout.svelte) so `db use dev|prod` can refresh the nav DB badge.
 
 ```svelte
 <script lang="ts">
@@ -157,26 +155,26 @@ A page component registers a named refresh callback:
     unregisterRefreshTarget,
   } from "$lib/devConsole";
 
-  async function reload() {
-    /* fetch + update local state */
+  async function reloadDbBadge() {
+    /* refetch /api/dev/database and update UI */
   }
 
   onMount(() => {
-    registerRefreshTarget("bills.recent-docs", reload);
-    return () => unregisterRefreshTarget("bills.recent-docs");
+    registerRefreshTarget("app.db", reloadDbBadge);
+    return () => unregisterRefreshTarget("app.db");
   });
 </script>
 ```
 
-Any command can then declare it in its outcome:
+Any command can declare refresh keys in its outcome:
 
 ```ts
-return { refresh: ["bills.recent-docs"], log: "reset complete" };
+return { refresh: ["app.db"], log: "switched database target" };
 ```
 
-Naming convention: `"<page>.<widget>"`, e.g. `bills.recent-docs`, `bills.postings.list`, `units.list`.
+Naming convention: `"<area>.<widget>"` (e.g. `app.db`). Bill/units refresh targets from the old `/tools` UI are removed; operations workflows move to **kickagent** — see [docs/upgrade/README.md](../upgrade/README.md).
 
-Users do **not** type refresh targets. The old `--refresh <target>` user flag has been removed; refresh is always command-declared.
+Users do **not** type refresh targets. Refresh is always command-declared.
 
 ## Persistence
 

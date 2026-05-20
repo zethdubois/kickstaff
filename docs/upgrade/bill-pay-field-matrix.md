@@ -1,5 +1,7 @@
 # Bill pay field matrix
 
+> **KA implementation reference** — former publicweb schema; adapter code removed from this repo.
+
 What `Unit` and `unit_bill_accounts` fields each (category × external system) pair
 needs in order to produce a valid export. Plain markdown today; if/when the UI
 becomes schema-driven we can promote this to Zod schemas.
@@ -15,7 +17,7 @@ becomes schema-driven we can promote this to Zod schemas.
 
 ## category: `utility` × adapter: `appfolio` (Vendor Bills bulk import)
 
-Adapter source: [src/lib/server/adapters/appfolio/vendorBill.ts](../../src/lib/server/adapters/appfolio/vendorBill.ts)
+Adapter source: reimplement in kickagent; template CSV: [bulk_vendor_bill_upload_template__appfolio.csv](bulk_vendor_bill_upload_template__appfolio.csv)
 
 ### From `units`
 

@@ -1,7 +1,7 @@
 # Units operations primer (ex–`/tools/units`)
 
 **Audience:** kickagent developers.  
-**Status:** The publicweb `/tools/units/*` UI has been **removed**. Schema and relink helpers remain in publicweb until migrated.
+**Status:** The publicweb `/tools/units/*` UI and `units` / `unit_bill_accounts` tables are **removed**. Reimplement in kickagent.
 
 ---
 
@@ -15,7 +15,7 @@ This data is required for [bills batch generation](bills-operations-primer.md): 
 
 ## Data model
 
-Tables in `src/lib/server/schema.ts` (target: `operations` schema):
+Tables (target: kickagent `operations` schema; dropped from publicweb DB):
 
 ### `units`
 
@@ -67,14 +67,14 @@ Child rows per unit; many per unit (water, power, etc.).
 
 ---
 
-## Server logic to migrate
+## Former server logic (reimplement in KA)
 
-| Module | Role |
-|--------|------|
-| `src/lib/server/bills/relinkParsedBills.ts` | Recompute `bill_documents.linked_unit_id` after mapping changes |
-| `src/lib/server/bills/resolveLinkedUnit.ts` | Used at parse time |
+| Former module | Role |
+|---------------|------|
+| `relinkParsedBills.ts` | Recompute `bill_documents.linked_unit_id` after mapping changes |
+| `resolveLinkedUnit.ts` | Used at parse time |
 
-Old route handlers lived under `src/routes/tools/units/` (deleted); **no separate API routes** — all form POST actions.
+Old route handlers lived under `src/routes/tools/units/` (deleted).
 
 ---
 

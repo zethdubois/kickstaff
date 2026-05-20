@@ -1,7 +1,7 @@
 # Bills operations primer (ex–`/tools/bills`)
 
 **Audience:** kickagent developers.  
-**Status:** The publicweb `/tools/bills/*` UI has been **removed**. Business logic remains in `src/lib/server/bills/` until migrated to kickagent.
+**Status:** The publicweb `/tools/bills/*` UI, `src/lib/server/bills/`, `/api/admin/bills/*`, and ops tables are **removed**. Reimplement in kickagent using this primer and [utility-bill-etl-scope.md](utility-bill-etl-scope.md).
 
 ---
 
@@ -23,7 +23,7 @@ Default landing tab was **Transactions** (first tab); last-selected tab was stor
 
 ## Data model (Postgres)
 
-Target owner: **`operations`** schema (today: `publicweb` default schema). See `src/lib/server/schema.ts`.
+Target owner: **`operations`** schema in kickagent. Tables were dropped from publicweb DB (migration `0019`); schema definitions are no longer in publicweb `schema.ts`.
 
 | Table | Role |
 |-------|------|
@@ -41,7 +41,7 @@ Target owner: **`operations`** schema (today: `publicweb` default schema). See `
 
 ## S3 storage
 
-Env: `UTILITY_BILL_S3_*` (see `.env.example`). Keys built in `src/lib/server/storage.ts` via `buildBillStorageKey`:
+Env: `UTILITY_BILL_S3_*` in **kickagent** deploy (removed from publicweb `.env.example`). Keys used the `buildBillStorageKey` pattern (see ETL scope doc):
 
 - **raw** — uploaded PDFs  
 - **output** — generated Appfolio CSV  
@@ -49,20 +49,21 @@ Env: `UTILITY_BILL_S3_*` (see `.env.example`). Keys built in `src/lib/server/sto
 
 ---
 
-## Server modules (migrate to KA)
+## Former publicweb modules (reimplement in KA)
 
-| Module | Responsibility |
-|--------|----------------|
+These lived under `src/lib/server/bills/` and related paths; **deleted from publicweb**:
+
+| Former module | Responsibility |
+|---------------|----------------|
 | `intake.ts` | `ingestBillPdf` — hash dedupe, S3 put, insert `bill_documents` |
 | `parseDocument.ts` | Load PDF from S3, run vendor parser, update row, resolve unit link |
-| `parsers/` | City/vendor parsers (e.g. Moscow utility) |
+| `parsers/` | City/vendor parsers (e.g. Moscow utility; used `pdfjs-dist`) |
 | `resolveLinkedUnit.ts` | Match service account → unit |
 | `relinkParsedBills.ts` | Re-link after unit/account edits |
 | `monthlyBatch.ts` | `generateMonthlyBatchFile`, status transitions, `getMonthlyBatchFile` |
 | `monthlyMetrics.ts` | Aggregates for reports UI |
-| `billDocumentsLinkedUnitSupport.ts` | Optional `linked_unit_id` column compatibility |
-
-**Appfolio CSV:** `src/lib/server/adapters/appfolio/vendorBill.ts` — headers + row builder.
+| `storage.ts` | S3 client (`@aws-sdk/client-s3`) |
+| `adapters/appfolio/vendorBill.ts` | Appfolio CSV headers + row builder |
 
 ---
 
@@ -101,14 +102,10 @@ Reset `parsed` → `received`, clear parsed fields (vendor-scoped or all). Imple
 
 ---
 
-## APIs still in publicweb
+## Removed from publicweb
 
-| Endpoint | Method | Notes |
-|----------|--------|-------|
-| `/api/admin/bills/recent` | GET | Last N documents for admin tooling |
-| `/api/admin/bills/reset` | POST | `{ vendor }` or `{ allParsed: true }` |
-
-KAM: `reset <vendor>` / `reset --all-parsed` in `src/lib/devConsole/commands.ts`.
+- `/api/admin/bills/recent`, `/api/admin/bills/reset`
+- KAM `reset` command
 
 ---
 
@@ -118,7 +115,7 @@ KAM: `reset <vendor>` / `reset --all-parsed` in `src/lib/devConsole/commands.ts`
 - No scheduled monthly job; generate was form-triggered.
 - `bill_runs` table unused in UI.
 - Transactions tab had **no** server-side filter/query.
-- Email intake and full ETL pipeline: see [utility-bill-etl-scope.md](../guides/utility-bill-etl-scope.md).
+- Email intake and full ETL pipeline: see [utility-bill-etl-scope.md](utility-bill-etl-scope.md).
 
 ---
 

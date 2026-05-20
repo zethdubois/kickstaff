@@ -1,0 +1,30 @@
+---
+description: Kickdesk subscriber — ports, manifest publish, migrate-status
+globs:
+  - vite.config.ts
+  - docker-compose.yml
+  - package.json
+  - kickdesk.registration.json
+  - scripts/kickdesk-manifest.ts
+  - scripts/publish-kickdesk-manifest.ts
+  - scripts/migrate-status.ts
+  - docs/guides/kickdesk-manifest.md
+---
+
+# Kickdesk integration
+
+This app is a **Kickdesk subscriber**. Read [`kickdesk.registration.json`](../../kickdesk.registration.json) first.
+
+When changing dev ports, Docker compose host mappings, `package.json` scripts referenced by workflows, or Kickdesk integration:
+
+1. Read Kickdesk spec files (readonly), if the sibling repo exists:
+   - `../kickdesk/docs/MANIFEST.md`
+   - `../kickdesk/examples/manifest.sample.json`
+   - Or `$KICKDESK_ROOT` when set.
+2. Update values in [`scripts/kickdesk-manifest.ts`](../../scripts/kickdesk-manifest.ts) — do not copy `manifest.sample.json` verbatim.
+3. Run `pnpm kickdesk:publish-manifest` after port/script/workflow changes.
+4. Run `pnpm db:migrate:status` after db up, migrate, or pulling new migrations.
+
+Do not add `.kickdesk.json` in this repo; publish only to `~/.config/publicweb/`.
+
+Guide: [`docs/guides/kickdesk-manifest.md`](../../docs/guides/kickdesk-manifest.md).

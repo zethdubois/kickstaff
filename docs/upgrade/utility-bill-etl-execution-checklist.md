@@ -1,6 +1,8 @@
 # Utility Bill ETL Execution Checklist
 
-Implementation checklist derived from `docs/guides/utility-bill-etl-scope.md`.
+> **KA implementation reference** — not publicweb code.
+
+Implementation checklist derived from [utility-bill-etl-scope.md](utility-bill-etl-scope.md).
 
 Use this as the execution tracker for delivery. Each checkbox should map to a PR or a clearly logged operational task.
 

@@ -41,13 +41,13 @@ Secondary tab bar: **Operations** | **Monthly**.
 
 **Left unchanged:** `failed`, `skipped`, `received` rows.
 
-**Duplicate capability:** KAM command `reset <vendor>` and `reset --all-parsed` call `/api/admin/bills/reset` — **keep that path in publicweb** until KA owns auth + API.
+**Removed from publicweb:** KAM `reset` and `/api/admin/bills/reset` — reimplement in kickagent.
 
 ---
 
 ## Monthly tab (metrics)
 
-**Server:** `src/lib/server/bills/monthlyMetrics.ts`
+**Former server:** `monthlyMetrics.ts` (deleted from publicweb; reimplement in KA)
 
 - `currentPeriod()` → `YYYY-MM` (UTC month).
 - `loadMonthlyMetrics(period)` returns:
@@ -71,7 +71,7 @@ No vendor breakdown, no drill-down, no charts.
 
 | Salvage | Rewrite |
 |---------|---------|
-| `loadMonthlyMetrics` shape as a starting API response | Tab-based “Reports” IA |
+| `loadMonthlyMetrics` query shape as a starting API response | Tab-based “Reports” IA |
 | Re-parse semantics (documented in [bills primer](bills-operations-primer.md)) | Duplicate HTML forms |
 | Period validation `YYYY-MM` | Static Svelte pages |
 

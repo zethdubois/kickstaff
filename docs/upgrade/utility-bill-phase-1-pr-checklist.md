@@ -2,7 +2,9 @@
 
 Concrete file-level checklist for the first implementation PRs.
 
-This checklist assumes Phase 1 from `docs/guides/utility-bill-etl-execution-checklist.md` and keeps scope tight: schema, storage adapter, manual intake path, and Moscow parser validation.
+> **KA implementation reference** — not publicweb code.
+
+This checklist assumes Phase 1 from [utility-bill-etl-execution-checklist.md](utility-bill-etl-execution-checklist.md) and keeps scope tight: schema, storage adapter, manual intake path, and Moscow parser validation.
 
 ## PR 1 - Database foundation (Drizzle schema + migration)
 

@@ -1,5 +1,7 @@
 # Utility Bill ETL Scope
 
+> **KA implementation reference** — not implemented in publicweb. Ops tables and `src/lib/server/bills/` were removed; rebuild in kickagent.
+
 Scope for an automated monthly pipeline that converts utility-bill PDFs into an Appfolio-compatible bulk vendor bill CSV.
 
 ## Goal
