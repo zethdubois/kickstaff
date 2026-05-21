@@ -49,7 +49,7 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
 ## Kickdesk
 
-This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:** [`kickdesk.registration.json`](kickdesk.registration.json) → KD `docs/MANIFEST.md` + `examples/manifest.sample.json` (readonly). **Day-to-day when-to-run:** [README.md → Kickdesk](README.md#kickdesk-local-cockpit).
+This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:** [`kickdesk.registration.json`](kickdesk.registration.json) → KD [`docs/subscriber-setup-for-robots.md`](../kickdesk/docs/subscriber-setup-for-robots.md) (start here) + paths in `readonlyFiles`. **Day-to-day when-to-run:** [README.md → Kickdesk](README.md#kickdesk-local-cockpit).
 
 | You did… | Run |
 |----------|-----|
@@ -57,7 +57,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 | DB up, migrate, or pulled migrations | `pnpm db:migrate:status` |
 
 - **Registration:** [`kickdesk.registration.json`](kickdesk.registration.json)
-- **Schema (readonly):** sibling `../kickdesk/docs/MANIFEST.md` and `examples/manifest.sample.json` (or `KICKDESK_ROOT`)
+- **Schema (readonly):** KD files listed in `kickdesk.registration.json` → `kickdeskSpec.readonlyFiles` (or `KICKDESK_ROOT`)
 - **Values source:** [`scripts/kickdesk-manifest.ts`](scripts/kickdesk-manifest.ts) — do not copy KD sample manifest verbatim
 
 ## Database
@@ -77,7 +77,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 - **kickagent cross-repo contracts** (sibling package `../kickagent`): [`docs/guides/contracts/README.md`](docs/guides/contracts/README.md); publicweb host guide [`docs/guides/contracts/publicweb-kickagent-consumer.md`](docs/guides/contracts/publicweb-kickagent-consumer.md).
 - **Human setup (local dev):** [README.md → Development](README.md#development).
 - **Production operations (operators):** [`docs/guides/production-operations.md`](docs/guides/production-operations.md).
-- **Kickdesk subscriber:** [`kickdesk.registration.json`](kickdesk.registration.json) + sibling `../kickdesk/docs/MANIFEST.md`; day-to-day [README → Kickdesk](README.md#kickdesk-local-cockpit).
+- **Kickdesk subscriber:** [`kickdesk.registration.json`](kickdesk.registration.json) + KD [`subscriber-setup-for-robots.md`](../kickdesk/docs/subscriber-setup-for-robots.md); day-to-day [README → Kickdesk](README.md#kickdesk-local-cockpit).
 - **Docs index:** [`docs/guides/README.md`](docs/guides/README.md).
 
 ## Route doc order (required)

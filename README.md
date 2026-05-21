@@ -58,7 +58,7 @@ pnpm seed:admin
 
 ### Kickdesk (local cockpit)
 
-Kickdesk reads **`~/.config/publicweb/`** (not files in this repo). First-time subscriber setup: [`kickdesk.registration.json`](kickdesk.registration.json) → Kickdesk [`docs/MANIFEST.md`](../kickdesk/docs/MANIFEST.md) (sibling repo or `KICKDESK_ROOT`). Ports/commands values: [`scripts/kickdesk-manifest.ts`](scripts/kickdesk-manifest.ts).
+Kickdesk reads **`~/.config/publicweb/`** (not files in this repo). First-time subscriber setup: [`kickdesk.registration.json`](kickdesk.registration.json) → Kickdesk [`docs/subscriber-setup-for-robots.md`](../kickdesk/docs/subscriber-setup-for-robots.md) (sibling repo or `KICKDESK_ROOT`). Ports/commands values: [`scripts/kickdesk-manifest.ts`](scripts/kickdesk-manifest.ts).
 
 **When to run** (day-to-day):
 

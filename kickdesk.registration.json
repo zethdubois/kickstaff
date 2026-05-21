@@ -5,8 +5,10 @@
     "root": "../kickdesk",
     "rootEnv": "KICKDESK_ROOT",
     "readonlyFiles": [
+      "docs/subscriber-setup-for-robots.md",
+      "examples/manifest.sample.json",
       "docs/MANIFEST.md",
-      "examples/manifest.sample.json"
+      "docs/DEV_PORTS.md"
     ]
   },
   "publish": {
