@@ -4,6 +4,7 @@
  */
 export type KickdeskManifest = {
 	id: string;
+	path: string;
 	port_family: number;
 	primary_port: number;
 	ports: { role: string; port: number }[];
@@ -16,9 +17,10 @@ export type KickdeskManifest = {
 export const KICKDESK_CONFIG_DIR = '~/.config/publicweb';
 export const KICKDESK_MIGRATE_STATUS_PATH = `${KICKDESK_CONFIG_DIR}/migrate-status`;
 
-export function buildKickdeskManifest(): KickdeskManifest {
+export function buildKickdeskManifest(repoPath: string): KickdeskManifest {
 	return {
 		id: 'publicweb',
+		path: repoPath,
 		port_family: 50,
 		primary_port: 5000,
 		ports: [

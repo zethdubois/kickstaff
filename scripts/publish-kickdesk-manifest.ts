@@ -11,6 +11,14 @@ import { buildKickdeskManifest } from './kickdesk-manifest.ts';
 const EXPECTED_APP_PORT = 5000;
 const EXPECTED_DB_PORT = 5043;
 
+/** Checkout path for manifest `path` (~ prefix when under home). */
+function repoPathForManifest(cwd = process.cwd()): string {
+	const home = homedir();
+	if (cwd === home) return '~';
+	if (cwd.startsWith(home + '/')) return '~' + cwd.slice(home.length);
+	return cwd;
+}
+
 function warnIfPortDrift() {
 	const root = process.cwd();
 	const warnings: string[] = [];
@@ -45,7 +53,7 @@ function warnIfPortDrift() {
 function main() {
 	warnIfPortDrift();
 
-	const manifest = buildKickdeskManifest();
+	const manifest = buildKickdeskManifest(repoPathForManifest());
 	const configDir = join(homedir(), '.config', 'publicweb');
 	const outPath = join(configDir, 'manifest.json');
 

@@ -58,13 +58,13 @@ pnpm seed:admin
 
 ### Kickdesk (local cockpit)
 
-Kickdesk reads **`~/.config/publicweb/`** (not files in this repo). First-time subscriber wiring: [docs/guides/kickdesk-manifest.md](docs/guides/kickdesk-manifest.md).
+Kickdesk reads **`~/.config/publicweb/`** (not files in this repo). First-time subscriber setup: [`kickdesk.registration.json`](kickdesk.registration.json) → Kickdesk [`docs/MANIFEST.md`](../kickdesk/docs/MANIFEST.md) (sibling repo or `KICKDESK_ROOT`). Ports/commands values: [`scripts/kickdesk-manifest.ts`](scripts/kickdesk-manifest.ts).
 
 **When to run** (day-to-day):
 
 | You did… | Run |
 |----------|-----|
-| Changed dev ports, compose host port, workflow keys, or manifest command strings (`scripts/kickdesk-manifest.ts`) | `pnpm kickdesk:publish-manifest` |
+| Changed checkout path, dev ports, compose host port, workflow keys, or manifest command strings (`scripts/kickdesk-manifest.ts`) | `pnpm kickdesk:publish-manifest` |
 | DB up, `pnpm db:migrate`, or pulled new migrations | `pnpm db:migrate:status` |
 | Fresh machine / clone (once) | Both — publish manifest, then migrate-status with DB up |
 

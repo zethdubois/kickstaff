@@ -2,7 +2,8 @@
   "appId": "publicweb",
   "configDir": "~/.config/publicweb",
   "kickdeskSpec": {
-    "root": "${KICKDESK_ROOT:-../kickdesk}",
+    "root": "../kickdesk",
+    "rootEnv": "KICKDESK_ROOT",
     "readonlyFiles": [
       "docs/MANIFEST.md",
       "examples/manifest.sample.json"

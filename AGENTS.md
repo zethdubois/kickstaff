@@ -49,11 +49,11 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
 ## Kickdesk
 
-This app is a **Kickdesk subscriber** (local dev cockpit). First-time setup: [`docs/guides/kickdesk-manifest.md`](docs/guides/kickdesk-manifest.md). **Day-to-day when-to-run:** [README.md → Kickdesk](README.md#kickdesk-local-cockpit).
+This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:** [`kickdesk.registration.json`](kickdesk.registration.json) → KD `docs/MANIFEST.md` + `examples/manifest.sample.json` (readonly). **Day-to-day when-to-run:** [README.md → Kickdesk](README.md#kickdesk-local-cockpit).
 
 | You did… | Run |
 |----------|-----|
-| Changed ports, compose, workflow keys, or `scripts/kickdesk-manifest.ts` | `pnpm kickdesk:publish-manifest` |
+| Changed checkout path, ports, compose, workflow keys, or `scripts/kickdesk-manifest.ts` | `pnpm kickdesk:publish-manifest` |
 | DB up, migrate, or pulled migrations | `pnpm db:migrate:status` |
 
 - **Registration:** [`kickdesk.registration.json`](kickdesk.registration.json)
@@ -77,7 +77,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). First-time setup: [`d
 - **kickagent cross-repo contracts** (sibling package `../kickagent`): [`docs/guides/contracts/README.md`](docs/guides/contracts/README.md); publicweb host guide [`docs/guides/contracts/publicweb-kickagent-consumer.md`](docs/guides/contracts/publicweb-kickagent-consumer.md).
 - **Human setup (local dev):** [README.md → Development](README.md#development).
 - **Production operations (operators):** [`docs/guides/production-operations.md`](docs/guides/production-operations.md).
-- **Kickdesk subscriber:** [`docs/guides/kickdesk-manifest.md`](docs/guides/kickdesk-manifest.md).
+- **Kickdesk subscriber:** [`kickdesk.registration.json`](kickdesk.registration.json) + sibling `../kickdesk/docs/MANIFEST.md`; day-to-day [README → Kickdesk](README.md#kickdesk-local-cockpit).
 - **Docs index:** [`docs/guides/README.md`](docs/guides/README.md).
 
 ## Route doc order (required)

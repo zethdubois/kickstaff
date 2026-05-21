@@ -50,7 +50,7 @@ Paired guides match component filenames (see SOP):
 
 | Guide                                                                                  | Topic                                                           |
 | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| [kickdesk-manifest.md](kickdesk-manifest.md)                                           | Kickdesk subscriber setup (once); day-to-day when-to-run: [README § Kickdesk](../../README.md#kickdesk-local-cockpit) |
+| [kickdesk.registration.json](../../kickdesk.registration.json) + [KD MANIFEST.md](../../kickdesk/docs/MANIFEST.md) | Kickdesk subscriber — schema in KD repo; day-to-day: [README § Kickdesk](../../README.md#kickdesk-local-cockpit); values: `scripts/kickdesk-manifest.ts` |
 | [kam-console.md](kam-console.md)                                                       | Dev console, `Ctrl+/`, klog, command palette                    |
 | [contracts/README.md](contracts/README.md)                                             | Cross-repo contract index and reading order                     |
 | [contracts/publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consumer.md) | publicweb host/subscriber (phases, security, PW-owned commands) |
