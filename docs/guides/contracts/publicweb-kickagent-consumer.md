@@ -84,20 +84,13 @@ These are **host** concerns — not registered by the kickagent plugin:
 - Enter KA shell: **`shell kickagent`**, or a user alias such as **`ka`** after **`alias kickagent ka`**. Leave: **`shell default`** / **`shell off`** (from default shell) or **`:exit`** / **`:shell default`** from inside KA shell.
 - Visual: `[KA] >` prompt + green accent bar — see [kam-console.md](../kam-console.md).
 
-### Registering a command today (Phase 1)
+### Registering commands (Phase 1)
 
-```ts
-import { registerKickagentCommand } from "$lib/kickagent/commands";
-import { helloWorld } from "kickagent";
+When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is unset, admin login runs [`registerKickagentCatalogCommands`](../../../src/lib/kickagent/registerCatalogCommands.ts) from [`+layout.svelte`](../../../src/routes/+layout.svelte). That loops kickagent **`COMMAND_CATALOG`** and calls `registerKickagentCommand` for each short name — **no per-command wiring in publicweb** for catalog commands.
 
-registerKickagentCommand("hello", async () => {
-  const logger = createDemoLogger("kickagent:hello");
-  const result = await helloWorld(user.id, user.email, logger);
-  return { log: result.message, level: "info" };
-});
-```
+**Checklist (humans + agents):** [register-kickagent-command.md](../register-kickagent-command.md).
 
-Helper re-export: [src/lib/kickagent/commands.ts](../../../src/lib/kickagent/commands.ts).
+Low-level helper: [src/lib/kickagent/commands.ts](../../../src/lib/kickagent/commands.ts) re-exports `registerKickagentCommand` for exceptional host-only commands outside the catalog.
 
 ### Ops hub command cards (KAM-UI v0)
 

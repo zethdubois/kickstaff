@@ -20,7 +20,7 @@
     unregisterRefreshTarget,
   } from "$lib/devConsole/refresh";
   import { browser } from "$app/environment";
-  import { registerKickagentHelloCommand } from "$lib/kickagent/registerHelloCommand";
+  import { registerKickagentCatalogCommands } from "$lib/kickagent/registerCatalogCommands";
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
   import { setKickagentPluginSessionUser } from "$lib/kickagent/pluginSession";
 
@@ -77,7 +77,7 @@
         }
       });
     } else {
-      registerKickagentHelloCommand(user);
+      registerKickagentCatalogCommands(user);
     }
   });
 

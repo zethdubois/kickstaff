@@ -141,7 +141,7 @@ From **inside** [KA]: use **:** to reach publicweb commands (`:shell default`, `
 
 `kamMode` is persisted in localStorage (`kamMode` in UI settings). When active, the command line shows **`[KA] >`** and a green accent bar on the prompt row (and palette modal).
 
-Register kickagent-scoped commands with `registerKickagentCommand("hello", handler)` from `$lib/devConsole` or `$lib/kickagent/commands` — it registers the full name `kickagent:hello`.
+**New kickagent commands:** add a row to kickagent `COMMAND_CATALOG` (see [register-kickagent-command.md](register-kickagent-command.md)). On admin login, publicweb registers the full catalog via `registerKickagentCatalogCommands` — you normally do **not** call `registerKickagentCommand` per command in publicweb. KAM names are always `kickagent:<shortName>`.
 
 ## Refresh targets (the bridge between pages and commands)
 

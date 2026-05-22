@@ -141,6 +141,13 @@
       "when": 1779000000000,
       "tag": "0019_drop_operations_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1779100000000,
+      "tag": "0020_dashboard_command_items",
+      "breakpoints": true
     }
   ]
 }
