@@ -14,6 +14,15 @@ Ctrl+/   (or Cmd+/)   → open or close palette
 ` (backtick)         → open KAM Console (if needed) and focus its prompt
 console              → toggle the KAM Console pane (command)
 help                 → list commands + refresh targets + hotkeys
+history              → numbered command history (like bash)
+history 20           → last 20 entries
+history -c           → clear all history
+history -d 3         → delete line 3 (same numbers as `history` list)
+!n                   → re-run history line n (after `history`)
+!!                   → re-run last command
+!-n                  → n commands ago (!-1 = last)
+!prefix              → re-run latest command starting with prefix
+↑ / ↓                → recall prior commands (console + palette)
 shell kickagent      → enter kickagent shell ([KA] mode)
 ka                   → shortcut only if defined: `alias kickagent ka` (stored in preferences)
 shell default        → leave kickagent shell (same when already default)
@@ -82,6 +91,7 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `console`   | Toggle the KAM Console pane.                                                                             |
 | `clear`     | Clear the in-memory klog buffer in the pane (does not touch the persisted history).                      |
 | `help`      | Print available commands, refresh targets, and hotkey hint.                                              |
+| `history`   | Numbered command history (`history`, `history 20`, `history -n 20`, `history -c` clear all, `history -d <n>` delete line). Event designators: `!n`, `!!`, `!-n`, `!prefix` (see below). Stored in `localStorage` (`publicweb.kamCommandHistory`). |
 | `echo`      | klog the remaining args.                                                                                 |
 | `exit`      | Leave kickagent shell when active (normally via `:exit`; see Kickagent shell).                             |
 | `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
@@ -96,6 +106,21 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 - **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`publicweb_db_target`).
 - **Production:** switching disabled; only `DATABASE_URL` is used.
 - **CLI:** `pnpm db:status`, `pnpm db:migrate` (dev), `pnpm db:migrate:prod` (dangerous).
+
+### Command history (bash-style)
+
+- **↑ / ↓** in the palette or console prompt recall prior commands (newest on first ↑).
+- While browsing history, partial input is restored when you press ↓ back to the “new” line.
+- **`history`** prints numbered lines; **`history 20`** (or **`history -n 20`**) shows the last *n* entries.
+- **`history -c`** clears all stored history (not recorded in history).
+- **`history -d <n>`** deletes one line by number (not recorded; renumbers remaining lines).
+- **`!{n}`** re-runs the command with that number (same numbering as `history` output).
+- **`!!`** re-runs the previous command; **`!-2`** runs two commands ago.
+- **`!prefix`** re-runs the most recent command whose text starts with `prefix` (e.g. `!kickagent:hello`).
+- Expansion is echoed to klog (`!3 → …`) before the command runs; the **expanded** line is what gets recorded in history.
+- History is shared between palette and console and persists across sessions (up to 500 entries).
+
+Implementation: [`src/lib/devConsole/commandHistory.ts`](../../src/lib/devConsole/commandHistory.ts); recording happens in `runCommand`.
 
 ### Command aliases
 

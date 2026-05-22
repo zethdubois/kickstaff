@@ -4,6 +4,10 @@
     devConsole,
     KAM_CONSOLE_FOCUS_INPUT_EVENT,
   } from "./state.svelte";
+  import {
+    handleHistoryKeydown,
+    resetHistoryNavigation,
+  } from "./commandHistory";
   import { runCommand } from "./commands";
 
   let bodyEl: HTMLDivElement | undefined = $state();
@@ -23,7 +27,7 @@
   const placeholder = $derived(
     devConsole.kickagentModeActive
       ? "hello · :help · :exit"
-      : "help · console · clear · Ctrl+/ palette",
+      : "help · history · ↑↓ recall · Ctrl+/ palette",
   );
 
   $effect(() => {
@@ -51,7 +55,9 @@
   }
 
   onMount(() => {
+    resetHistoryNavigation();
     function onFocusConsoleInput() {
+      resetHistoryNavigation();
       void tick().then(() => inlineInputEl?.focus());
     }
     window.addEventListener(KAM_CONSOLE_FOCUS_INPUT_EVENT, onFocusConsoleInput);
@@ -125,6 +131,11 @@
         autocorrect="off"
         autocapitalize="off"
         spellcheck="false"
+        onkeydown={(e) => {
+          handleHistoryKeydown(e, inlineInput, (v) => {
+            inlineInput = v;
+          });
+        }}
       />
     </form>
   </aside>

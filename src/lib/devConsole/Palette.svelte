@@ -1,6 +1,10 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import { devConsole } from "./state.svelte";
+  import {
+    handleHistoryKeydown,
+    resetHistoryNavigation,
+  } from "./commandHistory";
   import { runCommand } from "./commands";
 
   let input = $state("");
@@ -58,6 +62,7 @@
 
   $effect(() => {
     if (devConsole.paletteOpen) {
+      resetHistoryNavigation();
       void tick().then(() => inputEl?.focus());
     } else {
       input = "";
@@ -118,13 +123,18 @@
           autocorrect="off"
           autocapitalize="off"
           spellcheck="false"
+          onkeydown={(e) => {
+            handleHistoryKeydown(e, input, (v) => {
+              input = v;
+            });
+          }}
         />
       </form>
       {#if error}
         <p class="error">{error}</p>
       {/if}
       <p class="hint">
-        Enter to run · Esc or Ctrl+/ (⌘+/) to close · ` opens the KAM Console pane
+        Enter to run · ↑/↓ history · Esc or Ctrl+/ (⌘+/) to close · ` opens KAM Console
       </p>
     </div>
   </div>

@@ -26,6 +26,12 @@ import {
   type KlogLevel,
 } from "./state.svelte";
 import { materializeDashboardCommand } from "../client/dashboardCommandMaterialize";
+import {
+  executeHistoryCommand,
+  expandHistoryBang,
+  recordKamCommand,
+  shouldSkipHistoryRecord,
+} from "./commandHistory";
 import { listRefreshTargets, runRefreshTarget } from "./refresh";
 
 export type CommandOutcome = {
@@ -173,7 +179,20 @@ export async function runCommand(input: string): Promise<CommandResult> {
   const trimmed = input.trim();
   if (!trimmed) return { ok: false, error: "empty command" };
 
-  const [rawToken, ...args] = trimmed.split(/\s+/);
+  let commandLine = trimmed;
+  const bang = expandHistoryBang(trimmed);
+  if (bang) {
+    if (!bang.ok) {
+      klogError(bang.error);
+      return { ok: false, error: bang.error };
+    }
+    klogWithSource("info", "history", `${bang.event} → ${bang.expanded}`);
+    commandLine = bang.expanded;
+  }
+
+  if (!shouldSkipHistoryRecord(commandLine)) recordKamCommand(commandLine);
+
+  const [rawToken, ...args] = commandLine.split(/\s+/);
   if (!rawToken) return { ok: false, error: "empty command" };
 
   const lw = rawToken.toLowerCase();
@@ -307,6 +326,9 @@ registerCommand("help", (): CommandOutcome => {
     );
   }
   blocks.push(
+    "History: history · !n / !! / !-n / !prefix · history -c · history -d <n> · ↑/↓ recall",
+  );
+  blocks.push(
     "Hotkey: Ctrl+/ (⌘+/) — palette · ` (backtick) — KAM Console pane",
   );
   blocks.push("Database: db status · db use dev|prod (super only, local dev)");
@@ -319,6 +341,30 @@ registerCommand("help", (): CommandOutcome => {
 
 registerCommand("echo", (args): CommandOutcome => {
   return { log: args.join(" ") };
+});
+
+registerCommand("history", (args): CommandOutcome => {
+  const result = executeHistoryCommand(args);
+  if (!result.ok) {
+    return { log: result.error, level: "error" };
+  }
+  if (result.kind === "cleared") {
+    return { log: "history cleared", level: "log" };
+  }
+  if (result.kind === "deleted") {
+    return {
+      log: `history: deleted line ${result.lineNumber} (${result.removed})`,
+      level: "log",
+    };
+  }
+  if (result.lines.length === 0) {
+    return {
+      log: "(no history yet — run commands first, then use !n to repeat)",
+      level: "log",
+    };
+  }
+  const footer = "\n\n(re-run with !n, !!, !-n, or !prefix · history -d <n> to delete)";
+  return { log: result.lines.join("\n") + footer, level: "log" };
 });
 
 registerCommand("alias", (args): CommandOutcome => {
