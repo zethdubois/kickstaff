@@ -42,7 +42,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const columns = categories.map((category) => ({
 		category,
-		links: visible.filter((l) => l.category === category)
+		links: visible
+			.filter((l) => l.category === category)
+			.map((l) => ({
+				id: l.id,
+				label: l.label,
+				description: l.description,
+				category: l.category,
+				sortOrder: l.sortOrder,
+				itemType: (l.itemType === 'command' ? 'command' : 'link') as 'link' | 'command',
+				hyperlink: l.hyperlink ?? undefined,
+				commandKey: l.commandKey ?? undefined,
+				execution: undefined as 'local' | 'remote' | undefined
+			}))
 	}));
 
 	return { dashboardColumns: columns };

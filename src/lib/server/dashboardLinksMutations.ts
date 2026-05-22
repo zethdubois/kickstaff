@@ -49,6 +49,7 @@ export async function createDashboardLinkFromForm(
 	const db = getDb();
 	const now = new Date();
 	await db.insert(dashboardLinks).values({
+		itemType: 'link',
 		hyperlink: href.value,
 		label,
 		description,

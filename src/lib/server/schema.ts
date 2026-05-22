@@ -83,17 +83,28 @@ export const rentalLandingLinks = pgTable('rental_landing_links', {
 	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
 
-/** Internal ops dashboard external links; editable in Settings. */
-export const dashboardLinks = pgTable('dashboard_links', {
-	id: uuid('id').primaryKey().defaultRandom(),
-	hyperlink: text('hyperlink').notNull(),
-	label: text('label').notNull(),
-	description: text('description').notNull().default(''),
-	category: text('category').notNull(),
-	sortOrder: integer('sort_order').notNull().default(0),
-	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-	updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const dashboardItemTypes = ['link', 'command'] as const;
+export type DashboardItemType = (typeof dashboardItemTypes)[number];
+
+/** Internal ops dashboard links and materialized command cards; editable in Settings. */
+export const dashboardLinks = pgTable(
+	'dashboard_links',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		itemType: text('item_type').notNull().default('link').$type<DashboardItemType>(),
+		commandKey: text('command_key'),
+		hyperlink: text('hyperlink'),
+		label: text('label').notNull(),
+		description: text('description').notNull().default(''),
+		category: text('category').notNull(),
+		sortOrder: integer('sort_order').notNull().default(0),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		commandKeyUnique: uniqueIndex('dashboard_links_command_key_unique').on(t.commandKey)
+	})
+);
 
 /** Per-user visibility; missing row means the link is shown (default on). */
 export const userDashboardLinkPreferences = pgTable(

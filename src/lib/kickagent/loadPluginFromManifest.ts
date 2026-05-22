@@ -10,12 +10,22 @@ import {
   clearKickagentCommands,
   registerKickagentCommand,
 } from "$lib/devConsole/commands";
+import { setManifestCommandCache } from "./manifestCommandCache";
 import { getKickagentPluginSessionUser } from "./pluginSession";
+
+type KickagentManifestCommandJson = {
+  name: string;
+  description: string;
+  category: string;
+  execution: "local" | "remote";
+  sortOrder?: number;
+};
 
 type KickagentManifestJson = {
   version: string;
   moduleUrl: string;
   sha256: string;
+  commands?: KickagentManifestCommandJson[];
   api?: { baseUrl?: string };
 };
 
@@ -65,15 +75,40 @@ function parseManifest(raw: unknown): KickagentManifestJson {
   if (typeof sha256 !== "string" || !sha256.trim()) {
     throw new Error("manifest: missing sha256");
   }
+  const commands = parseManifestCommands(o.commands);
+
   return {
     version: version.trim(),
     moduleUrl: moduleUrl.trim(),
     sha256: sha256.trim().toLowerCase(),
+    commands,
     api:
       o.api && typeof o.api === "object"
         ? (o.api as { baseUrl?: string })
         : undefined,
   };
+}
+
+function parseManifestCommands(raw: unknown): KickagentManifestCommandJson[] {
+  if (!Array.isArray(raw)) return [];
+  const out: KickagentManifestCommandJson[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    const name = typeof row.name === "string" ? row.name.trim() : "";
+    const description =
+      typeof row.description === "string" ? row.description.trim() : "";
+    const category = typeof row.category === "string" ? row.category.trim() : "";
+    const execution = row.execution;
+    if (!name || !category) continue;
+    if (execution !== "local" && execution !== "remote") continue;
+    const sortOrder =
+      typeof row.sortOrder === "number" && Number.isFinite(row.sortOrder)
+        ? row.sortOrder
+        : undefined;
+    out.push({ name, description, category, execution, sortOrder });
+  }
+  return out;
 }
 
 export type ReloadKickagentResult =
@@ -187,6 +222,7 @@ export async function reloadKickagentPluginFromManifest(options?: {
     pluginRegister(collecting, initCtx);
 
     clearKickagentCommands();
+    setManifestCommandCache(manifest.commands ?? []);
 
     for (const { name, handler } of pending) {
       registerKickagentCommand(name, async (args) => {

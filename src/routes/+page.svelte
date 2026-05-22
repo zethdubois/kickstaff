@@ -1,12 +1,33 @@
 <script lang="ts">
+  import { invalidateAll } from "$app/navigation";
   import {
     categoryBorder,
     categoryForeground,
     categoryTintBackground,
     hashCategoryHue,
   } from "$lib/categoryColor";
+  import { materializeDashboardCommand } from "$lib/client/dashboardCommandMaterialize";
+  import { runCommand } from "$lib/devConsole/commands";
+  import { devConsole } from "$lib/devConsole/state.svelte";
 
   let { data } = $props();
+
+  let runningKey = $state<string | null>(null);
+
+  async function runHubCommand(commandKey: string) {
+    if (runningKey) return;
+    runningKey = commandKey;
+    try {
+      await materializeDashboardCommand(commandKey);
+      await invalidateAll();
+      if (!devConsole.consoleOpen) {
+        devConsole.consoleOpen = true;
+      }
+      await runCommand(commandKey);
+    } finally {
+      runningKey = null;
+    }
+  }
 </script>
 
 <svelte:head>
@@ -16,7 +37,10 @@
 <div class="dash">
   <header class="dash__header">
     <h1 class="dash__title">Internal Ops Dashboard</h1>
-    <p class="dash__subtitle">Quick links for day-to-day operations.</p>
+    <p class="dash__subtitle">
+      Quick links and commands you have run at least once. Run more from the KAM
+      palette (<kbd>Ctrl+/</kbd>).
+    </p>
   </header>
 
   <section class="dash__section" aria-label="Resources">
@@ -54,14 +78,25 @@
                   </summary>
                   <div class="card__expand">
                     <p class="card__desc">{item.description}</p>
-                    <a
-                      class="card__open"
-                      href={item.hyperlink}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open in new tab
-                    </a>
+                    {#if item.itemType === "command" && item.commandKey}
+                      <button
+                        type="button"
+                        class="card__open card__run"
+                        disabled={runningKey === item.commandKey}
+                        onclick={() => runHubCommand(item.commandKey!)}
+                      >
+                        {runningKey === item.commandKey ? "Running…" : "Run command"}
+                      </button>
+                    {:else if item.hyperlink}
+                      <a
+                        class="card__open"
+                        href={item.hyperlink}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open in new tab
+                      </a>
+                    {/if}
                   </div>
                 </details>
               {/each}
@@ -192,5 +227,19 @@
 
   .card__open:hover {
     opacity: 0.9;
+  }
+
+  .card__run {
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+  }
+
+  .card__run:disabled {
+    opacity: 0.6;
+    cursor: wait;
   }
 </style>

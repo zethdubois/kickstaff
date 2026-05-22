@@ -99,13 +99,24 @@ registerKickagentCommand("hello", async () => {
 
 Helper re-export: [src/lib/kickagent/commands.ts](../../../src/lib/kickagent/commands.ts).
 
+### Ops hub command cards (KAM-UI v0)
+
+The authenticated home page (`/`) is a category-column **linkboard** backed by `dashboard_links`. Kickagent commands can appear as **command cards** in the same UI after **lazy materialization**:
+
+1. Each kickagent row in **`COMMAND_CATALOG`** must include **`category`** (and optional **`sortOrder`**) so cards sort with URL links.
+2. On first successful run of a `kickagent:*` command (palette, console, or hub **Run**), the host calls **`POST /api/dashboard/materialize-command`** with `commandKey` (e.g. `kickagent:hello`).
+3. Server inserts a `dashboard_links` row (`item_type = command`, `command_key`, no `hyperlink`) using catalog/manifest metadata unless a row already exists (user edits in Settings are preserved).
+4. Users hide/reorder/relabel cards under **Settings → Dashboard** like ordinary links.
+
+Implementation: [dashboardCommandMaterialize.ts](../../../src/lib/server/dashboardCommandMaterialize.ts), [materialize-command API](../../../src/routes/api/dashboard/materialize-command/+server.ts), hub [`+page.svelte`](../../../src/routes/+page.svelte). Phase 2 manifest `commands[]` includes `category`; cached client-side in [manifestCommandCache.ts](../../../src/lib/kickagent/manifestCommandCache.ts) after plugin load.
+
 ---
 
 ## What publicweb expects from kickagent
 
 ### Today (Phase 1)
 
-- ESM package with exported functions and local `KlogBroadcaster` type — [kickagent-essentials-spec.md](kickagent-essentials-spec.md).
+- ESM package with exported functions, **`COMMAND_CATALOG`** (includes required **`category`** per command), and local `KlogBroadcaster` type — [kickagent-essentials-spec.md](kickagent-essentials-spec.md).
 - No import of publicweb or SvelteKit in kickagent.
 - CLI for standalone testing.
 

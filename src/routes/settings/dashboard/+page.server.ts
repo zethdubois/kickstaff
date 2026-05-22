@@ -52,6 +52,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const links = allLinks.map((l) => ({
 		...l,
+		itemType: l.itemType === 'command' ? ('command' as const) : ('link' as const),
 		showOnMyDashboard: !hidden.has(l.id)
 	}));
 
@@ -84,15 +85,33 @@ export const actions: Actions = {
 			return fail(400, { message: 'Sort order must be a reasonable number.' });
 		}
 
-		const href = parseHttpUrl(form.get('hyperlink'), true);
-		if (!href.ok) return fail(400, { message: href.message });
-
 		const db = getDb();
+		const existing = await db
+			.select({
+				itemType: dashboardLinks.itemType,
+				commandKey: dashboardLinks.commandKey
+			})
+			.from(dashboardLinks)
+			.where(eq(dashboardLinks.id, linkId))
+			.limit(1);
+
+		if (existing.length === 0) return fail(404, { message: 'Link not found.' });
+
+		const row = existing[0]!;
+		const isCommand = row.itemType === 'command';
+
+		let hyperlink: string | null = null;
+		if (!isCommand) {
+			const href = parseHttpUrl(form.get('hyperlink'), true);
+			if (!href.ok) return fail(400, { message: href.message });
+			hyperlink = href.value;
+		}
+
 		const now = new Date();
 		const updated = await db
 			.update(dashboardLinks)
 			.set({
-				hyperlink: href.value,
+				...(hyperlink !== null ? { hyperlink } : {}),
 				label,
 				description,
 				category,

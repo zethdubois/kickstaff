@@ -20,8 +20,9 @@
 
   <h1 class="dashSettings__title">Dashboard</h1>
   <p class="dashSettings__lead">
-    Edit links or choose what appears on <strong>your</strong> home page. To add
-    a new link for everyone, use the <a href="/settings/add-link">Add link</a> tab.
+    Edit links and command cards, or choose what appears on <strong>your</strong> home page.
+    Command cards appear after you run them once from KAM. New URL links for everyone:
+    <a href="/settings/add-link">Add link</a>.
   </p>
 
   {#if form?.message}
@@ -67,9 +68,15 @@
                 <span class="linkCard__title">{l.label}</span>
               </div>
               <p class="linkCard__desc">{l.description}</p>
-              <p class="linkCard__url">
-                <a href={l.hyperlink} target="_blank" rel="noreferrer">{l.hyperlink}</a>
-              </p>
+              {#if l.itemType === "command" && l.commandKey}
+                <p class="linkCard__url">
+                  <span class="linkCard__cmdKey">{l.commandKey}</span>
+                </p>
+              {:else if l.hyperlink}
+                <p class="linkCard__url">
+                  <a href={l.hyperlink} target="_blank" rel="noreferrer">{l.hyperlink}</a>
+                </p>
+              {/if}
 
               <form method="POST" action="?/update" class="linkCard__edit">
                 <input type="hidden" name="link_id" value={l.id} />
@@ -86,10 +93,12 @@
                     <span class="field__label">Description</span>
                     <textarea class="field__input field__textarea" name="description" rows="2" maxlength="4096">{l.description}</textarea>
                   </label>
-                  <label class="field field--full">
-                    <span class="field__label">Hyperlink</span>
-                    <input class="field__input" name="hyperlink" type="url" value={l.hyperlink} required maxlength="2048" />
-                  </label>
+                  {#if l.itemType !== "command"}
+                    <label class="field field--full">
+                      <span class="field__label">Hyperlink</span>
+                      <input class="field__input" name="hyperlink" type="url" value={l.hyperlink ?? ""} required maxlength="2048" />
+                    </label>
+                  {/if}
                   <label class="field field--inline">
                     <span class="field__label">Sort order</span>
                     <input
@@ -110,10 +119,14 @@
                   class="btn btn--small btn--danger"
                   type="submit"
                   onclick={(e) => {
-                    if (!confirm("Delete this link for everyone?")) e.preventDefault();
+                    const msg =
+                      l.itemType === "command"
+                        ? "Remove this command card from the hub for everyone?"
+                        : "Delete this link for everyone?";
+                    if (!confirm(msg)) e.preventDefault();
                   }}
                 >
-                  Delete link
+                  {l.itemType === "command" ? "Remove command card" : "Delete link"}
                 </button>
               </form>
             </li>
@@ -156,9 +169,15 @@
                 <span class="linkCard__title">{l.label}</span>
               </div>
               <p class="linkCard__desc">{l.description}</p>
-              <p class="linkCard__url">
-                <a href={l.hyperlink} target="_blank" rel="noreferrer">{l.hyperlink}</a>
-              </p>
+              {#if l.itemType === "command" && l.commandKey}
+                <p class="linkCard__url">
+                  <span class="linkCard__cmdKey">{l.commandKey}</span>
+                </p>
+              {:else if l.hyperlink}
+                <p class="linkCard__url">
+                  <a href={l.hyperlink} target="_blank" rel="noreferrer">{l.hyperlink}</a>
+                </p>
+              {/if}
 
               <form method="POST" action="?/update" class="linkCard__edit">
                 <input type="hidden" name="link_id" value={l.id} />
@@ -175,10 +194,12 @@
                     <span class="field__label">Description</span>
                     <textarea class="field__input field__textarea" name="description" rows="2" maxlength="4096">{l.description}</textarea>
                   </label>
-                  <label class="field field--full">
-                    <span class="field__label">Hyperlink</span>
-                    <input class="field__input" name="hyperlink" type="url" value={l.hyperlink} required maxlength="2048" />
-                  </label>
+                  {#if l.itemType !== "command"}
+                    <label class="field field--full">
+                      <span class="field__label">Hyperlink</span>
+                      <input class="field__input" name="hyperlink" type="url" value={l.hyperlink ?? ""} required maxlength="2048" />
+                    </label>
+                  {/if}
                   <label class="field field--inline">
                     <span class="field__label">Sort order</span>
                     <input
@@ -199,10 +220,14 @@
                   class="btn btn--small btn--danger"
                   type="submit"
                   onclick={(e) => {
-                    if (!confirm("Delete this link for everyone?")) e.preventDefault();
+                    const msg =
+                      l.itemType === "command"
+                        ? "Remove this command card from the hub for everyone?"
+                        : "Delete this link for everyone?";
+                    if (!confirm(msg)) e.preventDefault();
                   }}
                 >
-                  Delete link
+                  {l.itemType === "command" ? "Remove command card" : "Delete link"}
                 </button>
               </form>
             </li>
@@ -377,6 +402,11 @@
 
   .linkCard__url a {
     color: inherit;
+  }
+
+  .linkCard__cmdKey {
+    font-family: ui-monospace, monospace;
+    font-size: 0.82rem;
   }
 
   .linkCard__edit {

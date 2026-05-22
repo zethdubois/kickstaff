@@ -25,6 +25,7 @@ import {
   klogWithSource,
   type KlogLevel,
 } from "./state.svelte";
+import { materializeDashboardCommand } from "../client/dashboardCommandMaterialize";
 import { listRefreshTargets, runRefreshTarget } from "./refresh";
 
 export type CommandOutcome = {
@@ -76,6 +77,9 @@ export function clearKickagentCommands(): void {
       commands.delete(key);
     }
   }
+  void import("$lib/kickagent/manifestCommandCache").then((m) =>
+    m.clearManifestCommandCache(),
+  );
 }
 
 export function listCommands(): string[] {
@@ -249,6 +253,9 @@ export async function runCommand(input: string): Promise<CommandResult> {
   }
 
   logLines(outcome, source);
+  if (resolved.startsWith(KICKAGENT_NS)) {
+    void materializeDashboardCommand(resolved);
+  }
   return { ok: true };
 }
 
