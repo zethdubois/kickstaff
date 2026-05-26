@@ -331,7 +331,9 @@ registerCommand("help", (): CommandOutcome => {
   blocks.push(
     "Hotkey: Ctrl+/ (⌘+/) — palette · ` (backtick) — KAM Console pane",
   );
-  blocks.push("Database: db status · db use dev|prod (super only, local dev)");
+  blocks.push(
+    "Database: db status · db tables · db migrations · db use dev|prod (super only, local dev)",
+  );
   const targets = listRefreshTargets();
   if (targets.length > 0) {
     blocks.push(`Refresh targets: ${targets.join(", ")}`);
@@ -499,10 +501,24 @@ type DbApiStatus = {
   host: string;
   database: string;
   canSwitch: boolean;
+  connected?: boolean;
+  connectedError?: string;
 };
 
-async function fetchDbApiStatus(): Promise<DbApiStatus> {
-  const res = await fetch("/api/dev/database", { credentials: "same-origin" });
+type DbTablesPayload = {
+  tables: Array<{ schema: string; name: string; approxRows: number | null }>;
+};
+
+type DbMigrationsPayload = {
+  state: "ok" | "pending" | "unavailable";
+  journalCount: number;
+  appliedCount: number;
+  pendingCount: number;
+  pendingTags: string[];
+};
+
+async function fetchDevDbJson<T>(path: string): Promise<T> {
+  const res = await fetch(path, { credentials: "same-origin" });
   let payload: unknown = null;
   try {
     payload = await res.json();
@@ -512,11 +528,57 @@ async function fetchDbApiStatus(): Promise<DbApiStatus> {
   if (!res.ok) {
     const msg =
       payload && typeof payload === "object" && "message" in payload
-        ? String((payload as { message?: unknown }).message ?? "db status failed")
-        : "db status failed (sign in required)";
+        ? String((payload as { message?: unknown }).message ?? `${path} failed`)
+        : `${path} failed`;
     throw new Error(msg);
   }
-  return payload as DbApiStatus;
+  return payload as T;
+}
+
+function formatDbTables(payload: DbTablesPayload): string {
+  if (payload.tables.length === 0) {
+    return "(no tables in public or drizzle schemas)";
+  }
+  const schemaW = Math.max(6, ...payload.tables.map((t) => t.schema.length));
+  const nameW = Math.max(5, ...payload.tables.map((t) => t.name.length));
+  const lines = [
+    `${"schema".padEnd(schemaW)}  ${"table".padEnd(nameW)}  ~rows`,
+    ...payload.tables.map((t) => {
+      const rows =
+        t.approxRows === null || Number.isNaN(t.approxRows)
+          ? "—"
+          : String(Math.round(t.approxRows));
+      return `${t.schema.padEnd(schemaW)}  ${t.name.padEnd(nameW)}  ${rows}`;
+    }),
+  ];
+  return lines.join("\n");
+}
+
+function formatDbMigrations(payload: DbMigrationsPayload): string {
+  if (payload.state === "unavailable") {
+    return [
+      "migrations: unavailable",
+      "(check DATABASE_URL / journal / DB is running)",
+    ].join("\n");
+  }
+  const lines = [
+    payload.state === "pending"
+      ? `migrations: pending:${payload.pendingCount}`
+      : "migrations: ok",
+    `journal: ${payload.journalCount}  applied: ${payload.appliedCount}  pending: ${payload.pendingCount}`,
+  ];
+  if (payload.pendingTags.length > 0) {
+    lines.push("pending:");
+    for (const tag of payload.pendingTags) {
+      lines.push(`  ${tag}`);
+    }
+    lines.push("(run: pnpm db:migrate)");
+  }
+  return lines.join("\n");
+}
+
+async function fetchDbApiStatus(): Promise<DbApiStatus> {
+  return fetchDevDbJson<DbApiStatus>("/api/dev/database");
 }
 
 registerCommand("db", async (args): Promise<CommandOutcome> => {
@@ -530,13 +592,40 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
       `label: ${status.label}`,
       `host: ${status.host}`,
       `database: ${status.database}`,
+      status.connected === false
+        ? `connected: failed — ${status.connectedError ?? "unknown"}`
+        : status.connected === true
+          ? "connected: ok"
+          : "connected: unknown",
       status.canSwitch
         ? "switch: db use dev | db use prod (super only)"
         : "switch: disabled (production or DATABASE_URL_DEV unset)",
     ];
     return {
       log: lines.join("\n"),
-      level: status.target === "prod" ? "warn" : "info",
+      level:
+        status.target === "prod" || status.connected === false ? "warn" : "info",
+    };
+  }
+
+  if (sub === "tables") {
+    const payload = await fetchDevDbJson<DbTablesPayload>("/api/dev/database/tables");
+    return { log: formatDbTables(payload), level: "log" };
+  }
+
+  if (sub === "migrations" || sub === "migrate") {
+    if (sub === "migrate") {
+      return {
+        log: "db migrate is not available in KAM — use: pnpm db:migrate (or Kickdesk workflow)",
+        level: "warn",
+      };
+    }
+    const payload = await fetchDevDbJson<DbMigrationsPayload>(
+      "/api/dev/database/migrations",
+    );
+    return {
+      log: formatDbMigrations(payload),
+      level: payload.state === "pending" ? "warn" : "info",
     };
   }
 
@@ -584,7 +673,9 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
     };
   }
 
-  throw new Error("usage: db status | db use dev | db use prod");
+  throw new Error(
+    "usage: db status | db tables | db migrations | db use dev | db use prod",
+  );
 });
 
 registerCommand("kam:reload-kickagent", async (): Promise<CommandOutcome> => {

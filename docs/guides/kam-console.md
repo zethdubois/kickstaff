@@ -28,7 +28,9 @@ ka                   → shortcut only if defined: `alias kickagent ka` (stored 
 shell default        → leave kickagent shell (same when already default)
 :exit                → leave kickagent shell from inside [KA] mode (host escape)
 unalias --all        → remove every saved alias (or: alias --clear)
-db status            → show active database target (dev Docker vs prod)
+db status            → active DB target, host, connectivity (SELECT 1)
+db tables            → list public/drizzle tables (~row counts, local dev only)
+db migrations        → journal vs ledger (ok / pending:N); apply via pnpm db:migrate
 db use prod          → super only — switch runtime DB (local dev; warns on prod)
 ```
 
@@ -97,7 +99,7 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
 | `alias` / `unalias` | Persisted command aliases (`publicweb.consoleUi` in localStorage). See **Command aliases** below. |
 | `kam:reload-kickagent` | Phase 2: refetch `PUBLIC_KICKAGENT_MANIFEST_URL`, verify `sha256`, reload plugin (`kickagent:*` commands). No-op message if env unset. |
-| `db` | `db status` — active target and host/db name. `db use dev` \| `db use prod` — **super user only** (`ADMIN_EMAIL`), non-production, when `DATABASE_URL_DEV` is set. |
+| `db` | `db status` — active target, host/db name, and `connected: ok` / `failed`. `db tables` — relations in `public` and `drizzle` on the **runtime** target (local dev only). `db migrations` — Drizzle journal vs `drizzle.__drizzle_migrations` (read-only; run **`pnpm db:migrate`** or Kickdesk to apply). `db use dev` \| `db use prod` — **super user only** (`ADMIN_EMAIL`), non-production, when `DATABASE_URL_DEV` is set. |
 
 ### Database routing (local dev)
 
@@ -105,7 +107,8 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 - **Console header:** shows `dev` or `prod` badge with full label on hover.
 - **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`publicweb_db_target`).
 - **Production:** switching disabled; only `DATABASE_URL` is used.
-- **CLI:** `pnpm db:status`, `pnpm db:migrate` (dev), `pnpm db:migrate:prod` (dangerous).
+- **CLI:** `pnpm db:status` (env default target, not cookie), `pnpm db:migrate:status` (Kickdesk one-liner file), `pnpm db:migrate` (dev), `pnpm db:migrate:prod` (dangerous).
+- **KAM inspection** uses the same runtime target as the app (including after `db use prod`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
 
 ### Command history (bash-style)
 

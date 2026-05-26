@@ -1,4 +1,5 @@
 import { env } from '$env/dynamic/private';
+import { isLocalDevDatabaseFeaturesEnabled, isProductionRuntime } from '$lib/server/runtimeEnv';
 
 export type DbTarget = 'dev' | 'prod';
 
@@ -13,12 +14,8 @@ export type DbDisplayInfo = {
 
 let activeTarget: DbTarget = resolveDefaultTarget();
 
-function isProductionRuntime(): boolean {
-	return process.env.NODE_ENV === 'production';
-}
-
 export function isDbSwitchingEnabled(): boolean {
-	return !isProductionRuntime() && !!env.DATABASE_URL_DEV?.trim();
+	return isLocalDevDatabaseFeaturesEnabled(env.DATABASE_URL_DEV);
 }
 
 function resolveDefaultTarget(): DbTarget {

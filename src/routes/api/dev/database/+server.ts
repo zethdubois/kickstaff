@@ -1,30 +1,14 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import {
-	DB_TARGET_COOKIE,
-	getDbDisplayInfo,
-	isDbSwitchingEnabled,
-	setActiveDbTarget,
-	type DbTarget
-} from '$lib/server/dbTarget';
+import { buildDatabaseStatusPayload } from '$lib/server/devDbHandlers';
+import { DB_TARGET_COOKIE, isDbSwitchingEnabled, setActiveDbTarget, type DbTarget } from '$lib/server/dbTarget';
 import { isSuperUser } from '$lib/server/superUser';
-
-function buildStatus(canSwitch: boolean) {
-	const info = getDbDisplayInfo();
-	return {
-		target: info.target,
-		label: info.label,
-		host: info.host,
-		database: info.database,
-		canSwitch
-	};
-}
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 	const canSwitch = isDbSwitchingEnabled() && isSuperUser(locals.user);
-	return json(buildStatus(canSwitch));
+	return json(await buildDatabaseStatusPayload(canSwitch));
 };
 
 export const POST: RequestHandler = async ({ request, locals, cookies, url }) => {
@@ -65,5 +49,5 @@ export const POST: RequestHandler = async ({ request, locals, cookies, url }) =>
 		maxAge: 60 * 60 * 24 * 365
 	});
 
-	return json(buildStatus(true));
+	return json(await buildDatabaseStatusPayload(true));
 };

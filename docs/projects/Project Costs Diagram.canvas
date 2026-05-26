@@ -1,0 +1,23 @@
+{
+	"nodes":[
+		{"id":"74b423b42853b5d0","type":"text","text":"LABOR","x":-140,"y":-240,"width":250,"height":60,"color":"4"},
+		{"id":"30a0f09a13335323","type":"text","text":"1099 AF","x":-460,"y":-180,"width":250,"height":60},
+		{"id":"81c23aa99cc84e87","type":"text","text":"w2 QB","x":-460,"y":-300,"width":250,"height":60},
+		{"id":"1ffb0828228ab2b1","type":"text","text":"vendors","x":-460,"y":-40,"width":250,"height":60},
+		{"id":"98e8462a3d2384af","type":"text","text":"MATERIALS","x":-140,"y":-40,"width":250,"height":60,"color":"2"},
+		{"id":"6405031acf924d6e","type":"text","text":"permitting","x":-460,"y":100,"width":250,"height":60},
+		{"id":"88d72d51b4ab5ea0","type":"text","text":"services","x":-460,"y":210,"width":250,"height":50},
+		{"id":"4b81143c81a56133","type":"text","text":"FEES","x":-140,"y":150,"width":250,"height":60,"color":"1"},
+		{"id":"1b50f18d1235e374","type":"text","text":"PROJ COSTS","x":240,"y":-40,"width":250,"height":60,"color":"6"}
+	],
+	"edges":[
+		{"id":"5692b0ff5b536239","fromNode":"81c23aa99cc84e87","fromSide":"right","toNode":"74b423b42853b5d0","toSide":"left"},
+		{"id":"8f35f92a17d12f8e","fromNode":"30a0f09a13335323","fromSide":"right","toNode":"74b423b42853b5d0","toSide":"left"},
+		{"id":"599e50beb275ba20","fromNode":"1ffb0828228ab2b1","fromSide":"right","toNode":"98e8462a3d2384af","toSide":"left"},
+		{"id":"027c25eb967e9021","fromNode":"6405031acf924d6e","fromSide":"right","toNode":"4b81143c81a56133","toSide":"left"},
+		{"id":"8db52609b7077ab8","fromNode":"88d72d51b4ab5ea0","fromSide":"right","toNode":"4b81143c81a56133","toSide":"left"},
+		{"id":"45358cf8aac81ce4","fromNode":"74b423b42853b5d0","fromSide":"right","toNode":"1b50f18d1235e374","toSide":"left"},
+		{"id":"5cd48929f20daa12","fromNode":"98e8462a3d2384af","fromSide":"right","toNode":"1b50f18d1235e374","toSide":"left"},
+		{"id":"87032ab43b792f14","fromNode":"4b81143c81a56133","fromSide":"right","toNode":"1b50f18d1235e374","toSide":"left"}
+	]
+}
