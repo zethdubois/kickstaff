@@ -72,6 +72,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 
 ## Documentation pipeline
 
+- **Repo Architecture Onboarding (Cursor skill):** [`.cursor/skills/repo-architecture-onboarding/SKILL.md`](.cursor/skills/repo-architecture-onboarding/SKILL.md) — doc ladder and architecture summary when cold-starting or before cross-cutting work.
 - **Platform overview** (publicweb vs kickagent, one DB / two schemas, storage, KAM vs KAM-UI): `[docs/guides/platform-overview.md](docs/guides/platform-overview.md)`.
 - **Repository standards** for Svelte structure and file headers: `[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)`.
 - **Developer / agent guides** live under `[docs/guides/](docs/guides/)` — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
