@@ -175,9 +175,20 @@ function logLines(outcome: CommandOutcome | void, source: string): void {
   }
 }
 
+function kamPromptPrefix(): string {
+  return devConsole.kickagentModeActive ? "[KA] >" : "›";
+}
+
+/** Echo the submitted command line in the console scrollback (terminal-style). */
+function echoCommandInput(line: string): void {
+  klogWithSource("log", "kam:prompt", `${kamPromptPrefix()} ${line}`);
+}
+
 export async function runCommand(input: string): Promise<CommandResult> {
   const trimmed = input.trim();
   if (!trimmed) return { ok: false, error: "empty command" };
+
+  echoCommandInput(trimmed);
 
   let commandLine = trimmed;
   const bang = expandHistoryBang(trimmed);

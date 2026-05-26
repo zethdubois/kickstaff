@@ -81,6 +81,7 @@ export type CommandOutcome = {
 
 Runner semantics on a successful handler:
 
+0. The submitted line is echoed to the scrollback first (`› …` or `[KA] > …`, source `kam:prompt`) — from the console prompt or palette.
 1. For each key in `refresh`, call the registered refresh target. If a target is missing or throws, the command is treated as failed (subsequent refreshes and log lines are skipped).
 2. For each line in `log`, write a klog tagged with `command:<name>`.
 

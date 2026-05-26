@@ -102,6 +102,7 @@
           class:row--err={entry.level === "error"}
           class:row--warn={entry.level === "warn"}
           class:row--info={entry.level === "info"}
+          class:row--prompt={entry.source === "kam:prompt"}
         >
           <span class="ts">{fmtTs(entry.ts)}</span>
           <pre class="msg">{entry.message}</pre>
@@ -255,6 +256,11 @@
 
   .row--info .msg {
     color: #8ab4f8;
+  }
+
+  .row--prompt .msg {
+    color: #e2e4ea;
+    font-weight: 600;
   }
 
   .ts {
