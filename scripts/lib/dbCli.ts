@@ -1,29 +1,24 @@
 /**
  * CLI database target resolution (dotenv-loaded scripts).
- * Mirrors server logic in src/lib/server/dbTarget.ts using process.env.
+ * Uses shared logic in dbTargetCore.ts (aligned with kickagent KICKAGENT_DB_DEFAULT).
  */
 
-export type CliDbTarget = 'dev' | 'prod';
+import {
+	envFromProcess,
+	getDbDisplayInfoFromEnv,
+	getDefaultDbTarget,
+	resolveConnectionStringFromEnv,
+	type DbTarget
+} from '../../src/lib/server/dbTargetCore.ts';
+
+export type CliDbTarget = DbTarget;
 
 export function getDefaultCliDbTarget(): CliDbTarget {
-	if (process.env.NODE_ENV === 'production') return 'prod';
-	if (process.env.DATABASE_URL_DEV?.trim()) return 'dev';
-	return 'prod';
+	return getDefaultDbTarget(envFromProcess());
 }
 
 export function resolveCliConnectionString(target: CliDbTarget = getDefaultCliDbTarget()): string {
-	if (target === 'dev') {
-		const dev = process.env.DATABASE_URL_DEV?.trim();
-		if (!dev) {
-			throw new Error('DATABASE_URL_DEV is not set');
-		}
-		return dev;
-	}
-	const prod = process.env.DATABASE_URL?.trim();
-	if (!prod) {
-		throw new Error('DATABASE_URL is not set');
-	}
-	return prod;
+	return resolveConnectionStringFromEnv(envFromProcess(), target);
 }
 
 export function getCliDbDisplayInfo(target: CliDbTarget = getDefaultCliDbTarget()): {
@@ -32,16 +27,5 @@ export function getCliDbDisplayInfo(target: CliDbTarget = getDefaultCliDbTarget(
 	host: string;
 	database: string;
 } {
-	const connectionString = resolveCliConnectionString(target);
-	let host = 'unknown';
-	let database = 'unknown';
-	try {
-		const url = new URL(connectionString);
-		host = url.hostname + (url.port ? `:${url.port}` : '');
-		database = url.pathname.replace(/^\//, '') || 'postgres';
-	} catch {
-		host = '(invalid url)';
-		database = '?';
-	}
-	return { target, label: `${target} · ${host}/${database}`, host, database };
+	return getDbDisplayInfoFromEnv(envFromProcess(), target);
 }

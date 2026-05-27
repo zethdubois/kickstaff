@@ -1,7 +1,14 @@
 import { env } from '$env/dynamic/private';
 import { isLocalDevDatabaseFeaturesEnabled, isProductionRuntime } from '$lib/server/runtimeEnv';
+import {
+	getDefaultDbTarget,
+	getDbDisplayInfoFromEnv,
+	resolveConnectionStringFromEnv,
+	type DbTarget,
+	type DbTargetEnv
+} from './dbTargetCore';
 
-export type DbTarget = 'dev' | 'prod';
+export type { DbTarget };
 
 export const DB_TARGET_COOKIE = 'publicweb_db_target';
 
@@ -12,16 +19,19 @@ export type DbDisplayInfo = {
 	database: string;
 };
 
-let activeTarget: DbTarget = resolveDefaultTarget();
+function readDbTargetEnv(): DbTargetEnv {
+	return {
+		nodeEnv: process.env.NODE_ENV,
+		dbDefault: env.PUBLICWEB_DB_DEFAULT ?? process.env.PUBLICWEB_DB_DEFAULT,
+		databaseUrlDev: env.DATABASE_URL_DEV,
+		databaseUrl: env.DATABASE_URL
+	};
+}
+
+let activeTarget: DbTarget = getDefaultDbTarget(readDbTargetEnv());
 
 export function isDbSwitchingEnabled(): boolean {
 	return isLocalDevDatabaseFeaturesEnabled(env.DATABASE_URL_DEV);
-}
-
-function resolveDefaultTarget(): DbTarget {
-	if (isProductionRuntime()) return 'prod';
-	if (env.DATABASE_URL_DEV?.trim()) return 'dev';
-	return 'prod';
 }
 
 export function getActiveDbTarget(): DbTarget {
@@ -39,39 +49,17 @@ export async function syncDbTargetFromCookie(cookieValue: string | undefined): P
 	const fromCookie = parseDbTargetCookie(cookieValue);
 	if (!fromCookie) return;
 	if (fromCookie === activeTarget) return;
-	if (fromCookie === 'dev' && !env.DATABASE_URL_DEV?.trim()) return;
+	const dbEnv = readDbTargetEnv();
+	if (fromCookie === 'dev' && !dbEnv.databaseUrlDev?.trim()) return;
 	await setActiveDbTarget(fromCookie);
 }
 
 export function resolveConnectionString(target: DbTarget = getActiveDbTarget()): string {
-	if (target === 'dev') {
-		const dev = env.DATABASE_URL_DEV?.trim();
-		if (!dev) {
-			throw new Error('DATABASE_URL_DEV is not set');
-		}
-		return dev;
-	}
-	const prod = env.DATABASE_URL?.trim();
-	if (!prod) {
-		throw new Error('DATABASE_URL is not set');
-	}
-	return prod;
+	return resolveConnectionStringFromEnv(readDbTargetEnv(), target);
 }
 
 export function getDbDisplayInfo(target: DbTarget = getActiveDbTarget()): DbDisplayInfo {
-	const connectionString = resolveConnectionString(target);
-	let host = 'unknown';
-	let database = 'unknown';
-	try {
-		const url = new URL(connectionString);
-		host = url.hostname + (url.port ? `:${url.port}` : '');
-		database = url.pathname.replace(/^\//, '') || 'postgres';
-	} catch {
-		host = '(invalid url)';
-		database = '?';
-	}
-	const label = `${target} · ${host}/${database}`;
-	return { target, label, host, database };
+	return getDbDisplayInfoFromEnv(readDbTargetEnv(), target);
 }
 
 let switchPromise: Promise<void> | null = null;
@@ -80,8 +68,12 @@ export async function setActiveDbTarget(target: DbTarget): Promise<void> {
 	if (isProductionRuntime()) {
 		throw new Error('Database target cannot be changed in production');
 	}
-	if (target === 'dev' && !env.DATABASE_URL_DEV?.trim()) {
-		throw new Error('DATABASE_URL_DEV is not set');
+	const dbEnv = readDbTargetEnv();
+	try {
+		resolveConnectionStringFromEnv(dbEnv, target);
+	} catch (e) {
+		const message = e instanceof Error ? e.message : 'Invalid database target';
+		throw new Error(message);
 	}
 	if (target === activeTarget) return;
 
