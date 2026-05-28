@@ -3,6 +3,10 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
         plugins: [sveltekit()],
+        ssr: {
+                // Full kickagent entry re-exports DB commands; keep on server only.
+                external: ['kickagent']
+        },
         // Local dev and Replit webview both expect this port; keep in sync with `.replit` port mapping.
         server: {
                 allowedHosts: true,

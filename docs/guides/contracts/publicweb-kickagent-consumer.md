@@ -86,7 +86,7 @@ These are **host** concerns — not registered by the kickagent plugin:
 
 ### Registering commands (Phase 1)
 
-When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is unset, admin login runs [`registerKickagentCatalogCommands`](../../../src/lib/kickagent/registerCatalogCommands.ts) from [`+layout.svelte`](../../../src/routes/+layout.svelte). That loops kickagent **`COMMAND_CATALOG`** and calls `registerKickagentCommand` for each short name — **no per-command wiring in publicweb** for catalog commands.
+When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is unset, admin login runs [`registerKickagentCatalogCommands`](../../../src/lib/kickagent/registerCatalogCommands.ts) from [`+layout.svelte`](../../../src/routes/+layout.svelte). That loops kickagent **`PLUGIN_COMMAND_CATALOG`** via **`kickagent/plugin`** (browser-safe — do **not** import full **`COMMAND_CATALOG`** in client code; it pulls `pg`). Server-only metadata for hub cards may still use full `COMMAND_CATALOG` in [`dashboardCommandMaterialize.ts`](../../../src/lib/server/dashboardCommandMaterialize.ts).
 
 **Checklist (humans + agents):** [register-kickagent-command.md](../register-kickagent-command.md).
 
