@@ -8,7 +8,7 @@ import {
   BROWSER_PLUGIN_CATALOG,
   type KlogBroadcaster,
 } from "$lib/kickagent/browserPluginCatalog";
-import type { KickagentHostContext } from "kickagent";
+import type { KickagentHostContext } from "$lib/kickagent/contracts";
 import type { SessionUser } from "$lib/server/auth";
 
 function createKamLogger(source: string): KlogBroadcaster {

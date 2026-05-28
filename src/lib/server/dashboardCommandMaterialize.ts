@@ -1,20 +1,15 @@
 import { eq } from 'drizzle-orm';
-import { COMMAND_CATALOG } from 'kickagent';
+import { getKickagentCatalogDefaults } from '$lib/server/kickagentManifestCatalog';
+import type { CommandCatalogDefaults } from '$lib/server/dashboardCommandTypes';
 import { getDb } from '$lib/server/db';
 import { dashboardLinks, type DashboardItemType } from '$lib/server/schema';
+
+export type { CommandCatalogDefaults } from '$lib/server/dashboardCommandTypes';
 
 const KICKAGENT_NS = 'kickagent:';
 const MAX_LABEL = 512;
 const MAX_DESC = 4096;
 const MAX_CAT = 128;
-
-export type CommandCatalogDefaults = {
-	label: string;
-	description: string;
-	category: string;
-	sortOrder: number;
-	execution?: 'local' | 'remote';
-};
 
 export type EnsureDashboardCommandResult = {
 	linkId: string;
@@ -31,32 +26,17 @@ export function parseCommandKey(commandKey: string): { ok: true; key: string } |
 	return { ok: true, key };
 }
 
-/** Defaults from linked kickagent COMMAND_CATALOG (Phase 1). */
-export function getKickagentCatalogDefaults(shortName: string): CommandCatalogDefaults | null {
-	const cmd = COMMAND_CATALOG.find((c) => c.name === shortName);
-	if (!cmd) return null;
-	const label =
-		cmd.name.length > 0 ? cmd.name.charAt(0).toUpperCase() + cmd.name.slice(1) : cmd.name;
-	return {
-		label,
-		description: cmd.description,
-		category: cmd.category,
-		sortOrder: cmd.sortOrder ?? 0,
-		execution: cmd.execution
-	};
-}
-
-export function resolveCommandCatalogDefaults(
+export async function resolveCommandCatalogDefaults(
 	commandKey: string,
 	override?: Partial<CommandCatalogDefaults> | null
-): CommandCatalogDefaults | null {
+): Promise<CommandCatalogDefaults | null> {
 	const parsed = parseCommandKey(commandKey);
 	if (!parsed.ok) return null;
 
 	let base: CommandCatalogDefaults | null = null;
 	if (parsed.key.startsWith(KICKAGENT_NS)) {
 		const shortName = parsed.key.slice(KICKAGENT_NS.length);
-		base = getKickagentCatalogDefaults(shortName);
+		base = await getKickagentCatalogDefaults(shortName);
 	}
 
 	if (!base && !override) return null;
@@ -88,7 +68,7 @@ export async function ensureDashboardCommandRow(
 	const parsed = parseCommandKey(commandKey);
 	if (!parsed.ok) return { message: parsed.message };
 
-	const defaults = resolveCommandCatalogDefaults(parsed.key, override);
+	const defaults = await resolveCommandCatalogDefaults(parsed.key, override);
 	if (!defaults) {
 		return { message: `Unknown command or missing catalog metadata: ${parsed.key}` };
 	}

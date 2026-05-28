@@ -31,7 +31,7 @@ Canonical architecture: [platform-overview.md](../platform-overview.md).
 
 ### Phase 1 — Static package (default when manifest URL unset)
 
-- Dependency: `"kickagent": "link:../kickagent"` in [package.json](../../../package.json) (symlinks the sibling repo so `dist/` updates immediately after `pnpm build` in kickagent).
+- **No npm dependency** on kickagent in publicweb (Railway/build-safe). Local hello/foo fallback: [`browserPluginCatalog.ts`](../../../src/lib/kickagent/browserPluginCatalog.ts). Optional sibling repo only to run `serve-publish` and publish artifacts.
 
 - Each command is wired in TypeScript, e.g. [registerHelloCommand.ts](../../../src/lib/kickagent/registerHelloCommand.ts).
 - Uses `registerKickagentCommand("hello", handler)` → full name `kickagent:hello`.
@@ -86,7 +86,7 @@ These are **host** concerns — not registered by the kickagent plugin:
 
 ### Registering commands (Phase 1)
 
-When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is unset, admin login runs [`registerKickagentCatalogCommands`](../../../src/lib/kickagent/registerCatalogCommands.ts) from [`+layout.svelte`](../../../src/routes/+layout.svelte). That uses [`browserPluginCatalog.ts`](../../../src/lib/kickagent/browserPluginCatalog.ts) (hello/foo only — do **not** import full **`COMMAND_CATALOG`** or **`kickagent/plugin`** in client code; they pull `pg`). Server-only metadata for hub cards may still use full `COMMAND_CATALOG` in [`dashboardCommandMaterialize.ts`](../../../src/lib/server/dashboardCommandMaterialize.ts).
+When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is unset, admin login runs [`registerKickagentCatalogCommands`](../../../src/lib/kickagent/registerCatalogCommands.ts) from [`+layout.svelte`](../../../src/routes/+layout.svelte). That uses [`browserPluginCatalog.ts`](../../../src/lib/kickagent/browserPluginCatalog.ts) (hello/foo only). Hub metadata: [`kickagentManifestCatalog.ts`](../../../src/lib/server/kickagentManifestCatalog.ts) (manifest fetch or same static defaults).
 
 **Checklist (humans + agents):** [register-kickagent-command.md](../register-kickagent-command.md).
 

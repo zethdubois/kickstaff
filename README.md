@@ -39,7 +39,7 @@ src/
 | **pnpm** | Pinned in `package.json` (`packageManager`). Use [Corepack](https://pnpm.io/installation): `corepack enable` |
 | **Docker** | Engine required; Compose optional (`pnpm db:up` falls back to `docker run`). Install Compose: `sudo apt install docker-compose-v2` |
 | **PostgreSQL** | Prod URL in `DATABASE_URL`; local dev uses `DATABASE_URL_DEV` |
-| **kickagent** | Sibling repo at `../kickagent` (required before `pnpm install`) |
+| **kickagent** (optional local) | Sibling repo at `../kickagent` for `serve-publish` + manifest URL in `.env` — not an npm dependency of publicweb |
 
 Do **not** use npm or yarn; do not commit `package-lock.json`.
 
@@ -128,8 +128,7 @@ pnpm dev
 
 | Symptom | Check |
 |---------|--------|
-| `pnpm install` fails on `kickagent` | `../kickagent` exists |
-| `ERR_MODULE_NOT_FOUND` … `kickagent/dist/plugin.js` | In sibling repo: `pnpm build`. Dependency is `link:../kickagent`; run `pnpm install` if lock/package.json changed. Without sibling checkout both repos fail at install — expected |
+| KAM / kickagent commands empty | Set `PUBLIC_KICKAGENT_MANIFEST_URL` (HTTPS manifest + ESM on kickagent host); run `kam:reload-kickagent` after republish |
 | Login 500 / DATABASE_URL | `.env`, `pnpm db:up`, `DATABASE_URL_DEV` uses port **5043**, `pnpm db:migrate` |
 | Port 5432 already in use | Dev DB uses **5043** — match `DATABASE_URL_DEV` in `.env` to `.env.example` |
 | Port in use | Free port `5000` or change `vite.config.ts` |

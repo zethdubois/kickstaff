@@ -78,7 +78,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 - **Developer / agent guides** live under `[docs/guides/](docs/guides/)` — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Operations handoff (kickagent):** `[docs/upgrade/README.md](docs/upgrade/README.md)` — primers + ETL reference (no bill code in this repo).
 - **KAM dev console + command palette** (palette: `Ctrl+/`; focus console pane: ``` (backtick); `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
-- **kickagent cross-repo contracts** (sibling package `../kickagent`): `[docs/guides/contracts/README.md](docs/guides/contracts/README.md)`; publicweb host guide `[docs/guides/contracts/publicweb-kickagent-consumer.md](docs/guides/contracts/publicweb-kickagent-consumer.md)`.
+- **kickagent integration** (no npm/git dependency in publicweb — Phase 2 manifest + ESM): sibling `../kickagent` only to publish/serve artifacts; `[docs/guides/contracts/publicweb-kickagent-consumer.md](docs/guides/contracts/publicweb-kickagent-consumer.md)`.
 - **New kickagent command (checklist):** `[docs/guides/register-kickagent-command.md](docs/guides/register-kickagent-command.md)` — catalog in kickagent, auto-register in publicweb, KAM verify, optional hub card.
 - **Human setup (local dev):** [README.md → Development](README.md#development).
 - **Production operations (operators):** `[docs/guides/production-operations.md](docs/guides/production-operations.md)`.

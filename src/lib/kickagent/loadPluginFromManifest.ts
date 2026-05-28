@@ -2,7 +2,7 @@ import type {
   KickagentHostContext,
   KickagentRegistry,
   CommandHandler as KickagentCommandHandler,
-} from "kickagent";
+} from "$lib/kickagent/contracts";
 import { env } from "$env/dynamic/public";
 
 import { createKlogBroadcaster } from "$lib/devConsole/state.svelte";

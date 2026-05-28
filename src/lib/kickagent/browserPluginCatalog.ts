@@ -4,7 +4,8 @@
  * Phase 2 uses manifest load instead; server hub metadata uses full COMMAND_CATALOG.
  */
 import type { CommandOutcome } from '$lib/devConsole';
-import type { KickagentHostContext, KlogBroadcaster } from 'kickagent';
+import type { KickagentHostContext } from '$lib/kickagent/contracts';
+import type { KlogBroadcaster } from '$lib/devConsole';
 
 export type BrowserPluginCommand = {
 	name: string;
