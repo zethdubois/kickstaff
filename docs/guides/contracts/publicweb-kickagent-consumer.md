@@ -49,7 +49,9 @@ When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is set, layout bootstraps **Phase 2** i
 - Host command **`kam:reload-kickagent`** — `clearKickagentCommands()`, then the same load flow (**forced**, reapplies same version).
 - **Deploy:** new kickagent artifacts without bumping publicweb’s `kickagent` npm dependency (reload picks up new manifest/module URLs).
 
-Production hardening (HTTPS-only module origins beyond localhost, server-side execution, auto-poll) remains optional follow-up.
+Production hardening (server-side execution, auto-poll) remains optional follow-up.
+
+**Production CORS:** On the kickagent `serve-publish` service set `KICKAGENT_CORS_ORIGINS` to your publicweb origins (comma-separated), e.g. `https://www.kickassetmanagement.com,https://kickassetmanagement.com`. Use **`https://`** for `PUBLIC_KICKAGENT_MANIFEST_URL` (not `http://` — the browser blocks non-local http).
 
 ### Phase 3 — Remote jobs (planned)
 
