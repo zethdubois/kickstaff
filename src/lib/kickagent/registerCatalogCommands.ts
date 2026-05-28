@@ -4,8 +4,11 @@ import {
   type KlogLevel,
 } from "$lib/devConsole";
 import { registerKickagentCommand } from "$lib/kickagent/commands";
-import { PLUGIN_COMMAND_CATALOG } from "kickagent/plugin";
-import type { KickagentHostContext, KlogBroadcaster } from "kickagent";
+import {
+  BROWSER_PLUGIN_CATALOG,
+  type KlogBroadcaster,
+} from "$lib/kickagent/browserPluginCatalog";
+import type { KickagentHostContext } from "kickagent";
 import type { SessionUser } from "$lib/server/auth";
 
 function createKamLogger(source: string): KlogBroadcaster {
@@ -23,11 +26,10 @@ function createKamLogger(source: string): KlogBroadcaster {
 
 /**
  * Phase 1: register browser-safe plugin commands only (hello, foo).
- * CLI/DB commands (units-list, units-import-af) live in full COMMAND_CATALOG
- * and must not be imported here — they pull `pg` into the client bundle.
+ * CLI/DB commands are not registered in the browser bundle.
  */
 export function registerKickagentCatalogCommands(user: SessionUser): void {
-  for (const cmd of PLUGIN_COMMAND_CATALOG) {
+  for (const cmd of BROWSER_PLUGIN_CATALOG) {
     const source = `kickagent:${cmd.name}`;
     registerKickagentCommand(cmd.name, async (args): Promise<CommandOutcome | void> => {
       const ctx: KickagentHostContext = {
