@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import {
     categoryBorder,
     categoryForeground,
@@ -9,17 +9,25 @@
   import { materializeDashboardCommand } from "$lib/client/dashboardCommandMaterialize";
   import { runCommand } from "$lib/devConsole/commands";
   import { devConsole } from "$lib/devConsole/state.svelte";
+  import {
+    isUnitsHubCommandKey,
+    UNITS_OPS_PATH,
+  } from "$lib/kickagent/unitsOps";
 
   let { data } = $props();
 
   let runningKey = $state<string | null>(null);
 
-  async function runHubCommand(commandKey: string) {
+  async function openHubCommand(commandKey: string) {
     if (runningKey) return;
     runningKey = commandKey;
     try {
       await materializeDashboardCommand(commandKey);
       await invalidateAll();
+      if (isUnitsHubCommandKey(commandKey)) {
+        await goto(UNITS_OPS_PATH);
+        return;
+      }
       if (!devConsole.consoleOpen) {
         devConsole.consoleOpen = true;
       }
@@ -79,13 +87,18 @@
                   <div class="card__expand">
                     <p class="card__desc">{item.description}</p>
                     {#if item.itemType === "command" && item.commandKey}
+                      {@const unitsCard = isUnitsHubCommandKey(item.commandKey)}
                       <button
                         type="button"
                         class="card__open card__run"
                         disabled={runningKey === item.commandKey}
-                        onclick={() => runHubCommand(item.commandKey!)}
+                        onclick={() => openHubCommand(item.commandKey!)}
                       >
-                        {runningKey === item.commandKey ? "Running…" : "Run command"}
+                        {runningKey === item.commandKey
+                          ? "Opening…"
+                          : unitsCard
+                            ? "Open units"
+                            : "Run command"}
                       </button>
                     {:else if item.hyperlink}
                       <a

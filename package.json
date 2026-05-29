@@ -23,8 +23,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed:admin": "tsx scripts/seed-admin.ts",
+    "reset:admin-password": "tsx scripts/reset-admin-password.ts",
     "list:users": "tsx scripts/list-users.ts",
-    "test": "tsx --test src/lib/server/migrationStatus.test.ts src/lib/server/devDbApi.test.ts src/lib/server/dbTargetCore.test.ts src/lib/server/kickagentEnv.test.ts scripts/lib/dbCli.test.ts"
+    "test": "tsx --test src/lib/server/migrationStatus.test.ts src/lib/server/devDbApi.test.ts src/lib/server/devAuthBypass.test.ts src/lib/server/dbTargetCore.test.ts src/lib/server/kickagentEnv.test.ts scripts/lib/dbCli.test.ts src/lib/kickagent/manifestResourceCache.test.ts src/lib/kickagent/outcomeToTableModel.test.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^5.0.0",

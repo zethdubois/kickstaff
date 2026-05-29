@@ -25,7 +25,14 @@ import {
   klogWithSource,
   type KlogLevel,
 } from "./state.svelte";
+import type { CommandOutcome } from "$lib/kickagent/contracts";
+
+export type { CommandOutcome };
 import { materializeDashboardCommand } from "../client/dashboardCommandMaterialize";
+import {
+  outcomeToTableModel,
+  tableOutcomeMissingHint,
+} from "$lib/kickagent/outcomeToTableModel";
 import {
   executeHistoryCommand,
   expandHistoryBang,
@@ -33,12 +40,6 @@ import {
   shouldSkipHistoryRecord,
 } from "./commandHistory";
 import { listRefreshTargets, runRefreshTarget } from "./refresh";
-
-export type CommandOutcome = {
-  refresh?: string[];
-  log?: string | string[];
-  level?: KlogLevel;
-};
 
 export type CommandHandler = (
   args: string[],
@@ -86,6 +87,10 @@ export function clearKickagentCommands(): void {
   void import("$lib/kickagent/manifestCommandCache").then((m) =>
     m.clearManifestCommandCache(),
   );
+  void import("$lib/kickagent/manifestResourceCache").then((m) =>
+    m.clearManifestResourceCache(),
+  );
+  devConsole.clearTableOutcome();
 }
 
 export function listCommands(): string[] {
@@ -283,10 +288,24 @@ export async function runCommand(input: string): Promise<CommandResult> {
   }
 
   logLines(outcome, source);
+  maybeStashTableOutcome(outcome);
   if (resolved.startsWith(KICKAGENT_NS)) {
     void materializeDashboardCommand(resolved);
   }
   return { ok: true };
+}
+
+function maybeStashTableOutcome(outcome: CommandOutcome | void): void {
+  if (!outcome) return;
+  const model = outcomeToTableModel(outcome);
+  if (model) {
+    devConsole.setTableOutcome(model);
+    return;
+  }
+  const hint = tableOutcomeMissingHint(outcome);
+  if (hint) {
+    klogWithSource("warn", "kickagent:table", hint);
+  }
 }
 
 registerCommand("console", (): CommandOutcome => {
@@ -296,6 +315,7 @@ registerCommand("console", (): CommandOutcome => {
 
 registerCommand("clear", () => {
   devConsole.clear();
+  devConsole.clearTableOutcome();
 });
 
 registerCommand("help", (): CommandOutcome => {
@@ -697,8 +717,11 @@ registerCommand("kam:reload-kickagent", async (): Promise<CommandOutcome> => {
   if (!r.ok) {
     throw new Error(r.error);
   }
+  const resourceNote = r.resourcesCached
+    ? "resources.units.list cached"
+    : "WARNING: no resources.units.list in manifest — deploy kickagent ≥ 0.0.3";
   return {
-    log: `kickagent plugin reloaded (manifest v${r.version})`,
-    level: "info",
+    log: `kickagent plugin reloaded (manifest v${r.version}; ${resourceNote})`,
+    level: r.resourcesCached ? "info" : "warn",
   };
 });

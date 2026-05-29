@@ -129,6 +129,7 @@ pnpm dev
 |---------|--------|
 | KAM / kickagent commands empty | Set `PUBLIC_KICKAGENT_MANIFEST_URL` (HTTPS manifest + ESM on kickagent host); run `kam:reload-kickagent` after republish |
 | Login 500 / DATABASE_URL | `.env`, `pnpm db:up`, `DATABASE_URL_DEV` uses port **5043**, `pnpm db:migrate` |
+| Wrong password (local dev) | `pnpm reset:admin-password` syncs hash from `.env`; `pnpm list:users` for email/DB; non-prod bypass: **admin** + `ADMIN_PASSWORD` in `.env` (restart dev server); or `AGENT_EMAIL` + `/?as_agent=1` |
 | Port 5432 already in use | Dev DB uses **5043** — match `DATABASE_URL_DEV` in `.env` to `.env.example` |
 | Port in use | Free port `5000` or change `vite.config.ts` |
 | Vanity host wrong page | `pnpm run env:vanity`; hostname matches env |

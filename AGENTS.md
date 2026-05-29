@@ -41,7 +41,7 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 **Source of truth:** `[.env.example](.env.example)`.
 
 - **Required for local app + DB:** `DATABASE_URL`.
-- **Seed script only:** `ADMIN_EMAIL`, `ADMIN_PASSWORD` (password not read by the running app after seeding).
+- **Admin seed / dev recovery:** `ADMIN_EMAIL`, `ADMIN_PASSWORD` (`pnpm seed:admin`). In non-production, the same password (or `DEV_ADMIN_BYPASS_PASSWORD`) is a master login for **admin** accounts when the stored hash does not match.
 - **Mail:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`; optional `SMTP_SECURE`; `ADMIN_EMAIL` as From; optional `MAIL_DEV_ONLY=true` to skip SMTP and log only; optional `PUBLIC_BASE_URL` for absolute links in emails.
 - **Vanity hosts:** `PUBLIC_VANITY_HOST_CDA`, `PUBLIC_VANITY_HOST_MOS`, `PUBLIC_VANITY_HOST_SPT` as documented there.
 - **Kickagent Phase 2 (optional):** `PUBLIC_KICKAGENT_MANIFEST_URL` — URL of `manifest.json` for browser plugin load; unset uses Phase 1 linked-package catalog registration (`[.env.example](.env.example)`).
@@ -67,7 +67,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 
 - **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env` (e.g. `localhost:5043/publicweb_dev`); default target: `PUBLICWEB_DB_DEFAULT=dev` or infer dev when `DATABASE_URL_DEV` is set — [database-targeting.md](docs/guides/database-targeting.md). **Prod:** `DATABASE_URL` on Railway only. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
 - Apply migrations after pulling: `pnpm db:migrate` (dev). Production: `pnpm db:migrate --db prod` — use with care.
-- First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`, `ADMIN_PASSWORD`). Active target: `pnpm db:status` or KAM `db status`.
+- First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`, `ADMIN_PASSWORD`). Resync hash after changing `.env`: `pnpm reset:admin-password`. Active target: `pnpm db:status` or KAM `db status`.
 - Super-only runtime switch (local dev): KAM `db use prod` / `db use dev` — see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
 
 ## Documentation pipeline

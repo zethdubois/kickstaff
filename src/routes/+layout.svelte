@@ -14,7 +14,9 @@
     hydrateFromServer,
     klogError,
     klogInfo,
+    klogWarn,
   } from "$lib/devConsole/state.svelte";
+  import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
   import {
     registerRefreshTarget,
     unregisterRefreshTarget,
@@ -64,18 +66,32 @@
 
     setKickagentPluginSessionUser({ id: user.id, email: user.email });
 
-    if (lastKickagentBootUserId === user.id) return;
+    const manifestUrl = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
+    const shouldForceReload =
+      lastKickagentBootUserId !== user.id ||
+      (manifestUrl && !getUnitsListSchema());
+
+    if (lastKickagentBootUserId === user.id && !shouldForceReload) return;
     lastKickagentBootUserId = user.id;
 
-    const manifestUrl = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
     if (manifestUrl) {
-      void reloadKickagentPluginFromManifest({ force: true }).then((r) => {
-        if (r.ok) {
-          klogInfo(`kickagent ${r.version} loaded from manifest`);
-        } else {
-          klogError(`kickagent manifest load: ${r.error}`);
-        }
-      });
+      void reloadKickagentPluginFromManifest({ force: shouldForceReload }).then(
+        (r) => {
+          if (r.ok) {
+            if (r.resourcesCached) {
+              klogInfo(
+                `kickagent ${r.version} loaded (resources.units.list ready)`,
+              );
+            } else {
+              klogWarn(
+                `kickagent ${r.version} loaded but manifest has no resources.units.list — deploy kickagent ≥ 0.0.3`,
+              );
+            }
+          } else {
+            klogError(`kickagent manifest load: ${r.error}`);
+          }
+        },
+      );
     } else {
       registerKickagentCatalogCommands(user);
     }

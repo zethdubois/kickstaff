@@ -11,6 +11,11 @@ import {
   registerKickagentCommand,
 } from "$lib/devConsole/commands";
 import { setManifestCommandCache } from "./manifestCommandCache";
+import {
+  parseManifestResources,
+  setManifestResourceCache,
+  type ManifestResources,
+} from "./manifestResourceCache";
 import { getKickagentPluginSessionUser } from "./pluginSession";
 import { registerManifestServerCommands } from "./registerManifestServerCommands";
 
@@ -27,6 +32,7 @@ type KickagentManifestJson = {
   moduleUrl: string;
   sha256: string;
   commands?: KickagentManifestCommandJson[];
+  resources?: ManifestResources;
   api?: { baseUrl?: string };
 };
 
@@ -77,12 +83,14 @@ function parseManifest(raw: unknown): KickagentManifestJson {
     throw new Error("manifest: missing sha256");
   }
   const commands = parseManifestCommands(o.commands);
+  const resources = parseManifestResources(o.resources);
 
   return {
     version: version.trim(),
     moduleUrl: moduleUrl.trim(),
     sha256: sha256.trim().toLowerCase(),
     commands,
+    resources: resources ?? undefined,
     api:
       o.api && typeof o.api === "object"
         ? (o.api as { baseUrl?: string })
@@ -113,7 +121,7 @@ function parseManifestCommands(raw: unknown): KickagentManifestCommandJson[] {
 }
 
 export type ReloadKickagentResult =
-  | { ok: true; version: string }
+  | { ok: true; version: string; resourcesCached: boolean }
   | { ok: false; error: string };
 
 /**
@@ -156,7 +164,13 @@ export async function reloadKickagentPluginFromManifest(options?: {
 
     const applyKey = `${manifestUrlRaw}@${manifest.version}`;
     if (!force && lastAppliedKey === applyKey) {
-      return { ok: true, version: manifest.version };
+      setManifestCommandCache(manifest.commands ?? []);
+      setManifestResourceCache(manifest.resources ?? null);
+      return {
+        ok: true,
+        version: manifest.version,
+        resourcesCached: Boolean(manifest.resources?.units.list),
+      };
     }
 
     const modRes = await fetch(moduleUrlResolved);
@@ -224,6 +238,7 @@ export async function reloadKickagentPluginFromManifest(options?: {
 
     clearKickagentCommands();
     setManifestCommandCache(manifest.commands ?? []);
+    setManifestResourceCache(manifest.resources ?? null);
 
     const pluginNames = new Set<string>();
 
@@ -247,7 +262,11 @@ export async function reloadKickagentPluginFromManifest(options?: {
     registerManifestServerCommands(manifest.commands ?? [], pluginNames);
 
     lastAppliedKey = applyKey;
-    return { ok: true, version: manifest.version };
+    return {
+      ok: true,
+      version: manifest.version,
+      resourcesCached: Boolean(manifest.resources?.units.list),
+    };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { ok: false, error: `kickagent load failed: ${msg}` };

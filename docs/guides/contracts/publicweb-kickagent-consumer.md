@@ -105,6 +105,8 @@ The authenticated home page (`/`) is a category-column **linkboard** backed by `
 
 Implementation: [dashboardCommandMaterialize.ts](../../../src/lib/server/dashboardCommandMaterialize.ts), [materialize-command API](../../../src/routes/api/dashboard/materialize-command/+server.ts), hub [`+page.svelte`](../../../src/routes/+page.svelte). Phase 2 manifest `commands[]` includes `category`; cached client-side in [manifestCommandCache.ts](../../../src/lib/kickagent/manifestCommandCache.ts) after plugin load.
 
+**Units list (resource UI):** Hub card `kickagent:units-list` → **Open units** → [`/ops/units`](../../../src/routes/ops/units/+page.svelte). Table from `outcome.data` + manifest `resources.units.list` — not KAM pipe log. See [kickagent-resource-ui.md](../kickagent-resource-ui.md).
+
 ---
 
 ## What publicweb expects from kickagent
@@ -118,7 +120,9 @@ Implementation: [dashboardCommandMaterialize.ts](../../../src/lib/server/dashboa
 ### Manifest plugin (Phase 2 — host load)
 
 - **`manifest.json`** + ESM bundle at configured URL; **`register(registry, ctx)`** in the bundle.
+- **`resources`** block (e.g. `units.list` columns/filters) for Svelte tables — manifest ≥ 0.0.3; see [kickagent-resource-ui.md](../kickagent-resource-ui.md).
 - publicweb verifies **`sha256`** and loads in the browser (demo); production may move execution server-side later.
+- Server catalog commands (`units-list`, …) run via [`POST /api/kickagent/run`](../../../src/routes/api/kickagent/run/+server.ts).
 
 ### Later (Phase 3)
 

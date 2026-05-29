@@ -111,6 +111,12 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 - **CLI:** `pnpm db:status` (env default target, not cookie), `pnpm db:migrate:status` (Kickdesk one-liner file), `pnpm db:migrate` (dev). Prod: `pnpm db:<cmd> --db prod` (dangerous for migrate).
 - **KAM inspection** uses the same runtime target as the app (including after `db use prod`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
 
+### Resource tables (kickagent data UI)
+
+- List commands (e.g. **`units-list`**) return **`outcome.data`** + **`presentationRef`**; columns come from manifest **`resources`** (cached on `kam:reload-kickagent`).
+- KAM may show a small table **above** scrollback when stash succeeds; **pipe log lines are not parsed** for layout.
+- **Primary units UI:** hub card **Open units** or [`/ops/units`](../../src/routes/ops/units/+page.svelte). See [kickagent-resource-ui.md](kickagent-resource-ui.md).
+
 ### Command history (bash-style)
 
 - **↑ / ↓** in the palette or console prompt recall prior commands (newest on first ↑).

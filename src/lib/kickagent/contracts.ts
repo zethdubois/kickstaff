@@ -3,10 +3,57 @@
  * Duplicated here so publicweb does not depend on the kickagent npm/git package at build time.
  */
 
+export type CommandPresentationFieldType =
+	| 'string'
+	| 'number'
+	| 'integer'
+	| 'boolean'
+	| 'date'
+	| 'datetime'
+	| 'uuid'
+	| 'json'
+	| 'money-dollars'
+	| 'percent-bps';
+
+export type CommandPresentationColumn = {
+	key: string;
+	label: string;
+	type: CommandPresentationFieldType;
+};
+
+export type CommandPresentationField = CommandPresentationColumn & {
+	editable?: boolean;
+	required?: boolean;
+};
+
+export type CommandPresentation =
+	| {
+			kind: 'table';
+			rowsKey: string;
+			primaryKey: string;
+			columns: CommandPresentationColumn[];
+	  }
+	| {
+			kind: 'record';
+			titleKey: string;
+			fields: CommandPresentationField[];
+	  }
+	| {
+			kind: 'form';
+			titleKey: string;
+			submitCommand: string;
+			fields: CommandPresentationField[];
+			readonlyKeys?: string[];
+	  };
+
 export type CommandOutcome = {
 	refresh?: string[];
 	log?: string | string[];
 	level?: 'log' | 'info' | 'warn' | 'error';
+	data?: unknown;
+	/** Host resolves against manifest `resources` when set. */
+	presentationRef?: string;
+	presentation?: CommandPresentation;
 };
 
 export interface KlogBroadcaster {

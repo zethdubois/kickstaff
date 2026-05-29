@@ -20,6 +20,7 @@ export type KlogEntry = {
   source: string | null;
 };
 
+import type { ResourceTableModel } from "../kickagent/outcomeToTableModel";
 import {
   getUiSettings,
   setConsoleOpen,
@@ -28,6 +29,8 @@ import {
 } from "../client/uiSettings.svelte";
 
 export type { KamMode };
+
+export type KamTableOutcome = ResourceTableModel;
 
 const MAX_ENTRIES = 1000;
 const FLUSH_DEBOUNCE_MS = 800;
@@ -49,6 +52,7 @@ export type DbStatus = {
 };
 
 let _dbStatus = $state<DbStatus | null>(null);
+let _tableOutcome = $state<KamTableOutcome | null>(null);
 
 type PendingEntry = {
   ts: number;
@@ -171,6 +175,15 @@ export const devConsole = {
   },
   get dbStatus(): DbStatus | null {
     return _dbStatus;
+  },
+  get tableOutcome(): KamTableOutcome | null {
+    return _tableOutcome;
+  },
+  setTableOutcome(outcome: KamTableOutcome): void {
+    _tableOutcome = outcome;
+  },
+  clearTableOutcome(): void {
+    _tableOutcome = null;
   },
   togglePalette(): void {
     _paletteOpen = !_paletteOpen;

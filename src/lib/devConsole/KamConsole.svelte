@@ -9,6 +9,10 @@
     resetHistoryNavigation,
   } from "./commandHistory";
   import { runCommand } from "./commands";
+  import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
+  import KickagentResourceTable from "$lib/kickagent/KickagentResourceTable.svelte";
+  import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
+  import { UNITS_LIST_COMMAND } from "$lib/kickagent/unitsOps";
 
   let bodyEl: HTMLDivElement | undefined = $state();
   let inlineInput = $state("");
@@ -29,6 +33,15 @@
       ? "hello · :help · :exit"
       : "help · history · ↑↓ recall · Ctrl+/ palette",
   );
+
+  const unitsListSchema = $derived(
+    devConsole.kickagentModeActive ? getUnitsListSchema() : null,
+  );
+
+  async function runUnitsListFromConsole(args: string[]) {
+    const parts = [UNITS_LIST_COMMAND, ...args];
+    await runCommand(parts.join(" "));
+  }
 
   $effect(() => {
     if (!bodyEl) return;
@@ -96,6 +109,20 @@
     </header>
 
     <div class="body" bind:this={bodyEl}>
+      {#if unitsListSchema}
+        <KickagentListFilters
+          variant="console"
+          schema={unitsListSchema}
+          onRun={runUnitsListFromConsole}
+        />
+      {/if}
+      {#if devConsole.tableOutcome}
+        <KickagentResourceTable
+          variant="console"
+          model={devConsole.tableOutcome}
+          title="Units"
+        />
+      {/if}
       {#each devConsole.entries as entry (entry.id)}
         <div
           class="row"
