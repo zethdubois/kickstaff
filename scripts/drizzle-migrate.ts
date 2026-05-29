@@ -3,7 +3,7 @@
  *
  *   pnpm db:migrate
  *   pnpm db:migrate --db prod
- *   pnpm db:migrate prod
+ *   pnpm db:migrate prod   # positional alias
  */
 import 'dotenv/config';
 import { spawnSync } from 'node:child_process';

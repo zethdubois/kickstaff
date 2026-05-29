@@ -3,7 +3,7 @@
  * Writes the same one-line status to ~/.config/publicweb/migrate-status.
  *
  *   pnpm db:migrate:status
- *   pnpm db:migrate:status -- --db prod
+ *   pnpm db:migrate:status --db prod
  */
 import 'dotenv/config';
 import { mkdirSync, writeFileSync } from 'node:fs';

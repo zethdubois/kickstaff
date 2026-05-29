@@ -2,7 +2,7 @@
  * Print emails (and roles) in the connected database — sanity-check for login issues.
  *
  *   pnpm list:users
- *   pnpm list:users -- --db prod
+ *   pnpm list:users --db prod
  *
  * If the email you expect is missing, check active target with `pnpm db:status`.
  */

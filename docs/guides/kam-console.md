@@ -108,7 +108,7 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 - **Console header:** shows `dev` or `prod` badge with full label on hover.
 - **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`publicweb_db_target`).
 - **Production:** switching disabled; only `DATABASE_URL` is used.
-- **CLI:** `pnpm db:status` (env default target, not cookie), `pnpm db:migrate:status` (Kickdesk one-liner file), `pnpm db:migrate` (dev). Prod: `pnpm db:<cmd> -- --db prod` (dangerous for migrate).
+- **CLI:** `pnpm db:status` (env default target, not cookie), `pnpm db:migrate:status` (Kickdesk one-liner file), `pnpm db:migrate` (dev). Prod: `pnpm db:<cmd> --db prod` (dangerous for migrate).
 - **KAM inspection** uses the same runtime target as the app (including after `db use prod`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
 
 ### Command history (bash-style)

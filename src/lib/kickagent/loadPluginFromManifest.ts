@@ -12,6 +12,7 @@ import {
 } from "$lib/devConsole/commands";
 import { setManifestCommandCache } from "./manifestCommandCache";
 import { getKickagentPluginSessionUser } from "./pluginSession";
+import { registerManifestServerCommands } from "./registerManifestServerCommands";
 
 type KickagentManifestCommandJson = {
   name: string;
@@ -224,7 +225,10 @@ export async function reloadKickagentPluginFromManifest(options?: {
     clearKickagentCommands();
     setManifestCommandCache(manifest.commands ?? []);
 
+    const pluginNames = new Set<string>();
+
     for (const { name, handler } of pending) {
+      pluginNames.add(name);
       registerKickagentCommand(name, async (args) => {
         const u0 = getKickagentPluginSessionUser();
         if (!u0) {
@@ -239,6 +243,8 @@ export async function reloadKickagentPluginFromManifest(options?: {
         return handler(args, handlerCtx);
       });
     }
+
+    registerManifestServerCommands(manifest.commands ?? [], pluginNames);
 
     lastAppliedKey = applyKey;
     return { ok: true, version: manifest.version };

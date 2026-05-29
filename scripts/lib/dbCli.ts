@@ -2,7 +2,7 @@
  * CLI database target resolution (dotenv-loaded scripts).
  * Uses shared logic in dbTargetCore.ts (aligned with kickagent KICKAGENT_DB_DEFAULT).
  *
- * Explicit target: `pnpm db:<cmd> -- --db prod` or `pnpm db:<cmd> -- prod`
+ * Explicit target: `pnpm db:<cmd> --db prod` or `pnpm db:<cmd> prod`
  */
 
 import {
@@ -16,7 +16,7 @@ import {
 
 export type CliDbTarget = DbTarget;
 
-const CLI_DB_USAGE = 'usage: pnpm db:<cmd> [-- --db dev|prod] [dev|prod]';
+const CLI_DB_USAGE = 'usage: pnpm db:<cmd> [--db dev|prod] [dev|prod]';
 
 export type ParsedCliDbArgv = {
 	argv: string[];

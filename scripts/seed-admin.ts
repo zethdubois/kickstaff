@@ -3,7 +3,7 @@
  *
  * Usage (from repo root, with .env or env vars):
  *   pnpm seed:admin
- *   pnpm seed:admin -- --db prod
+ *   pnpm seed:admin --db prod
  *
  * Requires: DATABASE_URL_DEV or DATABASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD
  */

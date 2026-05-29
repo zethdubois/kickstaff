@@ -2,7 +2,7 @@
  * Print active CLI database target and test connectivity.
  *
  *   pnpm db:status
- *   pnpm db:status -- --db prod
+ *   pnpm db:status --db prod
  */
 import 'dotenv/config';
 import pg from 'pg';
