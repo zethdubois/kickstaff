@@ -5,6 +5,11 @@
     KAM_CONSOLE_FOCUS_INPUT_EVENT,
   } from "./state.svelte";
   import {
+    focusStack,
+    Z_CONSOLE_BASE,
+    Z_CONSOLE_TOP,
+  } from "$lib/client/focusStack.svelte";
+  import {
     handleHistoryKeydown,
     resetHistoryNavigation,
   } from "./commandHistory";
@@ -65,11 +70,21 @@
 
   function close() {
     devConsole.consoleOpen = false;
+    focusStack.reset();
+  }
+
+  const consoleOnTop = $derived(
+    !devConsole.consoleOpen || focusStack.activeLayer === "console",
+  );
+
+  function onConsoleInteract() {
+    focusStack.focusConsole();
   }
 
   onMount(() => {
     resetHistoryNavigation();
     function onFocusConsoleInput() {
+      focusStack.focusConsole();
       resetHistoryNavigation();
       void tick().then(() => inlineInputEl?.focus());
     }
@@ -83,7 +98,14 @@
 </script>
 
 {#if devConsole.consoleOpen}
-  <aside class="kamConsole" aria-label="KAM Console">
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <aside
+    class="kamConsole"
+    aria-label="KAM Console"
+    style:z-index={consoleOnTop ? Z_CONSOLE_TOP : Z_CONSOLE_BASE}
+    onfocusin={onConsoleInteract}
+    onpointerdown={onConsoleInteract}
+  >
     <header
       class="head"
       class:head--kickagent={devConsole.kickagentModeActive}
@@ -172,14 +194,13 @@
 <style>
   .kamConsole {
     position: fixed;
-    top: 0;
+    top: var(--site-header-offset, 0px);
     left: 0;
     bottom: 0;
     width: min(420px, 90vw);
     background: #0b0d11;
     color: #d6d8de;
     border-right: 1px solid #2a2f3a;
-    z-index: 900;
     display: grid;
     grid-template-rows: auto 1fr auto;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

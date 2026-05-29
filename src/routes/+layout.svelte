@@ -25,6 +25,9 @@
   import { registerKickagentCatalogCommands } from "$lib/kickagent/registerCatalogCommands";
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
   import { setKickagentPluginSessionUser } from "$lib/kickagent/pluginSession";
+  import MainContentSurface from "$lib/MainContentSurface.svelte";
+  import { focusStack } from "$lib/client/focusStack.svelte";
+  import { SITE_HEADER_OFFSET } from "$lib/shellLayout";
 
   let { children } = $props();
 
@@ -42,6 +45,14 @@
 
   const showInternalNav = $derived(!isLogin && !isVanityRoot);
 
+  /** Rental vanity/city landings need a full-width surface; hub/ops shrink-wrap. */
+  const mainSurfaceFullWidth = $derived(
+    page.route.id === "/cda" ||
+      page.route.id === "/mos" ||
+      page.route.id === "/spt" ||
+      isVanityRoot,
+  );
+
   let useExternalLink = $state(false);
   let rentalMenuOpen = $state(false);
   let userMenuOpen = $state(false);
@@ -52,6 +63,19 @@
     if (page.data.user) {
       void fetchDbStatus();
     }
+  });
+
+  $effect(() => {
+    page.route.id;
+    focusStack.reset();
+  });
+
+  $effect(() => {
+    if (!browser) return;
+    document.documentElement.style.setProperty(
+      "--site-header-offset",
+      showInternalNav ? SITE_HEADER_OFFSET : "0px",
+    );
   });
 
   $effect(() => {
@@ -308,7 +332,9 @@
     ? "calc(3.75rem + 1px + 0.125rem)"
     : "0px"}
 >
-  {@render children()}
+  <MainContentSurface fullWidth={mainSurfaceFullWidth}>
+    {@render children()}
+  </MainContentSurface>
 </main>
 
 <KamConsole />
