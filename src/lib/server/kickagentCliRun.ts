@@ -5,6 +5,10 @@ import type { CommandOutcome } from "$lib/kickagent/contracts";
 import type { DbTarget } from "$lib/server/dbTarget";
 import { getActiveDbTarget } from "$lib/server/dbTarget";
 import { buildKickagentSpawnEnv } from "$lib/server/kickagentEnv";
+import {
+  resolveKickagentApiBaseUrl,
+  runKickagentCatalogCommandViaApi,
+} from "$lib/server/kickagentRemoteRun";
 
 /** Kickagent repo root (sibling checkout by default). */
 export function resolveKickagentRepo(): string {
@@ -35,17 +39,26 @@ export type RunKickagentCatalogOptions = {
 export function runKickagentCatalogCommand(
   options: RunKickagentCatalogOptions,
 ): Promise<CommandOutcome> {
+  const db = options.db ?? getActiveDbTarget();
+  const apiBase = resolveKickagentApiBaseUrl();
   const cli = resolveKickagentCliPath();
+  const preferApi =
+    process.env.KICKAGENT_USE_API === "1" ||
+    process.env.KICKAGENT_USE_API === "true";
+
+  if (apiBase && (preferApi || !existsSync(cli))) {
+    return runKickagentCatalogCommandViaApi({ ...options, db });
+  }
+
   if (!existsSync(cli)) {
     return Promise.reject(
       new Error(
-        `kickagent CLI not found at ${cli} — set KICKAGENT_REPO or KICKAGENT_CLI and run pnpm build in kickagent`,
+        `kickagent CLI not found at ${cli} and no API URL — set KICKAGENT_REPO, KICKAGENT_API_URL, or PUBLIC_KICKAGENT_MANIFEST_URL`,
       ),
     );
   }
 
   const repo = resolveKickagentRepo();
-  const db = options.db ?? getActiveDbTarget();
   const argv = [
     cli,
     "run",
