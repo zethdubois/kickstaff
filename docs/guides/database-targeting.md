@@ -59,7 +59,7 @@ Production deploy: `PUBLICWEB_DB_DEFAULT=prod` (or unset), `DATABASE_URL` set, *
 
 `pnpm db:status` without `--db` uses **env default** (not the KAM cookie). After `db use prod`, the app uses prod until switched back.
 
-`db:generate`, `db:studio`, and `db:push` (Drizzle Kit via [`drizzle.config.ts`](../../drizzle.config.ts)) use **env default only** — no `--db` flag (same as kickagent).
+`pnpm db:migrate` passes `DRIZZLE_DATABASE_URL` into the drizzle-kit child so `--db prod` uses the same URL as the wrapper (not only env default). `db:generate`, `db:studio`, and `db:push` still use **env default only** via [`drizzle.config.ts`](../../drizzle.config.ts) — no `--db` flag on those commands.
 
 ## Kickagent comparison
 
