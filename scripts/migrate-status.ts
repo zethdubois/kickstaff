@@ -3,6 +3,7 @@
  * Writes the same one-line status to ~/.config/publicweb/migrate-status.
  *
  *   pnpm db:migrate:status
+ *   pnpm db:migrate:status -- --db prod
  */
 import 'dotenv/config';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -12,10 +13,15 @@ import {
 	formatKickdeskMigrateLine,
 	getMigrationStatus
 } from '../src/lib/server/migrationStatus.ts';
-import { getDefaultCliDbTarget, resolveCliConnectionString } from './lib/dbCli.ts';
+import {
+	resolveCliConnectionString,
+	resolveCliDbTarget,
+	warnIfExplicitProdCliTarget
+} from './lib/dbCli.ts';
 
-async function computeStatusLine(): Promise<string> {
-	const url = resolveCliConnectionString(getDefaultCliDbTarget());
+async function computeStatusLine(cliArgv: string[]): Promise<string> {
+	const target = resolveCliDbTarget(cliArgv);
+	const url = resolveCliConnectionString(target);
 	const result = await getMigrationStatus(url);
 	return formatKickdeskMigrateLine(result);
 }
@@ -27,7 +33,9 @@ function writeMigrateStatusFile(line: string) {
 }
 
 async function main() {
-	const line = await computeStatusLine();
+	const cliArgv = process.argv.slice(2);
+	warnIfExplicitProdCliTarget(cliArgv);
+	const line = await computeStatusLine(cliArgv);
 	writeMigrateStatusFile(line);
 	console.log(line);
 }

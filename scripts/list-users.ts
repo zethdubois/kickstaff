@@ -2,6 +2,7 @@
  * Print emails (and roles) in the connected database — sanity-check for login issues.
  *
  *   pnpm list:users
+ *   pnpm list:users -- --db prod
  *
  * If the email you expect is missing, check active target with `pnpm db:status`.
  */
@@ -12,14 +13,17 @@ import pg from 'pg';
 import * as schema from '../src/lib/server/schema.ts';
 import {
 	getCliDbDisplayInfo,
-	getDefaultCliDbTarget,
-	resolveCliConnectionString
+	resolveCliConnectionString,
+	resolveCliDbTarget,
+	warnIfExplicitProdCliTarget
 } from './lib/dbCli.ts';
 
 const { users } = schema;
 
 async function main() {
-	const target = getDefaultCliDbTarget();
+	const cliArgv = process.argv.slice(2);
+	warnIfExplicitProdCliTarget(cliArgv);
+	const target = resolveCliDbTarget(cliArgv);
 	const url = resolveCliConnectionString(target);
 	console.log('Database:', getCliDbDisplayInfo(target).label);
 

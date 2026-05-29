@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { describeDbFailure, messageForDbError } from '$lib/server/dbErrors';
 import {
 	ensureDashboardCommandRow,
 	parseCommandKey,
@@ -59,13 +60,19 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ message: parsed.message }, { status: 400 });
 	}
 
-	const result = await ensureDashboardCommandRow(parsed.key, parseOverride(body.defaults));
-	if ('message' in result) {
-		return json({ message: result.message }, { status: 400 });
-	}
+	try {
+		const result = await ensureDashboardCommandRow(parsed.key, parseOverride(body.defaults));
+		if ('message' in result) {
+			return json({ message: result.message }, { status: 400 });
+		}
 
-	return json({
-		linkId: result.linkId,
-		created: result.created
-	});
+		return json({
+			linkId: result.linkId,
+			created: result.created
+		});
+	} catch (e) {
+		console.error('[materialize-command]', e);
+		const hint = messageForDbError(e);
+		return json({ message: hint ?? describeDbFailure(e) }, { status: hint ? 503 : 500 });
+	}
 };

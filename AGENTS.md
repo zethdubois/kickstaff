@@ -66,7 +66,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 ## Database
 
 - **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env` (e.g. `localhost:5043/publicweb_dev`); default target: `PUBLICWEB_DB_DEFAULT=dev` or infer dev when `DATABASE_URL_DEV` is set — [database-targeting.md](docs/guides/database-targeting.md). **Prod:** `DATABASE_URL` on Railway only. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
-- Apply migrations after pulling: `pnpm db:migrate` (dev). `pnpm db:migrate:prod` hits production — use with care.
+- Apply migrations after pulling: `pnpm db:migrate` (dev). Production: `pnpm db:migrate -- --db prod` — use with care.
 - First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`, `ADMIN_PASSWORD`). Active target: `pnpm db:status` or KAM `db status`.
 - Super-only runtime switch (local dev): KAM `db use prod` / `db use dev` — see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
 

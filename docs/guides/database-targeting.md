@@ -48,19 +48,25 @@ Production deploy: `PUBLICWEB_DB_DEFAULT=prod` (or unset), `DATABASE_URL` set, *
 | Task | Command |
 | ---- | ------- |
 | Check CLI default + connection | `pnpm db:status` |
+| Check prod from laptop | `pnpm db:status -- --db prod` |
 | Check runtime target (app) | KAM `db status` |
 | Migrate dev | `pnpm db:migrate` |
-| Migrate prod | `pnpm db:migrate:prod` |
+| Migrate prod | `pnpm db:migrate -- --db prod` (or `pnpm db:migrate -- prod`) |
+| Migration pending (Kickdesk) | `pnpm db:migrate:status` (dev default); prod: `pnpm db:migrate:status -- --db prod` |
 | Switch running dev server | KAM `db use dev` \| `db use prod` (super only) |
 
-`pnpm db:status` uses **env default** (not the KAM cookie). After `db use prod`, the app uses prod until switched back.
+**Explicit CLI target** (same idea as kickagent `--db`): pass `--db dev` or `--db prod` after `--` so pnpm forwards args to the script. Precedence: `--db` > positional `dev`/`prod` > env default (`PUBLICWEB_DB_DEFAULT`, etc.).
+
+`pnpm db:status` without `--db` uses **env default** (not the KAM cookie). After `db use prod`, the app uses prod until switched back.
+
+`db:generate`, `db:studio`, and `db:push` (Drizzle Kit via [`drizzle.config.ts`](../../drizzle.config.ts)) use **env default only** — no `--db` flag (same as kickagent).
 
 ## Kickagent comparison
 
 | | **Publicweb** | **Kickagent** |
 | --- | --- | --- |
 | Default env | `PUBLICWEB_DB_DEFAULT` | `KICKAGENT_DB_DEFAULT` |
-| Switching | Cookie on dev server | `--db dev` \| `--db prod` per CLI process |
+| Switching | `--db dev` \| `--db prod` on CLI scripts; cookie on dev server | `--db dev` \| `--db prod` per CLI process |
 | Shared logic | `dbTargetCore.ts` | `src/db/dbTarget.ts` |
 
 When publicweb runs kickagent handlers that touch Postgres on the server, the host should pass `getActiveDbTarget()` into kickagent context (planned) so both use the same target.
@@ -70,5 +76,5 @@ When publicweb runs kickagent handlers that touch Postgres on the server, the ho
 | Symptom | Likely cause |
 | ------- | ------------- |
 | `database "kickasset" does not exist` | Shell `DATABASE_URL` points at prod; set `PUBLICWEB_DB_DEFAULT=dev`, unset exported `DATABASE_URL`, or `pnpm db:status`. |
-| Migrate/seed hits wrong DB | Wrong default; use `pnpm db:migrate:prod` explicitly or fix `PUBLICWEB_DB_DEFAULT`. |
+| Migrate/seed hits wrong DB | Wrong default; use `pnpm db:migrate -- --db prod` explicitly or fix `PUBLICWEB_DB_DEFAULT`. |
 | App vs CLI differ | Cookie override (`db use prod`) vs env default — check KAM `db status` vs `pnpm db:status`. |

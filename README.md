@@ -108,9 +108,8 @@ pnpm dev
 | `pnpm check` | Typecheck / Svelte check |
 | `pnpm db:up` | Start local Docker Postgres |
 | `pnpm db:down` | Stop local Docker Postgres |
-| `pnpm db:status` | Show active DB target + connectivity |
-| `pnpm db:migrate` | Apply migrations (dev DB by default) |
-| `pnpm db:migrate:prod` | Apply migrations to prod URL (dangerous) |
+| `pnpm db:status` | Show active DB target + connectivity (`-- --db prod` for Railway) |
+| `pnpm db:migrate` | Apply migrations (dev DB by default; `-- --db prod` for production) |
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm seed:admin` | Create/update seed admin |
 | `pnpm list:users` | List DB users |

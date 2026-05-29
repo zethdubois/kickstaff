@@ -20,12 +20,11 @@
     "db:migrate": "tsx scripts/drizzle-migrate.ts",
     "db:migrate:status": "tsx scripts/migrate-status.ts",
     "kickdesk:publish-manifest": "tsx scripts/publish-kickdesk-manifest.ts",
-    "db:migrate:prod": "tsx scripts/drizzle-migrate.ts prod",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "seed:admin": "tsx scripts/seed-admin.ts",
     "list:users": "tsx scripts/list-users.ts",
-    "test": "tsx --test src/lib/server/migrationStatus.test.ts src/lib/server/devDbApi.test.ts src/lib/server/dbTargetCore.test.ts"
+    "test": "tsx --test src/lib/server/migrationStatus.test.ts src/lib/server/devDbApi.test.ts src/lib/server/dbTargetCore.test.ts scripts/lib/dbCli.test.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^5.0.0",

@@ -1,5 +1,7 @@
+import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { and, asc, eq } from 'drizzle-orm';
+import { describeDbFailure, messageForDbError } from '$lib/server/dbErrors';
 import { getDb } from '$lib/server/db';
 import { dashboardLinks, userDashboardLinkPreferences } from '$lib/server/schema';
 
@@ -7,6 +9,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const user = locals.user!;
 	const db = getDb();
 
+	try {
+		return await loadDashboard(user.id, db);
+	} catch (e) {
+		console.error('[dashboard load]', e);
+		const hint = messageForDbError(e);
+		throw error(hint ? 503 : 500, hint ?? describeDbFailure(e));
+	}
+};
+
+async function loadDashboard(
+	userId: string,
+	db: ReturnType<typeof getDb>
+) {
 	const allLinks = await db
 		.select()
 		.from(dashboardLinks)
@@ -17,7 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from(userDashboardLinkPreferences)
 		.where(
 			and(
-				eq(userDashboardLinkPreferences.userId, user.id),
+				eq(userDashboardLinkPreferences.userId, userId),
 				eq(userDashboardLinkPreferences.enabled, false)
 			)
 		);

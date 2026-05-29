@@ -627,7 +627,7 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
   if (sub === "migrations" || sub === "migrate") {
     if (sub === "migrate") {
       return {
-        log: "db migrate is not available in KAM — use: pnpm db:migrate (or Kickdesk workflow)",
+        log: "db migrate is not available in KAM — use: pnpm db:migrate (dev) or pnpm db:migrate -- --db prod",
         level: "warn",
       };
     }

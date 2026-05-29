@@ -68,7 +68,7 @@ export function isSchemaMismatchError(e: unknown): boolean {
 export function messageForDbError(e: unknown): string | undefined {
 	const pg = deepPostgresSqlState(e);
 	if (pg === '42P01' || pg === '42703') {
-		return 'Database schema is out of date for this code version. With DATABASE_URL set, run: pnpm db:migrate';
+		return 'Database schema is out of date for this code version. Local dev: pnpm db:migrate. Production: set DATABASE_URL to the Railway Postgres URL and run pnpm db:migrate -- --db prod (includes dashboard command-card columns from migration 0020).';
 	}
 	return messageForDbConnectionError(e);
 }

@@ -1,18 +1,22 @@
 /**
  * Run drizzle-kit migrate against dev (default) or prod URL.
  *
- *   pnpm db:migrate        # dev when DATABASE_URL_DEV is set
- *   pnpm db:migrate:prod   # production DATABASE_URL
+ *   pnpm db:migrate
+ *   pnpm db:migrate -- --db prod
+ *   pnpm db:migrate -- prod
  */
 import 'dotenv/config';
 import { spawnSync } from 'node:child_process';
-import { resolveCliConnectionString, type CliDbTarget } from './lib/dbCli.ts';
+import {
+	resolveCliConnectionString,
+	resolveCliDbTarget,
+	warnIfProdMigrateTarget
+} from './lib/dbCli.ts';
 
-const target: CliDbTarget = process.argv[2] === 'prod' ? 'prod' : 'dev';
+const cliArgv = process.argv.slice(2);
+const target = resolveCliDbTarget(cliArgv);
 
-if (target === 'prod') {
-	console.warn('⚠ Applying migrations to PRODUCTION (DATABASE_URL)');
-}
+warnIfProdMigrateTarget(target);
 
 const url = resolveCliConnectionString(target);
 const info = target === 'dev' ? 'dev (DATABASE_URL_DEV)' : 'prod (DATABASE_URL)';

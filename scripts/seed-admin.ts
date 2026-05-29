@@ -3,6 +3,7 @@
  *
  * Usage (from repo root, with .env or env vars):
  *   pnpm seed:admin
+ *   pnpm seed:admin -- --db prod
  *
  * Requires: DATABASE_URL_DEV or DATABASE_URL, ADMIN_EMAIL, ADMIN_PASSWORD
  */
@@ -14,14 +15,17 @@ import pg from 'pg';
 import * as schema from '../src/lib/server/schema.ts';
 import {
 	getCliDbDisplayInfo,
-	getDefaultCliDbTarget,
-	resolveCliConnectionString
+	resolveCliConnectionString,
+	resolveCliDbTarget,
+	warnIfExplicitProdCliTarget
 } from './lib/dbCli.ts';
 
 const { users } = schema;
 
 async function main() {
-	const target = getDefaultCliDbTarget();
+	const cliArgv = process.argv.slice(2);
+	warnIfExplicitProdCliTarget(cliArgv);
+	const target = resolveCliDbTarget(cliArgv);
 	const url = resolveCliConnectionString(target);
 	const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 	const password = process.env.ADMIN_PASSWORD;

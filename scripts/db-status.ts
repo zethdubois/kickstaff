@@ -2,17 +2,21 @@
  * Print active CLI database target and test connectivity.
  *
  *   pnpm db:status
+ *   pnpm db:status -- --db prod
  */
 import 'dotenv/config';
 import pg from 'pg';
 import {
 	getCliDbDisplayInfo,
-	getDefaultCliDbTarget,
-	resolveCliConnectionString
+	resolveCliConnectionString,
+	resolveCliDbTarget,
+	warnIfExplicitProdCliTarget
 } from './lib/dbCli.ts';
 
 async function main() {
-	const target = getDefaultCliDbTarget();
+	const cliArgv = process.argv.slice(2);
+	warnIfExplicitProdCliTarget(cliArgv);
+	const target = resolveCliDbTarget(cliArgv);
 	const info = getCliDbDisplayInfo(target);
 	console.log(`target: ${info.target}`);
 	console.log(`label: ${info.label}`);
