@@ -1,4 +1,5 @@
 import { env } from "$env/dynamic/private";
+import { env as publicEnv } from "$env/dynamic/public";
 import type { CommandOutcome } from "$lib/kickagent/contracts";
 import type { DbTarget } from "$lib/server/dbTarget";
 import type { RunKickagentCatalogOptions } from "$lib/server/kickagentCliRun";
@@ -10,7 +11,7 @@ export function resolveKickagentApiBaseUrl(): string | null {
   if (explicit) return explicit.replace(/\/+$/, "");
 
   const manifestUrl =
-    env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim() ??
+    publicEnv.PUBLIC_KICKAGENT_MANIFEST_URL?.trim() ??
     process.env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
   if (!manifestUrl) return null;
 

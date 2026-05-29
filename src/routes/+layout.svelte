@@ -75,7 +75,7 @@
     lastKickagentBootUserId = user.id;
 
     if (manifestUrl) {
-      void reloadKickagentPluginFromManifest({ force: shouldForceReload }).then(
+      void reloadKickagentPluginFromManifest({ force: !!shouldForceReload }).then(
         (r) => {
           if (r.ok) {
             if (r.resourcesCached) {

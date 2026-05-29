@@ -30,7 +30,7 @@
 
   let loading = $state(false);
   let reloadingManifest = $state(false);
-  let error = $state<string | null>(data.manifest.error);
+  let error = $state<string | null>(null);
   let table = $state<ResourceTableModel | null>(null);
 
   function syncServerSchemaToClientCache(): void {
@@ -50,6 +50,7 @@
 
   onMount(() => {
     syncServerSchemaToClientCache();
+    if (data.manifest.error) error = data.manifest.error;
   });
 
   async function runList(args: string[]) {
