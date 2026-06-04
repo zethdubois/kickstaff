@@ -7,7 +7,7 @@
 
 - Nav: Dashboard · **Units**
 - Filters: [`KickagentListFilters`](../../src/lib/kickagent/KickagentListFilters.svelte) from manifest `resources.units.list.filters`
-- Table: [`KickagentResourceTable`](../../src/lib/kickagent/KickagentResourceTable.svelte) from `outcome.data.rows` + manifest columns
+- Split view: [`KickagentUnitsSplitView`](../../src/lib/kickagent/KickagentUnitsSplitView.svelte) — list column + detail form; highlight loads `units-show`
 - Errors: missing manifest cache, API failure, empty rows
 
 ## Hub entry

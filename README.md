@@ -43,6 +43,10 @@ src/
 
 Do **not** use npm or yarn; do not commit `package-lock.json`.
 
+### Cursor / VS Code (kickagent docs)
+
+To index sibling **kickagent** documentation alongside this repo, open [`publicweb.code-workspace`](publicweb.code-workspace) (**File → Open Workspace from File…**). That adds `../kickagent/docs` as a read-only root named `kickagent-docs`. See [AGENTS.md → Cursor workspace](AGENTS.md#cursor--vs-code-workspace-kickagent-docs).
+
 ### First-time setup
 
 ```bash

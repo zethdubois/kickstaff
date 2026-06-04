@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "publicweb"
+    },
+    {
+      "path": "../kickagent/docs/",
+      "name": "kickagent-docs"
+    }
+  ],
+  "settings": {
+    "files.readonlyInclude": {
+      "**/kickagent-docs/**": true
+    }
+  }
+}

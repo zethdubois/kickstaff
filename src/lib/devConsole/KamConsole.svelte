@@ -3,6 +3,7 @@
   import {
     devConsole,
     KAM_CONSOLE_FOCUS_INPUT_EVENT,
+    klogInfo,
   } from "./state.svelte";
   import {
     focusStack,
@@ -15,7 +16,7 @@
   } from "./commandHistory";
   import { runCommand } from "./commands";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
-  import KickagentResourceTable from "$lib/kickagent/KickagentResourceTable.svelte";
+  import KickagentUnitsSplitView from "$lib/kickagent/KickagentUnitsSplitView.svelte";
   import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
   import { UNITS_LIST_COMMAND } from "$lib/kickagent/unitsOps";
 
@@ -42,6 +43,7 @@
   const unitsListSchema = $derived(
     devConsole.kickagentModeActive ? getUnitsListSchema() : null,
   );
+
 
   async function runUnitsListFromConsole(args: string[]) {
     const parts = [UNITS_LIST_COMMAND, ...args];
@@ -139,10 +141,11 @@
         />
       {/if}
       {#if devConsole.tableOutcome}
-        <KickagentResourceTable
+        <KickagentUnitsSplitView
           variant="console"
           model={devConsole.tableOutcome}
           title="Units"
+          onActionMessage={(msg) => klogInfo(msg)}
         />
       {/if}
       {#each devConsole.entries as entry (entry.id)}

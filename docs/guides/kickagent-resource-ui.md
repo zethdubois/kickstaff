@@ -14,7 +14,7 @@
 | Surface | Role |
 | ------- | ---- |
 | **Hub command card** (`kickagent:units-list`) | **Trigger** — materialize card, navigate to [`/ops/units`](/ops/units) |
-| **`/ops/units`** | **Canonical UI** — filters + [`KickagentResourceTable`](../../src/lib/kickagent/KickagentResourceTable.svelte) |
+| **`/ops/units`** | **Canonical UI** — filters + [`KickagentUnitsSplitView`](../../src/lib/kickagent/KickagentUnitsSplitView.svelte) (list + detail form) |
 | **KAM Console** | Ad-hoc CLI; log lines stay; optional console table preview |
 
 ## Manifest (kickagent ≥ 0.0.3)
@@ -52,7 +52,8 @@ If table missing but pipes show: check klog for `table UI: missing manifest reso
 | ---- | ------- |
 | [`manifestResourceCache.ts`](../../src/lib/kickagent/manifestResourceCache.ts) | Parse/cache `resources` |
 | [`KickagentListFilters.svelte`](../../src/lib/kickagent/KickagentListFilters.svelte) | Filter form → CLI args |
-| [`KickagentResourceTable.svelte`](../../src/lib/kickagent/KickagentResourceTable.svelte) | Typed columns |
+| [`KickagentResourceList.svelte`](../../src/lib/kickagent/KickagentResourceList.svelte) | Name list + keyboard actions |
+| [`KickagentResourceTable.svelte`](../../src/lib/kickagent/KickagentResourceTable.svelte) | Typed columns (legacy / other resources) |
 | [`routes/ops/units/+page.svelte`](../../src/routes/ops/units/+page.svelte) | Full-page units |
 | [`unitsOps.ts`](../../src/lib/kickagent/unitsOps.ts) | Hub path + command key helpers |
 

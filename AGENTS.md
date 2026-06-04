@@ -48,6 +48,19 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 
 Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
+## Cursor / VS Code workspace (kickagent docs)
+
+For permanent **read-only** access to sibling kickagent documentation, open the multi-root workspace file (not the folder alone):
+
+**File → Open Workspace from File…** → [`publicweb.code-workspace`](publicweb.code-workspace)
+
+| Root | Path | Purpose |
+| ---- | ---- | ------- |
+| `publicweb` | this repo | App source (read/write) |
+| `kickagent-docs` | `../kickagent/docs` | Architecture, commands, operations, wiki, and generated catalog (read-only; edit in kickagent) |
+
+Requires sibling checkout at `../kickagent`. Workspace `files.readonlyInclude` marks the docs root read-only in the editor where supported. The generated command catalog lives at `kickagent/catalog/` inside that root (`pnpm docs:commands` in kickagent).
+
 ## Kickdesk
 
 This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:** `[kickdesk.registration.json](kickdesk.registration.json)` → KD `[docs/subscriber-setup-for-robots.md](../kickdesk/docs/subscriber-setup-for-robots.md)` (start here) + paths in `readonlyFiles`. **Day-to-day when-to-run:** [README.md → Kickdesk](README.md#kickdesk-local-cockpit).

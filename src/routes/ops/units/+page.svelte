@@ -6,11 +6,11 @@
   import { invalidateAll } from "$app/navigation";
   import { onMount } from "svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
-  import KickagentResourceTable from "$lib/kickagent/KickagentResourceTable.svelte";
+  import KickagentUnitsSplitView from "$lib/kickagent/KickagentUnitsSplitView.svelte";
   import {
+    getUnitsDetailSchema,
     getUnitsListSchema,
     setManifestResourceCache,
-    type ManifestResources,
   } from "$lib/kickagent/manifestResourceCache";
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
   import {
@@ -28,22 +28,19 @@
     data.manifest.unitsList ?? getUnitsListSchema(),
   );
 
+  const detailSchema = $derived(
+    data.manifest.unitsDetail ?? getUnitsDetailSchema(),
+  );
+
   let loading = $state(false);
   let reloadingManifest = $state(false);
   let error = $state<string | null>(null);
   let table = $state<ResourceTableModel | null>(null);
 
   function syncServerSchemaToClientCache(): void {
-    if (!browser || !data.manifest.unitsList) return;
-    const existing = getUnitsListSchema();
-    if (existing) return;
-    const resources: ManifestResources = {
-      units: {
-        version: 1,
-        list: data.manifest.unitsList,
-      },
-    };
-    setManifestResourceCache(resources);
+    if (!browser || !data.manifest.resources) return;
+    if (getUnitsListSchema()) return;
+    setManifestResourceCache(data.manifest.resources);
   }
 
   let autoLoaded = $state(false);
@@ -125,8 +122,8 @@
   <header class="ops__header">
     <h1 class="ops__title">Units</h1>
     <p class="ops__lead">
-      Operations units from kickagent. Table is built from command <code>data</code>
-      and manifest columns — not from KAM pipe log output.
+      Operations units from kickagent. Select a unit in the list to load its detail form.
+      ↑↓ navigate · Space menu.
     </p>
     {#if data.manifest.manifestVersion}
       <p class="ops__meta">
@@ -164,7 +161,11 @@
     {/if}
 
     {#if table}
-      <KickagentResourceTable model={table} title="Units" />
+      <KickagentUnitsSplitView
+        model={table}
+        detailSchema={detailSchema}
+        title="Units"
+      />
     {:else if !loading && !error}
       <p class="ops__empty">No rows returned.</p>
     {/if}

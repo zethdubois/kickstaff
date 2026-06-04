@@ -1,13 +1,18 @@
 import { env } from '$env/dynamic/public';
 import {
 	parseManifestResources,
+	type ManifestResources,
+	type ManifestUnitsDetailResource,
 	type ManifestUnitsListResource
 } from '$lib/kickagent/manifestResourceCache';
 
 export type KickagentManifestResourcesLoad = {
 	manifestUrl: string | null;
 	manifestVersion: string | null;
+	/** Parsed manifest resources when fetch succeeds. */
+	resources: ManifestResources | null;
 	unitsList: ManifestUnitsListResource | null;
+	unitsDetail: ManifestUnitsDetailResource | null;
 	error: string | null;
 };
 
@@ -18,7 +23,9 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 		return {
 			manifestUrl: null,
 			manifestVersion: null,
+			resources: null,
 			unitsList: null,
+			unitsDetail: null,
 			error: 'PUBLIC_KICKAGENT_MANIFEST_URL is not set'
 		};
 	}
@@ -31,7 +38,9 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 			return {
 				manifestUrl,
 				manifestVersion: null,
+				resources: null,
 				unitsList: null,
+				unitsDetail: null,
 				error: `manifest fetch failed: ${res.status} ${res.statusText}`
 			};
 		}
@@ -41,6 +50,7 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 			typeof raw.version === 'string' ? raw.version.trim() : null;
 		const resources = parseManifestResources(raw.resources);
 		const unitsList = resources?.units.list ?? null;
+		const unitsDetail = resources?.units.detail ?? null;
 
 		if (!unitsList) {
 			const hint =
@@ -52,7 +62,9 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 			return {
 				manifestUrl,
 				manifestVersion,
+				resources: null,
 				unitsList: null,
+				unitsDetail: null,
 				error: hint
 			};
 		}
@@ -60,7 +72,9 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 		return {
 			manifestUrl,
 			manifestVersion,
+			resources,
 			unitsList,
+			unitsDetail,
 			error: null
 		};
 	} catch (e) {
@@ -68,7 +82,9 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 		return {
 			manifestUrl,
 			manifestVersion: null,
+			resources: null,
 			unitsList: null,
+			unitsDetail: null,
 			error: message
 		};
 	}

@@ -76,6 +76,10 @@ export function getUnitsListSchema(): ManifestUnitsListResource | null {
 	return cached?.units.list ?? null;
 }
 
+export function getUnitsDetailSchema(): ManifestUnitsDetailResource | null {
+	return cached?.units.detail ?? null;
+}
+
 export function resolvePresentationRef(ref: string): ManifestUnitsListResource | null {
 	if (!cached) return null;
 	const key = ref.trim().toLowerCase();
