@@ -1,5 +1,20 @@
 # AGENTS.md — publicweb
 
+<!-- BEGIN proj-agents -->
+Portable procedure (now/plan, closing a phase, commit): **[.agent/SOP.md](.agent/SOP.md)**. Installed version: **[.agent/SOP_VERSION](.agent/SOP_VERSION)** (`proj-agents version` / `proj-agents status .`).
+
+## Start here (ordered)
+
+1. **[docs/now.md](docs/now.md)** — this week’s work; do the first unchecked item
+2. **[docs/plan.md](docs/plan.md)** — roadmap + phase outcomes (only the linked section)
+3. **[.agent/SOP.md](.agent/SOP.md)** — how we work (shared across projects)
+
+## Working rules
+
+Follow [.agent/SOP.md](.agent/SOP.md). Keep `.agent/COMMITLOG` current with *why* — append each turn; prefix **`[c]`** (Cursor) or **`[oc]`** (OpenCode). Humans run `commit` / `commit <project>`. Agents do not run `commit.sh` unless asked.
+<!-- END proj-agents -->
+
+
 Entry point for **Cursor agents** and developers working in this repository.
 
 ## Project overview

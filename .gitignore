@@ -30,3 +30,7 @@ vite.config.ts.timestamp-*
 
 # Uploaded rental hero images (served from /static/rental-media)
 static/rental-media/**
+
+# BEGIN proj-agents
+.agent/COMMITLOG
+# END proj-agents
