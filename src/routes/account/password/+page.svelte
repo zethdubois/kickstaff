@@ -77,7 +77,11 @@
 	}
 
 	.dlg {
+		position: relative;
+		inset: auto;
 		width: min(34rem, 100%);
+		height: auto;
+		margin: 0;
 		border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
 		border-radius: 14px;
 		padding: 1.1rem 1.1rem 1rem;

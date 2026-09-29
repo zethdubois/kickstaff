@@ -2,8 +2,8 @@
 # Run docker compose (v2 plugin), docker-compose (v1), or plain docker for db:up / db:down.
 set -euo pipefail
 
-CONTAINER_NAME=publicweb-postgres
-VOLUME_NAME=publicweb_pg_data
+CONTAINER_NAME=kickstaff-postgres
+VOLUME_NAME=kickstaff_pg_data
 
 run_compose() {
 	if docker compose version &>/dev/null 2>&1; then
@@ -32,7 +32,7 @@ docker_up_standalone() {
 		--restart unless-stopped \
 		-e POSTGRES_USER=postgres \
 		-e POSTGRES_PASSWORD=postgres \
-		-e POSTGRES_DB=publicweb_dev \
+		-e POSTGRES_DB=kickstaff_dev \
 		-p 5043:5432 \
 		-v "${VOLUME_NAME}:/var/lib/postgresql/data" \
 		postgres:16

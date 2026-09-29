@@ -1,5 +1,5 @@
 /**
- * Publish operational manifest to ~/.config/publicweb/manifest.json
+ * Publish operational manifest to ~/.config/kickstaff/manifest.json
  *
  *   pnpm kickdesk:publish-manifest
  */
@@ -54,7 +54,7 @@ function main() {
 	warnIfPortDrift();
 
 	const manifest = buildKickdeskManifest(repoPathForManifest());
-	const configDir = join(homedir(), '.config', 'publicweb');
+	const configDir = join(homedir(), '.config', 'kickstaff');
 	const outPath = join(configDir, 'manifest.json');
 
 	try {

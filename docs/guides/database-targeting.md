@@ -1,6 +1,6 @@
 # Database targeting (dev vs prod)
 
-**Audience:** Developers and agents in **publicweb**. Kickagent uses the same env var names and resolution rules with `KICKAGENT_DB_DEFAULT` — see kickagent `docs/database-targeting.md` in the sibling repo.
+**Audience:** Developers and agents in **kickstaff**. Kickagent uses the same env var names and resolution rules with `KICKAGENT_DB_DEFAULT` — see kickagent `docs/database-targeting.md` in the sibling repo.
 
 ## Problem we avoid
 
@@ -12,7 +12,7 @@ process.env.DATABASE_URL || process.env.DATABASE_URL_DEV
 
 A shell-exported `DATABASE_URL` (e.g. Railway prod) would always win over `.env`’s `DATABASE_URL_DEV` when code used OR precedence. Both repos pick an explicit **target** (`dev` | `prod`) and then read the matching URL only.
 
-## Publicweb model
+## Kickstaff model
 
 Implementation:
 
@@ -26,9 +26,9 @@ Implementation:
 
 | Concept | Behavior |
 | ------- | -------- |
-| **Default target** | `PUBLICWEB_DB_DEFAULT` (`dev` \| `prod`), else infer `dev` if `DATABASE_URL_DEV` is set, else `prod`. |
+| **Default target** | `KICKSTAFF_DB_DEFAULT` (`dev` \| `prod`), else infer `dev` if `DATABASE_URL_DEV` is set, else `prod`. |
 | **Production runtime** | `NODE_ENV=production` → **always `prod`**, only `DATABASE_URL`. Cookie switching disabled. |
-| **Runtime override** | Super user: `db use dev` \| `db use prod` (httpOnly cookie `publicweb_db_target`) on local dev server only. |
+| **Runtime override** | Super user: `db use dev` \| `db use prod` (httpOnly cookie `kickstaff_db_target`) on local dev server only. |
 | **Connection** | `dev` → `DATABASE_URL_DEV`; `prod` → `DATABASE_URL`. |
 
 ### Environment (local)
@@ -36,12 +36,12 @@ Implementation:
 [`.env.example`](../../.env.example):
 
 ```env
-PUBLICWEB_DB_DEFAULT=dev
-DATABASE_URL_DEV=postgresql://postgres:postgres@localhost:5043/publicweb_dev
+KICKSTAFF_DB_DEFAULT=dev
+DATABASE_URL_DEV=postgresql://postgres:postgres@localhost:5043/kickstaff_dev
 # DATABASE_URL=postgresql://...   # optional locally; required for prod target / db use prod
 ```
 
-Production deploy: `PUBLICWEB_DB_DEFAULT=prod` (or unset), `DATABASE_URL` set, **no** `DATABASE_URL_DEV`.
+Production deploy: `KICKSTAFF_DB_DEFAULT=prod` (or unset), `DATABASE_URL` set, **no** `DATABASE_URL_DEV`.
 
 ### Commands
 
@@ -55,7 +55,7 @@ Production deploy: `PUBLICWEB_DB_DEFAULT=prod` (or unset), `DATABASE_URL` set, *
 | Migration pending (Kickdesk) | `pnpm db:migrate:status` (dev default); prod: `pnpm db:migrate:status --db prod` |
 | Switch running dev server | KAM `db use dev` \| `db use prod` (super only) |
 
-**Explicit CLI target** (same idea as kickagent `--db`): pass `--db dev` or `--db prod` on the pnpm script (e.g. `pnpm db:migrate --db prod`). Precedence: `--db` > positional `dev`/`prod` > env default (`PUBLICWEB_DB_DEFAULT`, etc.).
+**Explicit CLI target** (same idea as kickagent `--db`): pass `--db dev` or `--db prod` on the pnpm script (e.g. `pnpm db:migrate --db prod`). Precedence: `--db` > positional `dev`/`prod` > env default (`KICKSTAFF_DB_DEFAULT`, etc.).
 
 `pnpm db:status` without `--db` uses **env default** (not the KAM cookie). After `db use prod`, the app uses prod until switched back.
 
@@ -63,18 +63,18 @@ Production deploy: `PUBLICWEB_DB_DEFAULT=prod` (or unset), `DATABASE_URL` set, *
 
 ## Kickagent comparison
 
-| | **Publicweb** | **Kickagent** |
+| | **Kickstaff** | **Kickagent** |
 | --- | --- | --- |
-| Default env | `PUBLICWEB_DB_DEFAULT` | `KICKAGENT_DB_DEFAULT` |
+| Default env | `KICKSTAFF_DB_DEFAULT` | `KICKAGENT_DB_DEFAULT` |
 | Switching | `--db dev` \| `--db prod` on CLI scripts; cookie on dev server | `--db dev` \| `--db prod` per CLI process |
 | Shared logic | `dbTargetCore.ts` | `src/db/dbTarget.ts` |
 
-When publicweb runs kickagent handlers that touch Postgres on the server, the host should pass `getActiveDbTarget()` into kickagent context (planned) so both use the same target.
+When kickstaff runs kickagent handlers that touch Postgres on the server, the host should pass `getActiveDbTarget()` into kickagent context (planned) so both use the same target.
 
 ## Troubleshooting
 
 | Symptom | Likely cause |
 | ------- | ------------- |
-| `database "kickasset" does not exist` | Shell `DATABASE_URL` points at prod; set `PUBLICWEB_DB_DEFAULT=dev`, unset exported `DATABASE_URL`, or `pnpm db:status`. |
-| Migrate/seed hits wrong DB | Wrong default; use `pnpm db:migrate --db prod` explicitly or fix `PUBLICWEB_DB_DEFAULT`. |
+| `database "kickasset" does not exist` | Shell `DATABASE_URL` points at prod; set `KICKSTAFF_DB_DEFAULT=dev`, unset exported `DATABASE_URL`, or `pnpm db:status`. |
+| Migrate/seed hits wrong DB | Wrong default; use `pnpm db:migrate --db prod` explicitly or fix `KICKSTAFF_DB_DEFAULT`. |
 | App vs CLI differ | Cookie override (`db use prod`) vs env default — check KAM `db status` vs `pnpm db:status`. |

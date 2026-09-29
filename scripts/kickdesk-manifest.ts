@@ -1,5 +1,5 @@
 /**
- * Operational Kickdesk manifest for publicweb (50xx family).
+ * Operational Kickdesk manifest for kickstaff (50xx family).
  * Single source for `pnpm kickdesk:publish-manifest`.
  */
 export type KickdeskManifest = {
@@ -14,12 +14,12 @@ export type KickdeskManifest = {
 	status?: { migrate: string };
 };
 
-export const KICKDESK_CONFIG_DIR = '~/.config/publicweb';
+export const KICKDESK_CONFIG_DIR = '~/.config/kickstaff';
 export const KICKDESK_MIGRATE_STATUS_PATH = `${KICKDESK_CONFIG_DIR}/migrate-status`;
 
 export function buildKickdeskManifest(repoPath: string): KickdeskManifest {
 	return {
-		id: 'publicweb',
+		id: 'kickstaff',
 		path: repoPath,
 		port_family: 50,
 		primary_port: 5000,

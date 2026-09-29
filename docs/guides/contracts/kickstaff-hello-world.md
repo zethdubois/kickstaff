@@ -1,15 +1,15 @@
-# publicweb — Kickagent Hello World Integration
+# kickstaff — Kickagent Hello World Integration
 
-**Audience:** Developer working in **publicweb**.
+**Audience:** Developer working in **kickstaff**.
 
-**Consumer guide:** [publicweb-kickagent-consumer.md](publicweb-kickagent-consumer.md). **Phase 1 package:** [kickagent-essentials-spec.md](kickagent-essentials-spec.md). **KAM console:** [../kam-console.md](../kam-console.md).
+**Consumer guide:** [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md). **Phase 1 package:** [kickagent-essentials-spec.md](kickagent-essentials-spec.md). **KAM console:** [../kam-console.md](../kam-console.md).
 
 ---
 
 ## Overview
 
 - **kickagent** owns the pure function: `helloWorld(userId, userEmail, logger)`.
-- **publicweb** owns the thin wrapper: import, logger shim, console command registration.
+- **kickstaff** owns the thin wrapper: import, logger shim, console command registration.
 - **Shared boundary:** function signature and `KlogBroadcaster` shape (defined in both repos; see essentials spec).
 
 ---

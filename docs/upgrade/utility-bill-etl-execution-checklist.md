@@ -1,6 +1,6 @@
 # Utility Bill ETL Execution Checklist
 
-> **KA implementation reference** — not publicweb code.
+> **KA implementation reference** — not kickstaff code.
 
 Implementation checklist derived from [utility-bill-etl-scope.md](utility-bill-etl-scope.md).
 

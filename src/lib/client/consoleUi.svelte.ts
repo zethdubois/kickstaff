@@ -3,7 +3,7 @@
  * Command aliases rewrite the leading token (+ inject words) before resolution.
  */
 
-export const CONSOLE_UI_STORAGE_KEY = "publicweb.consoleUi";
+export const CONSOLE_UI_STORAGE_KEY = "kickstaff.consoleUi";
 export const CONSOLE_UI_VERSION = 1;
 
 const MAX_ALIASES = 48;

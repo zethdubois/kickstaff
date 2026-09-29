@@ -4,13 +4,13 @@
 
 **Canonical contract:** [kickagent-essentials-spec.md](kickagent-essentials-spec.md) — function signature, logger rules, CLI, build, and acceptance criteria. This doc is a **first-milestone walkthrough** only (scaffolding and local verification).
 
-**publicweb side:** [publicweb-hello-world.md](publicweb-hello-world.md).
+**kickstaff side:** [kickstaff-hello-world.md](kickstaff-hello-world.md).
 
 ---
 
 ## Goal
 
-Ship the first exported function so publicweb can import the package and run `kickagent:hello` in the KAM console (`Ctrl+/`). Behavior and types are defined in the essentials spec; do not duplicate them here.
+Ship the first exported function so kickstaff can import the package and run `kickagent:hello` in the KAM console (`Ctrl+/`). Behavior and types are defined in the essentials spec; do not duplicate them here.
 
 ---
 
@@ -110,13 +110,13 @@ console.assert(result.message === "Hello, alice@example.com!");
 
 ---
 
-## Build and link to publicweb
+## Build and link to kickstaff
 
 ```bash
 npm run build
 ```
 
-publicweb depends on the sibling checkout:
+kickstaff depends on the sibling checkout:
 
 ```json
 {
@@ -126,13 +126,13 @@ publicweb depends on the sibling checkout:
 }
 ```
 
-After kickagent builds, run `pnpm install` in publicweb if needed, then test end-to-end: sign in as admin, **`shell kickagent`** (or **`alias kickagent ka`** then **`ka`**), **`hello`** or **`kickagent:hello`**.
+After kickagent builds, run `pnpm install` in kickstaff if needed, then test end-to-end: sign in as admin, **`shell kickagent`** (or **`alias kickagent ka`** then **`ka`**), **`hello`** or **`kickagent:hello`**.
 
 ---
 
-## What publicweb does (summary)
+## What kickstaff does (summary)
 
-publicweb imports `helloWorld`, registers `kickagent:hello`, passes `user.id` / `user.email`, and surfaces the returned message in klog. Details: [publicweb-hello-world.md](publicweb-hello-world.md).
+kickstaff imports `helloWorld`, registers `kickagent:hello`, passes `user.id` / `user.email`, and surfaces the returned message in klog. Details: [kickstaff-hello-world.md](kickstaff-hello-world.md).
 
 ---
 
@@ -141,4 +141,4 @@ publicweb imports `helloWorld`, registers `kickagent:hello`, passes `user.id` / 
 - [ ] `helloWorld` + `KlogBroadcaster` match [kickagent-essentials-spec.md](kickagent-essentials-spec.md)
 - [ ] CLI works locally
 - [ ] `dist/index.js` and `dist/index.d.ts` exist after `npm run build`
-- [ ] publicweb runs `kickagent:hello` successfully
+- [ ] kickstaff runs `kickagent:hello` successfully

@@ -7,7 +7,7 @@ describe('runtimeEnv (database inspection guard)', () => {
 		const prev = process.env.NODE_ENV;
 		process.env.NODE_ENV = 'development';
 		try {
-			assert.equal(isLocalDevDatabaseFeaturesEnabled('postgres://localhost:5043/publicweb_dev'), true);
+			assert.equal(isLocalDevDatabaseFeaturesEnabled('postgres://localhost:5043/kickstaff_dev'), true);
 		} finally {
 			process.env.NODE_ENV = prev;
 		}

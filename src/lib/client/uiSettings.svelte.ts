@@ -1,4 +1,4 @@
-export const UI_SETTINGS_STORAGE_KEY = "publicweb.uiSettings";
+export const UI_SETTINGS_STORAGE_KEY = "kickstaff.uiSettings";
 export const UI_SETTINGS_VERSION = 4;
 
 export const KAM_MODES = ["default", "kickagent"] as const;

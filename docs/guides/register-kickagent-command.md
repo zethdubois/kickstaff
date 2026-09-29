@@ -1,6 +1,6 @@
 # Register a new kickagent command
 
-**Audience:** Developers and Cursor agents adding a `kickagent:*` command that runs in publicweb KAM and (optionally) appears on the ops hub.
+**Audience:** Developers and Cursor agents adding a `kickagent:*` command that runs in kickstaff KAM and (optionally) appears on the ops hub.
 
 **Source of truth for command metadata:** kickagent `COMMAND_CATALOG` in [`../../kickagent/src/commands/index.ts`](../../kickagent/src/commands/index.ts). Generated table: [`../../kickagent/docs/commands.md`](../../kickagent/docs/commands.md).
 
@@ -11,7 +11,7 @@
 | Layer | What you do |
 | ----- | ----------- |
 | **kickagent** | Implement behavior + one `defineCommand` row in `COMMAND_CATALOG` |
-| **publicweb** | Usually **nothing per command** — host registers the full catalog on admin login (Phase 1) or manifest reload (Phase 2) |
+| **kickstaff** | Usually **nothing per command** — host registers the full catalog on admin login (Phase 1) or manifest reload (Phase 2) |
 | **KAM** | Run `kickagent:<name>` to verify |
 | **Ops hub** | Card appears **after first successful run** (lazy materialize); customize under Settings → Dashboard |
 
@@ -23,7 +23,7 @@ flowchart TD
     Index["COMMAND_CATALOG"]
     Impl --> CmdFile --> Index
   end
-  subgraph publicweb_host [publicweb]
+  subgraph kickstaff_host [kickstaff]
     Layout["Admin layout boot"]
     Reg["registerKickagentCatalogCommands"]
     KAM["KAM registry"]
@@ -84,24 +84,24 @@ flowchart TD
 
 ---
 
-## 2. publicweb Phase 1 (linked package)
+## 2. kickstaff Phase 1 (linked package)
 
 When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is **unset** (typical local dev):
 
 1. `pnpm build` in kickagent (sibling `link:../kickagent` picks up `dist/`).
-2. **Restart** the publicweb dev server.
+2. **Restart** the kickstaff dev server.
 3. Sign in as **admin** — [`src/lib/kickagent/registerCatalogCommands.ts`](../../src/lib/kickagent/registerCatalogCommands.ts) registers **every** `COMMAND_CATALOG` row via [`src/routes/+layout.svelte`](../../src/routes/+layout.svelte).
 
-**No per-command publicweb TypeScript** unless you are intentionally bypassing the catalog (exceptional).
+**No per-command kickstaff TypeScript** unless you are intentionally bypassing the catalog (exceptional).
 
 ---
 
-## 3. publicweb Phase 2 (manifest URL)
+## 3. kickstaff Phase 2 (manifest URL)
 
 When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is set (see [`.env.example`](../../.env.example)):
 
 1. Build kickagent and publish manifest + ESM bundle ([plugin-manifest-and-reload.md](../../kickagent/docs/guides/plugin-manifest-and-reload.md)).
-2. Restart publicweb or run **`kam:reload-kickagent`** in KAM after republishing.
+2. Restart kickstaff or run **`kam:reload-kickagent`** in KAM after republishing.
 3. Plugin `register()` uses the same catalog; manifest `commands[]` includes **`category`** for hub materialize defaults.
 
 ---
@@ -120,7 +120,7 @@ As admin:
 
 **Failure:** `unknown command: …`
 
-- Phase 1: kickagent not rebuilt, or publicweb dev server not restarted after build.
+- Phase 1: kickagent not rebuilt, or kickstaff dev server not restarted after build.
 - Phase 2: stale manifest — republish and `kam:reload-kickagent`.
 - Command missing from `COMMAND_CATALOG` or invalid `name` pattern.
 
@@ -139,7 +139,7 @@ Hub cards are **lazy**: the command does not appear on `/` until it has been **r
 
 Removing a card in Settings does **not** unregister the KAM command.
 
-Details: [publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consumer.md) (Ops hub command cards).
+Details: [kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) (Ops hub command cards).
 
 ---
 
@@ -150,13 +150,13 @@ Details: [publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consume
 | Command definition | `kickagent/src/commands/<name>.command.ts` |
 | Catalog list | `kickagent/src/commands/index.ts` |
 | Implementation | `kickagent/src/<module>.ts` |
-| Host auto-register (Phase 1) | `publicweb/src/lib/kickagent/registerCatalogCommands.ts` |
-| Host manifest load (Phase 2) | `publicweb/src/lib/kickagent/loadPluginFromManifest.ts` |
-| Hub materialize | `publicweb/src/lib/server/dashboardCommandMaterialize.ts` |
+| Host auto-register (Phase 1) | `kickstaff/src/lib/kickagent/registerCatalogCommands.ts` |
+| Host manifest load (Phase 2) | `kickstaff/src/lib/kickagent/loadPluginFromManifest.ts` |
+| Hub materialize | `kickstaff/src/lib/server/dashboardCommandMaterialize.ts` |
 
 | Avoid | Reason |
 | ----- | ------ |
-| `registerKickagentCommand` in publicweb for catalog commands | Duplicates catalog; use `COMMAND_CATALOG` only |
+| `registerKickagentCommand` in kickstaff for catalog commands | Duplicates catalog; use `COMMAND_CATALOG` only |
 | Edit manifest `commands[]` by hand | Generated from catalog |
 | Expect hub card before first run | Lazy materialize by design |
 
@@ -168,6 +168,6 @@ Details: [publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consume
 | --- | ----- |
 | [kickagent/docs/commands.md](../../kickagent/docs/commands.md) | Generated command table |
 | [kickagent/docs/AGENTS.md](../../kickagent/docs/AGENTS.md) | Kickagent repo conventions |
-| [contracts/publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consumer.md) | Host phases, security, hub |
+| [contracts/kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) | Host phases, security, hub |
 | [kam-console.md](kam-console.md) | Palette, klog, kickagent shell |
 | [platform-overview.md](platform-overview.md) | KAM vs KAM-UI architecture |

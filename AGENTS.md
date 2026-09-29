@@ -1,7 +1,7 @@
-# AGENTS.md — publicweb
+# AGENTS.md — kickstaff
 
 <!-- BEGIN proj-agents -->
-Portable procedure (now/plan, closing a phase, commit): **[.agent/SOP.md](.agent/SOP.md)**. Installed version: **[.agent/SOP_VERSION](.agent/SOP_VERSION)** (`proj-agents version` / `proj-agents status .`).
+Portable procedure (now/plan, closing a phase, commit, shared-data writes): **[.agent/SOP.md](.agent/SOP.md)**. Installed version: **[.agent/SOP_VERSION](.agent/SOP_VERSION)** (`proj-agents version` / `proj-agents status .`).
 
 ## Start here (ordered)
 
@@ -11,7 +11,9 @@ Portable procedure (now/plan, closing a phase, commit): **[.agent/SOP.md](.agent
 
 ## Working rules
 
-Follow [.agent/SOP.md](.agent/SOP.md). Keep `.agent/COMMITLOG` current with *why* — append each turn; prefix **`[c]`** (Cursor) or **`[oc]`** (OpenCode). Humans run `commit` / `commit <project>`. Agents do not run `commit.sh` unless asked.
+Follow [.agent/SOP.md](.agent/SOP.md). Keep `.agent/COMMITLOG` current with *why* — append each turn; prefix **`[c]`** Cursor, **`[oc]`** OpenCode. Humans run `commit` / `commit <project>`. Agents do not run `commit.sh` unless asked.
+
+**Shared / production data:** name those stores in this file’s project notes. Before any write to them: back up under `~/backups/<project>/…`, dry-run, get human approval, then apply — and append **[docs/data-ops-log.md](docs/data-ops-log.md)** in the same session (operation not done until logged). See SOP → Writes to shared data.
 <!-- END proj-agents -->
 
 
@@ -47,7 +49,7 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 - Current persisted shape includes:
   - `consoleOpen` (KAM console visibility)
   - `kamMode` (`default | kickagent` — **[KA]** shell; enter with `shell kickagent`, or shortcut like `ka` via `alias kickagent ka`)
-- KAM **command aliases** (`alias` / `unalias`; `publicweb.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
+- KAM **command aliases** (`alias` / `unalias`; `kickstaff.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
   - When adding/removing/changing fields, bump `UI_SETTINGS_VERSION`.
   - Keep `DEFAULT_UI_SETTINGS` and validation (`isValidShape`) in sync with the new version.
 
@@ -67,11 +69,11 @@ Copy `.env.example` to `.env` and fill values; never commit real secrets.
 
 For permanent **read-only** access to sibling kickagent documentation, open the multi-root workspace file (not the folder alone):
 
-**File → Open Workspace from File…** → [`publicweb.code-workspace`](publicweb.code-workspace)
+**File → Open Workspace from File…** → [`kickstaff.code-workspace`](kickstaff.code-workspace)
 
 | Root | Path | Purpose |
 | ---- | ---- | ------- |
-| `publicweb` | this repo | App source (read/write) |
+| `kickstaff` | this repo | App source (read/write) |
 | `kickagent-docs` | `../kickagent/docs` | Architecture, commands, operations, wiki, and generated catalog (read-only; edit in kickagent) |
 
 Requires sibling checkout at `../kickagent`. Workspace `files.readonlyInclude` marks the docs root read-only in the editor where supported. The generated command catalog lives at `kickagent/catalog/` inside that root (`pnpm docs:commands` in kickagent).
@@ -93,7 +95,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 
 ## Database
 
-- **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env` (e.g. `localhost:5043/publicweb_dev`); default target: `PUBLICWEB_DB_DEFAULT=dev` or infer dev when `DATABASE_URL_DEV` is set — [database-targeting.md](docs/guides/database-targeting.md). **Prod:** `DATABASE_URL` on Railway only. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
+- **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env` (e.g. `localhost:5043/kickstaff_dev`); default target: `KICKSTAFF_DB_DEFAULT=dev` or infer dev when `DATABASE_URL_DEV` is set — [database-targeting.md](docs/guides/database-targeting.md). **Prod:** `DATABASE_URL` on Railway only. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
 - Apply migrations after pulling: `pnpm db:migrate` (dev). Production: `pnpm db:migrate --db prod` — use with care.
 - First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`, `ADMIN_PASSWORD`). Resync hash after changing `.env`: `pnpm reset:admin-password`. Active target: `pnpm db:status` or KAM `db status`.
 - Super-only runtime switch (local dev): KAM `db use prod` / `db use dev` — see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
@@ -101,13 +103,13 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 ## Documentation pipeline
 
 - **Repo Architecture Onboarding (Cursor skill):** [`.cursor/skills/repo-architecture-onboarding/SKILL.md`](.cursor/skills/repo-architecture-onboarding/SKILL.md) — doc ladder and architecture summary when cold-starting or before cross-cutting work.
-- **Platform overview** (publicweb vs kickagent, one DB / two schemas, storage, KAM vs KAM-UI): `[docs/guides/platform-overview.md](docs/guides/platform-overview.md)`.
+- **Platform overview** (kickstaff vs kickagent, one DB / two schemas, storage, KAM vs KAM-UI): `[docs/guides/platform-overview.md](docs/guides/platform-overview.md)`.
 - **Repository standards** for Svelte structure and file headers: `[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)`.
 - **Developer / agent guides** live under `[docs/guides/](docs/guides/)` — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Operations handoff (kickagent):** `[docs/upgrade/README.md](docs/upgrade/README.md)` — primers + ETL reference (no bill code in this repo).
 - **KAM dev console + command palette** (palette: `Ctrl+/`; focus console pane: ``` (backtick); `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
-- **kickagent integration** (no npm/git dependency in publicweb — Phase 2 manifest + ESM): sibling `../kickagent` only to publish/serve artifacts; `[docs/guides/contracts/publicweb-kickagent-consumer.md](docs/guides/contracts/publicweb-kickagent-consumer.md)`.
-- **New kickagent command (checklist):** `[docs/guides/register-kickagent-command.md](docs/guides/register-kickagent-command.md)` — catalog in kickagent, auto-register in publicweb, KAM verify, optional hub card.
+- **kickagent integration** (no npm/git dependency in kickstaff — Phase 2 manifest + ESM): sibling `../kickagent` only to publish/serve artifacts; `[docs/guides/contracts/kickstaff-kickagent-consumer.md](docs/guides/contracts/kickstaff-kickagent-consumer.md)`.
+- **New kickagent command (checklist):** `[docs/guides/register-kickagent-command.md](docs/guides/register-kickagent-command.md)` — catalog in kickagent, auto-register in kickstaff, KAM verify, optional hub card.
 - **Human setup (local dev):** [README.md → Development](README.md#development).
 - **Production operations (operators):** `[docs/guides/production-operations.md](docs/guides/production-operations.md)`.
 - **Kickdesk subscriber:** `[kickdesk.registration.json](kickdesk.registration.json)` + KD `[subscriber-setup-for-robots.md](../kickdesk/docs/subscriber-setup-for-robots.md)`; day-to-day [README → Kickdesk](README.md#kickdesk-local-cockpit).

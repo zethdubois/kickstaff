@@ -1,6 +1,6 @@
 /**
  * Host/plugin contract (aligned with kickagent package types).
- * Duplicated here so publicweb does not depend on the kickagent npm/git package at build time.
+ * Duplicated here so kickstaff does not depend on the kickagent npm/git package at build time.
  */
 
 export type CommandPresentationFieldType =

@@ -1,7 +1,7 @@
 # Reports operations primer (ex–`/tools/reports`)
 
 **Audience:** kickagent developers.  
-**Status:** The publicweb `/tools/reports/*` UI has been **removed**. This area was **lightly developed** — useful mainly as concepts and one shared metrics helper.
+**Status:** The kickstaff `/tools/reports/*` UI has been **removed**. This area was **lightly developed** — useful mainly as concepts and one shared metrics helper.
 
 ---
 
@@ -41,13 +41,13 @@ Secondary tab bar: **Operations** | **Monthly**.
 
 **Left unchanged:** `failed`, `skipped`, `received` rows.
 
-**Removed from publicweb:** KAM `reset` and `/api/admin/bills/reset` — reimplement in kickagent.
+**Removed from kickstaff:** KAM `reset` and `/api/admin/bills/reset` — reimplement in kickagent.
 
 ---
 
 ## Monthly tab (metrics)
 
-**Former server:** `monthlyMetrics.ts` (deleted from publicweb; reimplement in KA)
+**Former server:** `monthlyMetrics.ts` (deleted from kickstaff; reimplement in KA)
 
 - `currentPeriod()` → `YYYY-MM` (UTC month).
 - `loadMonthlyMetrics(period)` returns:
@@ -79,6 +79,6 @@ No vendor breakdown, no drill-down, no charts.
 
 ## Suggested KA deliverables
 
-1. **Operations:** single `bills reset` command/API (already partially in PW).
+1. **Operations:** single `bills reset` command/API (already partially in kickstaff).
 2. **Metrics:** `GET /operations/metrics?period=YYYY-MM` backed by same queries as `monthlyMetrics.ts`.
 3. **Future:** run-level audit from `bill_runs` when batch runner exists; not from old Reports UI.

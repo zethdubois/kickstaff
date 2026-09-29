@@ -4,7 +4,7 @@
 |------|----------|------|
 | `COMMITLOG` | **no** (gitignored) | WIP commit message; agents keep it current |
 | `COMMITLOG.example` | yes | Template if COMMITLOG is missing |
-| `SOP.md` | yes | Portable agent SOP (now/plan, commit, closing a phase) |
+| `SOP.md` | yes | Portable agent SOP (now/plan, commit, closing a phase, shared-data writes) |
 | `SOP_VERSION` | yes | Installed pack version (`version=N`) |
 | `../commit.sh` | yes | Human-gated `git add -A` + `git commit -F COMMITLOG` |
 

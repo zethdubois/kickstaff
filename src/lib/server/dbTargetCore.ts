@@ -7,7 +7,7 @@ export type DbTarget = 'dev' | 'prod';
 
 export type DbTargetEnv = {
 	nodeEnv?: string;
-	/** PUBLICWEB_DB_DEFAULT — explicit default when not production */
+	/** KICKSTAFF_DB_DEFAULT — explicit default when not production */
 	dbDefault?: string;
 	databaseUrlDev?: string;
 	databaseUrl?: string;
@@ -16,7 +16,7 @@ export type DbTargetEnv = {
 export function envFromProcess(): DbTargetEnv {
 	return {
 		nodeEnv: process.env.NODE_ENV,
-		dbDefault: process.env.PUBLICWEB_DB_DEFAULT,
+		dbDefault: process.env.KICKSTAFF_DB_DEFAULT,
 		databaseUrlDev: process.env.DATABASE_URL_DEV,
 		databaseUrl: process.env.DATABASE_URL
 	};
@@ -36,7 +36,7 @@ export function getConfiguredDefaultTarget(env: DbTargetEnv): DbTarget | null {
 	if (!raw) return null;
 	const parsed = parseDbTarget(raw);
 	if (!parsed) {
-		throw new Error(`PUBLICWEB_DB_DEFAULT must be "dev" or "prod" (got "${raw}")`);
+		throw new Error(`KICKSTAFF_DB_DEFAULT must be "dev" or "prod" (got "${raw}")`);
 	}
 	if (isProductionRuntime(env.nodeEnv) && parsed === 'dev') {
 		return 'prod';

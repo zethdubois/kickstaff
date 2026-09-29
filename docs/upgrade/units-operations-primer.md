@@ -1,7 +1,7 @@
 # Units operations primer (ex–`/tools/units`)
 
 **Audience:** kickagent developers.  
-**Status:** The publicweb `/tools/units/*` UI and `units` / `unit_bill_accounts` tables are **removed**. Reimplement in kickagent.
+**Status:** The kickstaff `/tools/units/*` UI and `units` / `unit_bill_accounts` tables are **removed**. Reimplement in kickagent.
 
 ---
 
@@ -15,7 +15,7 @@ This data is required for [bills batch generation](bills-operations-primer.md): 
 
 ## Data model
 
-Tables (target: kickagent `operations` schema; dropped from publicweb DB):
+Tables (target: kickagent `operations` schema; dropped from kickstaff DB):
 
 ### `units`
 
@@ -91,4 +91,4 @@ Old route handlers lived under `src/routes/tools/units/` (deleted).
 1. CRUD API or commands for units and bill accounts.
 2. Validation mirroring old forms (required fields, unique constraints).
 3. Explicit `relink` operation after mapping changes (or automatic on save).
-4. Consider soft-delete vs hard-delete (PW used hard delete).
+4. Consider soft-delete vs hard-delete (kickstaff used hard delete).

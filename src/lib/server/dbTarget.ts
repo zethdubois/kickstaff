@@ -10,7 +10,7 @@ import {
 
 export type { DbTarget };
 
-export const DB_TARGET_COOKIE = 'publicweb_db_target';
+export const DB_TARGET_COOKIE = 'kickstaff_db_target';
 
 export type DbDisplayInfo = {
 	target: DbTarget;
@@ -22,7 +22,7 @@ export type DbDisplayInfo = {
 function readDbTargetEnv(): DbTargetEnv {
 	return {
 		nodeEnv: process.env.NODE_ENV,
-		dbDefault: env.PUBLICWEB_DB_DEFAULT ?? process.env.PUBLICWEB_DB_DEFAULT,
+		dbDefault: env.KICKSTAFF_DB_DEFAULT ?? process.env.KICKSTAFF_DB_DEFAULT,
 		databaseUrlDev: env.DATABASE_URL_DEV,
 		databaseUrl: env.DATABASE_URL
 	};

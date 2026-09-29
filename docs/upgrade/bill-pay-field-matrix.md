@@ -1,6 +1,6 @@
 # Bill pay field matrix
 
-> **KA implementation reference** — former publicweb schema; adapter code removed from this repo.
+> **KA implementation reference** — former kickstaff schema; adapter code removed from this repo.
 
 What `Unit` and `unit_bill_accounts` fields each (category × external system) pair
 needs in order to produce a valid export. Plain markdown today; if/when the UI

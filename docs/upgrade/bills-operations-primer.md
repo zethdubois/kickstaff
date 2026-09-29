@@ -1,7 +1,7 @@
 # Bills operations primer (ex–`/tools/bills`)
 
 **Audience:** kickagent developers.  
-**Status:** The publicweb `/tools/bills/*` UI, `src/lib/server/bills/`, `/api/admin/bills/*`, and ops tables are **removed**. Reimplement in kickagent using this primer and [utility-bill-etl-scope.md](utility-bill-etl-scope.md).
+**Status:** The kickstaff `/tools/bills/*` UI, `src/lib/server/bills/`, `/api/admin/bills/*`, and ops tables are **removed**. Reimplement in kickagent using this primer and [utility-bill-etl-scope.md](utility-bill-etl-scope.md).
 
 ---
 
@@ -23,7 +23,7 @@ Default landing tab was **Transactions** (first tab); last-selected tab was stor
 
 ## Data model (Postgres)
 
-Target owner: **`operations`** schema in kickagent. Tables were dropped from publicweb DB (migration `0019`); schema definitions are no longer in publicweb `schema.ts`.
+Target owner: **`operations`** schema in kickagent. Tables were dropped from kickstaff DB (migration `0019`); schema definitions are no longer in kickstaff `schema.ts`.
 
 | Table | Role |
 |-------|------|
@@ -41,7 +41,7 @@ Target owner: **`operations`** schema in kickagent. Tables were dropped from pub
 
 ## S3 storage
 
-Env: `UTILITY_BILL_S3_*` in **kickagent** deploy (removed from publicweb `.env.example`). Keys used the `buildBillStorageKey` pattern (see ETL scope doc):
+Env: `UTILITY_BILL_S3_*` in **kickagent** deploy (removed from kickstaff `.env.example`). Keys used the `buildBillStorageKey` pattern (see ETL scope doc):
 
 - **raw** — uploaded PDFs  
 - **output** — generated Appfolio CSV  
@@ -49,9 +49,9 @@ Env: `UTILITY_BILL_S3_*` in **kickagent** deploy (removed from publicweb `.env.e
 
 ---
 
-## Former publicweb modules (reimplement in KA)
+## Former kickstaff modules (reimplement in KA)
 
-These lived under `src/lib/server/bills/` and related paths; **deleted from publicweb**:
+These lived under `src/lib/server/bills/` and related paths; **deleted from kickstaff**:
 
 | Former module | Responsibility |
 |---------------|----------------|
@@ -102,14 +102,14 @@ Reset `parsed` → `received`, clear parsed fields (vendor-scoped or all). Imple
 
 ---
 
-## Removed from publicweb
+## Removed from kickstaff
 
 - `/api/admin/bills/recent`, `/api/admin/bills/reset`
 - KAM `reset` command
 
 ---
 
-## Gaps / non-goals in PW prototype
+## Gaps / non-goals in kickstaff prototype
 
 - No Gmail intake worker in app (manual upload only).
 - No scheduled monthly job; generate was form-triggered.

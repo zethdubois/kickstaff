@@ -94,19 +94,19 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `console`   | Toggle the KAM Console pane.                                                                             |
 | `clear`     | Clear the in-memory klog buffer in the pane (does not touch the persisted history).                      |
 | `help`      | Print available commands, refresh targets, and hotkey hint.                                              |
-| `history`   | Numbered command history (`history`, `history 20`, `history -n 20`, `history -c` clear all, `history -d <n>` delete line). Event designators: `!n`, `!!`, `!-n`, `!prefix` (see below). Stored in `localStorage` (`publicweb.kamCommandHistory`). |
+| `history`   | Numbered command history (`history`, `history 20`, `history -n 20`, `history -c` clear all, `history -d <n>` delete line). Event designators: `!n`, `!!`, `!-n`, `!prefix` (see below). Stored in `localStorage` (`kickstaff.kamCommandHistory`). |
 | `echo`      | klog the remaining args.                                                                                 |
 | `exit`      | Leave kickagent shell when active (normally via `:exit`; see Kickagent shell).                             |
 | `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
-| `alias` / `unalias` | Persisted command aliases (`publicweb.consoleUi` in localStorage). See **Command aliases** below. |
+| `alias` / `unalias` | Persisted command aliases (`kickstaff.consoleUi` in localStorage). See **Command aliases** below. |
 | `kam:reload-kickagent` | Phase 2: refetch `PUBLIC_KICKAGENT_MANIFEST_URL`, verify `sha256`, reload plugin (`kickagent:*` commands). No-op message if env unset. |
 | `db` | `db status` — active target, host/db name, and `connected: ok` / `failed`. `db tables` — relations in `public` and `drizzle` on the **runtime** target (local dev only). `db migrations` — Drizzle journal vs `drizzle.__drizzle_migrations` (read-only; run **`pnpm db:migrate`** or Kickdesk to apply). `db use dev` \| `db use prod` — **super user only** (`ADMIN_EMAIL`), non-production, when `DATABASE_URL_DEV` is set. |
 
 ### Database routing (local dev)
 
-- **Default:** `PUBLICWEB_DB_DEFAULT` (`dev` \| `prod`) if set; else `DATABASE_URL_DEV` when set → `dev`; else `prod`. Never `DATABASE_URL || DATABASE_URL_DEV` — [database-targeting.md](database-targeting.md).
+- **Default:** `KICKSTAFF_DB_DEFAULT` (`dev` \| `prod`) if set; else `DATABASE_URL_DEV` when set → `dev`; else `prod`. Never `DATABASE_URL || DATABASE_URL_DEV` — [database-targeting.md](database-targeting.md).
 - **Console header:** shows `dev` or `prod` badge with full label on hover.
-- **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`publicweb_db_target`).
+- **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`kickstaff_db_target`).
 - **Production:** switching disabled; only `DATABASE_URL` is used.
 - **CLI:** `pnpm db:status` (env default target, not cookie), `pnpm db:migrate:status` (Kickdesk one-liner file), `pnpm db:migrate` (dev). Prod: `pnpm db:<cmd> --db prod` (dangerous for migrate).
 - **KAM inspection** uses the same runtime target as the app (including after `db use prod`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
@@ -155,28 +155,28 @@ Inside **[KA]** shell, use **`:alias`** / **`:unalias`** to reach the host comma
 
 **Naming:** **`kickagent:hello`** is the **subscriber** namespace (`kickagent:` + command). **`shell kickagent`** (or a **user alias** that expands to it) enters the **[KA]** prompt where bare names resolve only under `kickagent:`. Using a meta command literally named `kickagent` would overload that word — the host uses **`shell`** instead.
 
-When **[KA]** is on, **bare** names resolve **only** under the `kickagent:` namespace (no silent fallback to publicweb). For example, `hello` runs `kickagent:hello`. `clear` does **not** run publicweb `clear` unless kickagent registers `kickagent:clear`.
+When **[KA]** is on, **bare** names resolve **only** under the `kickagent:` namespace (no silent fallback to kickstaff). For example, `hello` runs `kickagent:hello`. `clear` does **not** run kickstaff `clear` unless kickagent registers `kickagent:clear`.
 
 From **outside** [KA]: **`shell kickagent`**, or a shortcut you defined (e.g. **`ka`** after **`alias kickagent ka`**).
 
-From **inside** [KA]: use **:** to reach publicweb commands (`:shell default`, `:exit`, `:help`, …).
+From **inside** [KA]: use **:** to reach kickstaff commands (`:shell default`, `:exit`, `:help`, …).
 
 | Input | Effect |
 | ----- | ------ |
 | `hello` | Runs `kickagent:hello` if registered |
 | `clear` | Unknown unless `kickagent:clear` exists |
-| `:clear` | Runs publicweb `clear` |
-| `:help` | Runs publicweb `help` |
+| `:clear` | Runs kickstaff `clear` |
+| `:help` | Runs kickstaff `help` |
 | `:exit` | Leaves kickagent shell (host `exit`) |
 | `:shell default` | Same as `:exit` (host `shell` with args) |
 | `kickagent:hello` | Always works (any mode; explicit qualified subscriber name) |
 | `:kickagent:hello` | Same as `kickagent:hello` (host escape with full key) |
 
-`:exit` (and `:shell …`) are the general **escape to publicweb host commands** from inside `[KA]` mode.
+`:exit` (and `:shell …`) are the general **escape to kickstaff host commands** from inside `[KA]` mode.
 
 `kamMode` is persisted in localStorage (`kamMode` in UI settings). When active, the command line shows **`[KA] >`** and a green accent bar on the prompt row (and palette modal).
 
-**New kickagent commands:** add a row to kickagent `COMMAND_CATALOG` (see [register-kickagent-command.md](register-kickagent-command.md)). On admin login, publicweb registers the full catalog via `registerKickagentCatalogCommands` — you normally do **not** call `registerKickagentCommand` per command in publicweb. KAM names are always `kickagent:<shortName>`.
+**New kickagent commands:** add a row to kickagent `COMMAND_CATALOG` (see [register-kickagent-command.md](register-kickagent-command.md)). On admin login, kickstaff registers the full catalog via `registerKickagentCatalogCommands` — you normally do **not** call `registerKickagentCommand` per command in kickstaff. KAM names are always `kickagent:<shortName>`.
 
 ## Refresh targets (the bridge between pages and commands)
 

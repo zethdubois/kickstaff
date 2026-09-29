@@ -45,12 +45,19 @@
 
   const showInternalNav = $derived(!isLogin && !isVanityRoot);
 
-  /** Rental vanity/city landings need a full-width surface; hub/ops shrink-wrap. */
+  /**
+   * Rental landings need a full-width surface; hub/ops shrink-wrap.
+   * Auth cards use `<dialog>`, which is absolutely positioned by the
+   * browser. A shrink-wrapped parent makes that percentage width resolve
+   * to the longest word, so those routes need a definite containing block.
+   */
   const mainSurfaceFullWidth = $derived(
     page.route.id === "/cda" ||
       page.route.id === "/mos" ||
       page.route.id === "/spt" ||
-      isVanityRoot,
+      isVanityRoot ||
+      isLogin ||
+      page.route.id === "/account/password",
   );
 
   let useExternalLink = $state(false);

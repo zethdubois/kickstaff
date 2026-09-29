@@ -1,6 +1,6 @@
 # Agent SOP
 
-**SOP version:** 4
+**SOP version:** 5
 
 Portable procedure for humans and agents in any git project. Source of truth is the `future` repo (`~/projects/future/sop/`). The operator updates a project with:
 
@@ -20,10 +20,11 @@ Same files for humans and agents.
 
 1. **[docs/now.md](../docs/now.md)** — this week’s work; do the first unchecked item
 2. **[docs/plan.md](../docs/plan.md)** — roadmap; open **only the linked section**
+3. **[docs/data-ops-log.md](../docs/data-ops-log.md)** — when touching shared/production data (see [Writes to shared data](#writes-to-shared-data))
 
 Tick `docs/now.md` when a session step is done. Tick `docs/plan.md` only when that **phase outcome** is done. Do not keep the same checklist in both files.
 
-Project-specific notes (stack, layout, local rules) live in the repo’s `AGENTS.md` if it has one.
+Project-specific notes (stack, layout, local rules) live in the repo’s `AGENTS.md` if it has one. That file should **name** which databases or stores count as shared/production for this project.
 
 ## Closing a phase
 
@@ -59,10 +60,26 @@ If asked to commit without a TTY: `git add -A` at the repo root, `git commit -F 
 
 See [`.agent/README.md`](README.md).
 
+## Writes to shared data
+
+`now.md` tracks work; `plan.md` tracks phases; `COMMITLOG` is wiped on every commit. None of those are a durable record of what changed in **live** data.
+
+Use **[docs/data-ops-log.md](../docs/data-ops-log.md)** (append-only, newest first) for every write to shared or production data: migrations, backfills, direct updates, seeds against a shared DB. Local throwaway databases do not need an entry.
+
+| Step | Rule |
+|------|------|
+| 1. Back up | On the host that will run the write: `~/backups/<project>/<store>/<YYYY-MM-DD>_<slug>/`. Never `/tmp` or the git repo. Lossless dump + `SHA256SUMS` + keep the script. Do not Syncthing backups into `~/fleet`. |
+| 2. Dry-run → apply | Agents never auto-run a shared-data write. Explicit human approval, then apply. |
+| 3. Log same session | Not finished until a log entry exists. Entry fields: date/slug; who (`[c]` / `[oc]` / `[h]`) and host; script; scope; backup path and checksum; what changed; how verified; **data lost or overwritten** (identifiers); restore snippet; follow-ups. |
+
+The log is not a runbook (link the how-to) and not a code changelog. Record paths and checksums — **never** connection strings.
+
+`now.md` may note a finished op under Done recently with a link to the log entry; do not copy the full entry there.
+
 ## Secrets and local agent state
 
 - Do not commit secrets (`.env`, tokens). Review scrap scripts with hardcoded tokens before reuse.
-- Do not Syncthing git working trees, live Cursor DBs, or OpenCode sqlite.
+- Do not Syncthing git working trees, live Cursor DBs, OpenCode sqlite, or `~/backups/` dump trees.
 - Code lives in git only.
 
 ## `commit` dispatcher

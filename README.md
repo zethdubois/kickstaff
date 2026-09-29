@@ -1,4 +1,4 @@
-# publicweb — Kick Asset Management
+# kickstaff — Kick Asset Management
 
 SvelteKit app for **rental marketing pages** (CDA, Moscow, Sandpoint) with optional vanity hosts, an authenticated **ops hub**, **admin** tooling (`/admin`), **settings** (dashboard links), and the **KAM** console (command palette + kickagent integration). Office operations (bills, units) move to **kickagent** — see [platform overview](docs/guides/platform-overview.md) and [upgrade primers](docs/upgrade/README.md).
 
@@ -39,13 +39,13 @@ src/
 | **pnpm** | Pinned in `package.json` (`packageManager`). Use [Corepack](https://pnpm.io/installation): `corepack enable` |
 | **Docker** | Engine required; Compose optional (`pnpm db:up` falls back to `docker run`). Install Compose: `sudo apt install docker-compose-v2` |
 | **PostgreSQL** | Prod URL in `DATABASE_URL`; local dev uses `DATABASE_URL_DEV` |
-| **kickagent** (optional local) | Sibling repo at `../kickagent` for `serve-publish` + manifest URL in `.env` — not an npm dependency of publicweb |
+| **kickagent** (optional local) | Sibling repo at `../kickagent` for `serve-publish` + manifest URL in `.env` — not an npm dependency of kickstaff |
 
 Do **not** use npm or yarn; do not commit `package-lock.json`.
 
 ### Cursor / VS Code (kickagent docs)
 
-To index sibling **kickagent** documentation alongside this repo, open [`publicweb.code-workspace`](publicweb.code-workspace) (**File → Open Workspace from File…**). That adds `../kickagent/docs` as a read-only root named `kickagent-docs`. See [AGENTS.md → Cursor workspace](AGENTS.md#cursor--vs-code-workspace-kickagent-docs).
+To index sibling **kickagent** documentation alongside this repo, open [`kickstaff.code-workspace`](kickstaff.code-workspace) (**File → Open Workspace from File…**). That adds `../kickagent/docs` as a read-only root named `kickagent-docs`. See [AGENTS.md → Cursor workspace](AGENTS.md#cursor--vs-code-workspace-kickagent-docs).
 
 ### First-time setup
 
@@ -62,7 +62,7 @@ pnpm seed:admin
 
 ### Kickdesk (local cockpit)
 
-Kickdesk reads **`~/.config/publicweb/`** (not files in this repo). First-time subscriber setup: [`kickdesk.registration.json`](kickdesk.registration.json) → Kickdesk [`docs/subscriber-setup-for-robots.md`](../kickdesk/docs/subscriber-setup-for-robots.md) (sibling repo or `KICKDESK_ROOT`). Ports/commands values: [`scripts/kickdesk-manifest.ts`](scripts/kickdesk-manifest.ts).
+Kickdesk reads **`~/.config/kickstaff/`** (not files in this repo). First-time subscriber setup: [`kickdesk.registration.json`](kickdesk.registration.json) → Kickdesk [`docs/subscriber-setup-for-robots.md`](../kickdesk/docs/subscriber-setup-for-robots.md) (sibling repo or `KICKDESK_ROOT`). Ports/commands values: [`scripts/kickdesk-manifest.ts`](scripts/kickdesk-manifest.ts).
 
 **When to run** (day-to-day):
 
@@ -118,8 +118,8 @@ pnpm dev
 | `pnpm seed:admin` | Create/update seed admin |
 | `pnpm list:users` | List DB users |
 | `pnpm run env:vanity` | Print vanity host env |
-| `pnpm kickdesk:publish-manifest` | Publish Kickdesk manifest to `~/.config/publicweb/` |
-| `pnpm db:migrate:status` | Migration status for Kickdesk (`ok` / `pending:N`); also writes `~/.config/publicweb/migrate-status` |
+| `pnpm kickdesk:publish-manifest` | Publish Kickdesk manifest to `~/.config/kickstaff/` |
+| `pnpm db:migrate:status` | Migration status for Kickdesk (`ok` / `pending:N`); also writes `~/.config/kickstaff/migrate-status` |
 
 ### Optional local setup
 
@@ -141,7 +141,7 @@ pnpm dev
 
 ## Documentation
 
-- **[docs/guides/platform-overview.md](docs/guides/platform-overview.md)** — publicweb vs kickagent, Postgres schemas, storage, KAM / KAM-UI
+- **[docs/guides/platform-overview.md](docs/guides/platform-overview.md)** — kickstaff vs kickagent, Postgres schemas, storage, KAM / KAM-UI
 - **[docs/upgrade/README.md](docs/upgrade/README.md)** — handoff primers for bills/units/reports (ex–`/tools`)
 - **[AGENTS.md](AGENTS.md)** — Cursor agents and contributors: conventions, env summary, route-doc pipeline, Svelte 5 runes
 - **[docs/guides/README.md](docs/guides/README.md)** — index of route architecture, admin dev guides, ETL, KAM console

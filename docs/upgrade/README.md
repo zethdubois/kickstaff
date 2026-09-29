@@ -1,8 +1,8 @@
-# Upgrade primers (publicweb → kickagent)
+# Upgrade primers (kickstaff → kickagent)
 
-**Audience:** kickagent (KA) developers rebuilding **operations** (bills, units, reports) after publicweb removed the native experiment.
+**Audience:** kickagent (KA) developers rebuilding **operations** (bills, units, reports) after kickstaff removed the native experiment.
 
-These documents capture **what existed**, **how it behaved**, and **what to reimplement** in kickagent (`operations` schema, S3, commands/API). **No bill/units code or tables remain in publicweb** (migration `0019_drop_operations_tables`).
+These documents capture **what existed**, **how it behaved**, and **what to reimplement** in kickagent (`operations` schema, S3, commands/API). **No bill/units code or tables remain in kickstaff** (migration `0019_drop_operations_tables`).
 
 ## Behavior primers (ex–`/tools/*`)
 
@@ -12,7 +12,7 @@ These documents capture **what existed**, **how it behaved**, and **what to reim
 | [units-operations-primer.md](units-operations-primer.md) | Units master data and `unit_bill_accounts` mapping |
 | [reports-operations-primer.md](reports-operations-primer.md) | Ad-hoc re-parse ops and monthly metrics (early concepts) |
 
-## Implementation reference (KA — not publicweb code)
+## Implementation reference (KA — not kickstaff code)
 
 | Doc | Topic |
 |-----|--------|
@@ -24,4 +24,4 @@ These documents capture **what existed**, **how it behaved**, and **what to reim
 
 **Related:** [platform-overview.md](../guides/platform-overview.md), [kam-console.md](../guides/kam-console.md).
 
-**Still in publicweb:** rental pages, `/admin`, `/settings`, KAM host (kickagent plugin load, `db`, klog) — not bill processing.
+**Still in kickstaff:** rental pages, `/admin`, `/settings`, KAM host (kickagent plugin load, `db`, klog) — not bill processing.

@@ -2,9 +2,9 @@
 
 Audience: kickagent repo developer.
 
-Purpose: define the minimum **Phase 1** package contract for kickagent as a library-first module that `publicweb` can import and wrap in the KAM console.
+Purpose: define the minimum **Phase 1** package contract for kickagent as a library-first module that `kickstaff` can import and wrap in the KAM console.
 
-For the longer-term **subscriber platform** (manifest, ESM plugin, API jobs), see the kickagent repo [platform spec](../../../kickagent/docs/kickagent-platform-spec.md). publicweb host expectations: [publicweb-kickagent-consumer.md](publicweb-kickagent-consumer.md).
+For the longer-term **subscriber platform** (manifest, ESM plugin, API jobs), see the kickagent repo [platform spec](../../../kickagent/docs/kickagent-platform-spec.md). kickstaff host expectations: [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md).
 
 ## Core decision
 
@@ -13,7 +13,7 @@ kickagent is a library of exported functions, not a server-first service.
 - Primary interface: exported functions
 - Local test harness: CLI wrapper required
 - HTTP harness: optional secondary tool only
-- `publicweb` integration: imports kickagent as a package and wraps its functions as console commands
+- `kickstaff` integration: imports kickagent as a package and wraps its functions as console commands
 
 ## Required first function
 
@@ -29,7 +29,7 @@ export async function helloWorld(
 
 ## Required logger contract
 
-Define the logger locally in kickagent. Do not import logger types from `publicweb`.
+Define the logger locally in kickagent. Do not import logger types from `kickstaff`.
 
 ```ts
 export interface KlogBroadcaster {
@@ -40,7 +40,7 @@ export interface KlogBroadcaster {
 }
 ```
 
-publicweb defines a matching interface in `src/lib/devConsole/state.svelte.ts` for its logger shim. There is no shared types package yet—keep the shapes in sync manually when either side changes.
+kickstaff defines a matching interface in `src/lib/devConsole/state.svelte.ts` for its logger shim. There is no shared types package yet—keep the shapes in sync manually when either side changes.
 
 ## helloWorld behavior
 
@@ -48,7 +48,7 @@ publicweb defines a matching interface in `src/lib/devConsole/state.svelte.ts` f
 - Emit a real-time log message through `logger.info(...)`
 - Return `{ message: string }`
 - Do not call `console.log()` inside the function
-- Do not depend on browser APIs or `publicweb` internals
+- Do not depend on browser APIs or `kickstaff` internals
 
 Expected behavior:
 
@@ -98,18 +98,18 @@ The CLI is the recommended standalone test path.
 An HTTP server is optional and secondary.
 
 If present, it must be treated as a dev harness only, not the primary contract.
-Do not make `publicweb` depend on the HTTP server for normal integration.
+Do not make `kickstaff` depend on the HTTP server for normal integration.
 
 ## Build expectations
 
 - package must build cleanly to `dist/`
 - ESM output should use `.js` extensions in relative imports
 - `dist/index.js` and `dist/index.d.ts` must exist for package consumption
-- `publicweb` should be able to import the package directly as a dependency
+- `kickstaff` should be able to import the package directly as a dependency
 
-## publicweb integration contract
+## kickstaff integration contract
 
-`publicweb` will:
+`kickstaff` will:
 
 - import `helloWorld` from `kickagent`
 - provide a concrete `KlogBroadcaster`
@@ -117,7 +117,7 @@ Do not make `publicweb` depend on the HTTP server for normal integration.
 - pass the current user context to the kickagent function
 - surface the returned message back into the KAM console
 
-`publicweb` should not need to know kickagent internals.
+`kickstaff` should not need to know kickagent internals.
 
 ## Acceptance criteria
 
@@ -127,5 +127,5 @@ The spec is complete when:
 - logger methods are used for progress output
 - a CLI wrapper exists and works locally
 - package builds successfully
-- `publicweb` can import the package and run the hello command
+- `kickstaff` can import the package and run the hello command
 - no HTTP server is required for the core integration path

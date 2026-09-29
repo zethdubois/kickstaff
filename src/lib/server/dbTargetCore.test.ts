@@ -12,7 +12,7 @@ function env(overrides: Partial<DbTargetEnv> = {}): DbTargetEnv {
 	return {
 		nodeEnv: 'development',
 		dbDefault: undefined,
-		databaseUrlDev: 'postgresql://localhost:5043/publicweb_dev',
+		databaseUrlDev: 'postgresql://localhost:5043/kickstaff_dev',
 		databaseUrl: 'postgresql://localhost/kickasset',
 		...overrides
 	};
@@ -25,7 +25,7 @@ describe('dbTargetCore', () => {
 		assert.equal(parseDbTarget('x'), null);
 	});
 
-	it('uses PUBLICWEB_DB_DEFAULT when set', () => {
+	it('uses KICKSTAFF_DB_DEFAULT when set', () => {
 		assert.equal(getDefaultDbTarget(env({ dbDefault: 'prod' })), 'prod');
 		assert.equal(getDefaultDbTarget(env({ dbDefault: 'dev' })), 'dev');
 	});
@@ -43,7 +43,7 @@ describe('dbTargetCore', () => {
 		);
 	});
 
-	it('forces prod default in production even when PUBLICWEB_DB_DEFAULT=dev', () => {
+	it('forces prod default in production even when KICKSTAFF_DB_DEFAULT=dev', () => {
 		assert.equal(
 			getDefaultDbTarget(
 				env({
@@ -56,14 +56,14 @@ describe('dbTargetCore', () => {
 		);
 	});
 
-	it('rejects invalid PUBLICWEB_DB_DEFAULT', () => {
-		assert.throws(() => getConfiguredDefaultTarget(env({ dbDefault: 'staging' })), /PUBLICWEB_DB_DEFAULT/);
+	it('rejects invalid KICKSTAFF_DB_DEFAULT', () => {
+		assert.throws(() => getConfiguredDefaultTarget(env({ dbDefault: 'staging' })), /KICKSTAFF_DB_DEFAULT/);
 	});
 
 	it('resolves connection strings per target', () => {
 		const e = env();
 		assert.match(resolveConnectionStringFromEnv(e, 'prod'), /kickasset/);
-		assert.match(resolveConnectionStringFromEnv(e, 'dev'), /publicweb_dev/);
+		assert.match(resolveConnectionStringFromEnv(e, 'dev'), /kickstaff_dev/);
 	});
 
 	it('throws when prod target without DATABASE_URL', () => {

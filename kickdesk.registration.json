@@ -1,6 +1,6 @@
 {
-  "appId": "publicweb",
-  "configDir": "~/.config/publicweb",
+  "appId": "kickstaff",
+  "configDir": "~/.config/kickstaff",
   "kickdeskSpec": {
     "root": "../kickdesk",
     "rootEnv": "KICKDESK_ROOT",

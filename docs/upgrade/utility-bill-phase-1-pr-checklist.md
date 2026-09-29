@@ -2,7 +2,7 @@
 
 Concrete file-level checklist for the first implementation PRs.
 
-> **KA implementation reference** — not publicweb code.
+> **KA implementation reference** — not kickstaff code.
 
 This checklist assumes Phase 1 from [utility-bill-etl-execution-checklist.md](utility-bill-etl-execution-checklist.md) and keeps scope tight: schema, storage adapter, manual intake path, and Moscow parser validation.
 

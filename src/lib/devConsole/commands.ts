@@ -148,7 +148,7 @@ function expandQualifiedCommandToken(qualifiedLower: string): string {
 function resolveCommandName(rawName: string): string | null {
   const lower = rawName.toLowerCase();
 
-  // Host / publicweb namespace escape: `:name` resolves only to registry keys (never kickagent:name).
+  // Host / kickstaff namespace escape: `:name` resolves only to registry keys (never kickagent:name).
   // In kickagent mode, bare names resolve only under kickagent:.
   // Qualified names like `kickagent:hello` work in any mode.
   if (lower.startsWith(":")) {
@@ -251,7 +251,7 @@ export async function runCommand(input: string): Promise<CommandResult> {
   if (!resolved) {
     const hint =
       devConsole.kamMode === "kickagent"
-        ? " — try :help for publicweb commands"
+        ? " — try :help for kickstaff commands"
         : "";
     const msg = `unknown command: ${rawToken}${hint}`;
     klogError(msg);
@@ -322,11 +322,11 @@ registerCommand("help", (): CommandOutcome => {
   const blocks: string[] = [];
   if (devConsole.kamMode === "kickagent") {
     blocks.push(
-      "kickagent shell: on — bare names are kickagent: only; use :help, :exit, :shell default, :clear for publicweb",
+      "kickagent shell: on — bare names are kickagent: only; use :help, :exit, :shell default, :clear for kickstaff",
     );
     const globals = listCommands().filter((c) => !c.startsWith(KICKAGENT_NS));
     blocks.push(
-      `publicweb commands (use : prefix): ${globals.map((c) => `:${c}`).join(", ")}`,
+      `kickstaff commands (use : prefix): ${globals.map((c) => `:${c}`).join(", ")}`,
     );
     const shorts = listKickagentShortNames();
     if (shorts.length > 0) {

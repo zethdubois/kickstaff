@@ -3,7 +3,7 @@
  * palette and console inputs. ArrowUp/ArrowDown walk newest → oldest.
  */
 
-export const KAM_COMMAND_HISTORY_KEY = "publicweb.kamCommandHistory";
+export const KAM_COMMAND_HISTORY_KEY = "kickstaff.kamCommandHistory";
 export const KAM_COMMAND_HISTORY_VERSION = 1;
 const MAX_ENTRIES = 500;
 

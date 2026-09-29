@@ -7,8 +7,8 @@
 
 | Doc                                                                | Purpose                                                                    |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| [platform-overview.md](platform-overview.md)                         | **Architecture** — publicweb vs kickagent, one DB / two schemas, KAM / KAM-UI |
-| [database-targeting.md](database-targeting.md)                       | **Dev vs prod DB** — `PUBLICWEB_DB_DEFAULT`, CLI vs KAM cookie (aligned with kickagent) |
+| [platform-overview.md](platform-overview.md)                         | **Architecture** — kickstaff vs kickagent, one DB / two schemas, KAM / KAM-UI |
+| [database-targeting.md](database-targeting.md)                       | **Dev vs prod DB** — `KICKSTAFF_DB_DEFAULT`, CLI vs KAM cookie (aligned with kickagent) |
 | [README.md](../../README.md#development)                           | **Local dev setup** — install, DB, seed, `pnpm dev`, troubleshooting       |
 | [AGENTS.md](../../AGENTS.md)                                       | Stack, tooling, env summary, route-doc pipeline, naming                    |
 | [production-operations.md](production-operations.md)               | **Production operators** — vanity domains, AppFolio links, admin workflows |
@@ -55,11 +55,11 @@ Paired guides match component filenames (see SOP):
 | [kam-console.md](kam-console.md)                                                       | Dev console, `Ctrl+/`, klog, command palette                    |
 | [register-kickagent-command.md](register-kickagent-command.md)                         | **Checklist:** add a `kickagent:*` command (catalog → KAM → hub) |
 | [contracts/README.md](contracts/README.md)                                             | Cross-repo contract index and reading order                     |
-| [contracts/publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consumer.md) | publicweb host/subscriber (phases, security, PW-owned commands) |
+| [contracts/kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) | kickstaff host/subscriber (phases, security, kickstaff-owned commands) |
 | [kickagent platform spec](../../kickagent/docs/kickagent-platform-spec.md)             | Manifest, ESM plugin, API (sibling repo `../kickagent`)         |
 | [contracts/kickagent-essentials-spec.md](contracts/kickagent-essentials-spec.md)       | Phase 1 kickagent npm package contract                          |
 | [contracts/kickagent-hello-world.md](contracts/kickagent-hello-world.md)               | Hello-world milestone (kickagent repo)                          |
-| [contracts/publicweb-hello-world.md](contracts/publicweb-hello-world.md)               | Hello-world integration (publicweb repo)                        |
+| [contracts/kickstaff-hello-world.md](contracts/kickstaff-hello-world.md)               | Hello-world integration (kickstaff repo)                        |
 
 
 ## Other notes in `docs/`

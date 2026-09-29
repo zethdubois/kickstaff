@@ -1,6 +1,6 @@
 /**
  * Report pending Drizzle migrations (kickdesk migrate-status contract).
- * Writes the same one-line status to ~/.config/publicweb/migrate-status.
+ * Writes the same one-line status to ~/.config/kickstaff/migrate-status.
  *
  *   pnpm db:migrate:status
  *   pnpm db:migrate:status --db prod
@@ -27,7 +27,7 @@ async function computeStatusLine(cliArgv: string[]): Promise<string> {
 }
 
 function writeMigrateStatusFile(line: string) {
-	const configDir = join(homedir(), '.config', 'publicweb');
+	const configDir = join(homedir(), '.config', 'kickstaff');
 	mkdirSync(configDir, { recursive: true });
 	writeFileSync(join(configDir, 'migrate-status'), `${line}\n`, 'utf8');
 }

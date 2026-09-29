@@ -84,9 +84,9 @@ Confirm docs against code — **one** representative path, not a full tree walk:
 
 Use grep/glob to locate symbols; do not read every file.
 
-## This repository (publicweb)
+## This repository (kickstaff)
 
-When cwd is **publicweb**, prefer these after Step 1:
+When cwd is **kickstaff**, prefer these after Step 1:
 
 | Order | Doc |
 |-------|-----|
@@ -99,7 +99,7 @@ When cwd is **publicweb**, prefer these after Step 1:
 | Cross-repo KAM/kickagent | [docs/guides/contracts/README.md](../../docs/guides/contracts/README.md) |
 | Kickdesk edits | [.cursor/rules/kickdesk.mdc](../../rules/kickdesk.mdc) |
 
-**Platform split:** publicweb (product shell, marketing, KAM host) vs **kickagent** sibling (`operations` schema). **Stack:** SvelteKit, pnpm, PostgreSQL/Drizzle, cookie sessions.
+**Platform split:** kickstaff (product shell, marketing, KAM host) vs **kickagent** sibling (`operations` schema). **Stack:** SvelteKit, pnpm, PostgreSQL/Drizzle, cookie sessions.
 
 ## Output
 

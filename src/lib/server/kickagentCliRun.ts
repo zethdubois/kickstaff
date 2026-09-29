@@ -28,7 +28,7 @@ export type RunKickagentCatalogOptions = {
   args: string[];
   userId: string;
   userEmail: string;
-  /** Defaults to publicweb active DB target (`db` / `db use` / cookie). */
+  /** Defaults to kickstaff active DB target (`db` / `db use` / cookie). */
   db?: DbTarget;
 };
 

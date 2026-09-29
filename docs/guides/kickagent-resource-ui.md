@@ -1,13 +1,13 @@
 # Kickagent resource UI (manifest data + Svelte)
 
-**Audience:** Developers wiring kickagent list commands into publicweb.
+**Audience:** Developers wiring kickagent list commands into kickstaff.
 
 ## Contract
 
 | Layer | Responsibility |
 | ----- | -------------- |
 | **Kickagent** | Manifest `resources.*.list` (columns, filters, `rowsKey`); command returns `outcome.data` + `presentationRef`; optional dumb `log` for KAM scrollback |
-| **Publicweb** | Cache resources on manifest reload; render tables from **data + manifest** — **never** parse pipe-separated `log` |
+| **Kickstaff** | Cache resources on manifest reload; render tables from **data + manifest** — **never** parse pipe-separated `log` |
 
 ## Product placement (option D)
 
@@ -21,7 +21,7 @@
 
 See kickagent `docs/manifest-resources.md`. After publish, admin runs **`kam:reload-kickagent`** (or re-login).
 
-Publicweb parses `resources.units.list` even when `detail` / `update` are not yet published (defaults applied).
+Kickstaff parses `resources.units.list` even when `detail` / `update` are not yet published (defaults applied).
 
 ## Run outcome shape (`units-list`)
 
@@ -59,6 +59,6 @@ If table missing but pipes show: check klog for `table UI: missing manifest reso
 
 ## Related
 
-- [publicweb-kickagent-consumer.md](contracts/publicweb-kickagent-consumer.md)
+- [kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md)
 - [kam-console.md](kam-console.md)
 - [ops-units-ui-map.md](ops-units-ui-map.md)

@@ -21,6 +21,6 @@ When changing dev ports, Docker compose host mappings, checkout path, `package.j
 3. Run `pnpm kickdesk:publish-manifest` after path/port/script/workflow changes.
 4. Run `pnpm db:migrate:status` after db up, migrate, or pulling new migrations.
 
-Do not add `.kickdesk.json` in this repo; publish only to `~/.config/publicweb/`.
+Do not add `.kickdesk.json` in this repo; publish only to `~/.config/kickstaff/`.
 
 Day-to-day when-to-run: [README.md → Kickdesk](../../README.md#kickdesk-local-cockpit).
