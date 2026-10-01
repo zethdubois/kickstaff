@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, scale } from 'svelte/transition';
 	import type { CitySlug } from '$lib/cities';
+	import { Z_MODAL } from '$lib/client/focusStack.svelte';
 
 	let {
 		open = $bindable(false),
@@ -77,6 +78,7 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="rentalContact__overlay"
+		style:z-index={Z_MODAL}
 		transition:fade={{ duration: 170 }}
 		role="presentation"
 		onclick={close}
@@ -165,7 +167,6 @@
 	.rentalContact__overlay {
 		position: fixed;
 		inset: 0;
-		z-index: 200;
 		display: flex;
 		align-items: center;
 		justify-content: center;

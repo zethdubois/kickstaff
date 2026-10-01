@@ -9,10 +9,17 @@ export type ResourceListItem = {
 	label: string;
 };
 
-/** Manifest detail `titleKey` (units: `name`) or first column / primary key. */
+/** Manifest detail `titleKey` or first column / primary key. */
 export function resolveListLabelKey(model: ResourceTableModel): string {
-	const detail = getManifestResources()?.units.detail;
-	if (detail?.titleKey) return detail.titleKey;
+	const resources = getManifestResources();
+	const ref = model.presentationRef.trim().toLowerCase();
+	if (ref === 'gl.list' || ref === 'gl-list') {
+		const titleKey = resources?.gl?.detail.titleKey;
+		if (titleKey) return titleKey;
+	} else {
+		const titleKey = resources?.units.detail?.titleKey;
+		if (titleKey) return titleKey;
+	}
 	if (model.columns.some((c) => c.key === 'name')) return 'name';
 	return model.columns[0]?.key ?? model.primaryKey;
 }

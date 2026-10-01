@@ -10,6 +10,7 @@
   import Palette from "$lib/devConsole/Palette.svelte";
   import KamConsole from "$lib/devConsole/KamConsole.svelte";
   import {
+    devConsole,
     fetchDbStatus,
     hydrateFromServer,
     klogError,
@@ -26,8 +27,8 @@
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
   import { setKickagentPluginSessionUser } from "$lib/kickagent/pluginSession";
   import MainContentSurface from "$lib/MainContentSurface.svelte";
-  import { focusStack } from "$lib/client/focusStack.svelte";
-  import { SITE_HEADER_OFFSET } from "$lib/shellLayout";
+  import { focusStack, Z_SITE_HEADER } from "$lib/client/focusStack.svelte";
+  import { KAM_CONSOLE_WIDTH, SITE_HEADER_OFFSET } from "$lib/shellLayout";
 
   let { children } = $props();
 
@@ -82,6 +83,10 @@
     document.documentElement.style.setProperty(
       "--site-header-offset",
       showInternalNav ? SITE_HEADER_OFFSET : "0px",
+    );
+    document.documentElement.style.setProperty(
+      "--kam-console-width",
+      KAM_CONSOLE_WIDTH,
     );
   });
 
@@ -224,7 +229,7 @@
 </svelte:head>
 
 {#if showInternalNav}
-  <header class="site-header">
+  <header class="site-header" style:z-index={Z_SITE_HEADER}>
     <nav class="nav" aria-label="Main">
       <a class="nav__home" href="/" aria-label="KAM home">
         <img
@@ -335,6 +340,7 @@
   class="main"
   class:main--hub={isHub}
   class:main--city={!isHub}
+  class:main--besideConsole={devConsole.consoleOpen}
   style:--rental-viewport-offset={showInternalNav
     ? "calc(3.75rem + 1px + 0.125rem)"
     : "0px"}
@@ -351,7 +357,6 @@
   .site-header {
     position: sticky;
     top: 0;
-    z-index: 10;
     border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
     background: color-mix(in srgb, Canvas 88%, transparent);
     backdrop-filter: blur(10px);
@@ -675,5 +680,22 @@
     max-width: none;
     margin: 0;
     padding: 0;
+  }
+
+  /* Page content lives in the lane to the right of the fixed console so the
+     two boxes never share pixels. Focus can still swap z-index; there is
+     nothing under the pane for that swap to hide or reveal. */
+  .main--besideConsole.main--city {
+    margin-left: var(--kam-console-width);
+    width: calc(100% - var(--kam-console-width));
+    box-sizing: border-box;
+  }
+
+  .main--besideConsole.main--hub {
+    margin-left: max(var(--kam-console-width), calc((100% - 48rem) / 2));
+    margin-right: auto;
+    width: min(48rem, calc(100% - var(--kam-console-width)));
+    max-width: min(48rem, calc(100% - var(--kam-console-width)));
+    box-sizing: border-box;
   }
 </style>

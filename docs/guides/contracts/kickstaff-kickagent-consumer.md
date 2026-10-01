@@ -107,6 +107,8 @@ Implementation: [dashboardCommandMaterialize.ts](../../../src/lib/server/dashboa
 
 **Units list (resource UI):** Hub card `kickagent:units-list` → **Open units** → [`/ops/units`](../../../src/routes/ops/units/+page.svelte). Table from `outcome.data` + manifest `resources.units.list` — not KAM pipe log. See [kickagent-resource-ui.md](../kickagent-resource-ui.md).
 
+**Chart of accounts:** Hub card `kickagent:gl-list` → **Open accounts** → [`/ops/accounts`](../../../src/routes/ops/accounts/+page.svelte). List from `gl-list` + `resources.gl.list`; detail `gl-show`; save `gl-update`. Include-hidden and include-retired are host flags, not manifest filters.
+
 ---
 
 ## What kickstaff expects from kickagent

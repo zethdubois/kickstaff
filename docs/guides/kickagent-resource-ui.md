@@ -7,7 +7,7 @@
 | Layer | Responsibility |
 | ----- | -------------- |
 | **Kickagent** | Manifest `resources.*.list` (columns, filters, `rowsKey`); command returns `outcome.data` + `presentationRef`; optional dumb `log` for KAM scrollback |
-| **Kickstaff** | Cache resources on manifest reload; render tables from **data + manifest** — **never** parse pipe-separated `log` |
+| **Kickstaff** | Cache `resources.units` and `resources.gl` on manifest reload; render tables from **data + manifest** — **never** parse pipe-separated `log` |
 
 ## Product placement (option D)
 
@@ -15,6 +15,7 @@
 | ------- | ---- |
 | **Hub command card** (`kickagent:units-list`) | **Trigger** — materialize card, navigate to [`/ops/units`](/ops/units) |
 | **`/ops/units`** | **Canonical UI** — filters + [`KickagentUnitsSplitView`](../../src/lib/kickagent/KickagentUnitsSplitView.svelte) (list + detail form) |
+| **`/ops/accounts`** | Chart of accounts — `gl-list` table from `resources.gl.list.columns`, detail `gl-show`, save `gl-update`. See [ops-accounts-ui-map.md](ops-accounts-ui-map.md) |
 | **KAM Console** | Ad-hoc CLI; log lines stay; optional console table preview |
 
 ## Manifest (kickagent ≥ 0.0.3)
@@ -55,7 +56,9 @@ If table missing but pipes show: check klog for `table UI: missing manifest reso
 | [`KickagentResourceList.svelte`](../../src/lib/kickagent/KickagentResourceList.svelte) | Name list + keyboard actions |
 | [`KickagentResourceTable.svelte`](../../src/lib/kickagent/KickagentResourceTable.svelte) | Typed columns (legacy / other resources) |
 | [`routes/ops/units/+page.svelte`](../../src/routes/ops/units/+page.svelte) | Full-page units |
+| [`routes/ops/accounts/+page.svelte`](../../src/routes/ops/accounts/+page.svelte) | Chart of accounts |
 | [`unitsOps.ts`](../../src/lib/kickagent/unitsOps.ts) | Hub path + command key helpers |
+| [`accountsOps.ts`](../../src/lib/kickagent/accountsOps.ts) | Accounts hub path |
 
 ## Related
 

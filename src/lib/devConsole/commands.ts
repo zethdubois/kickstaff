@@ -29,6 +29,7 @@ import type { CommandOutcome } from "$lib/kickagent/contracts";
 
 export type { CommandOutcome };
 import { materializeDashboardCommand } from "../client/dashboardCommandMaterialize";
+import { getGlListSchema } from "$lib/kickagent/manifestResourceCache";
 import {
   outcomeToTableModel,
   tableOutcomeMissingHint,
@@ -717,9 +718,14 @@ registerCommand("kam:reload-kickagent", async (): Promise<CommandOutcome> => {
   if (!r.ok) {
     throw new Error(r.error);
   }
-  const resourceNote = r.resourcesCached
-    ? "resources.units.list cached"
-    : "WARNING: no resources.units.list in manifest — deploy kickagent ≥ 0.0.3";
+  const resourceNote = [
+    r.resourcesCached
+      ? "resources.units.list cached"
+      : "WARNING: no resources.units.list in manifest — deploy kickagent ≥ 0.0.3",
+    getGlListSchema()
+      ? "resources.gl.list cached"
+      : "no resources.gl.list",
+  ].join("; ");
   return {
     log: `kickagent plugin reloaded (manifest v${r.version}; ${resourceNote})`,
     level: r.resourcesCached ? "info" : "warn",

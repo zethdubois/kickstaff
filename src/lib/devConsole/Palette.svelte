@@ -6,6 +6,7 @@
     resetHistoryNavigation,
   } from "./commandHistory";
   import { runCommand } from "./commands";
+  import { Z_MODAL } from "$lib/client/focusStack.svelte";
 
   let input = $state("");
   let error = $state("");
@@ -88,6 +89,7 @@
 {#if devConsole.paletteOpen}
   <div
     class="overlay"
+    style:z-index={Z_MODAL}
     role="presentation"
     onclick={close}
     onkeydown={(e) => {
@@ -146,7 +148,6 @@
     inset: 0;
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(2px);
-    z-index: 1000;
     display: grid;
     place-items: start center;
     padding-top: 18vh;

@@ -10,6 +10,10 @@
   import { runCommand } from "$lib/devConsole/commands";
   import { devConsole } from "$lib/devConsole/state.svelte";
   import {
+    ACCOUNTS_OPS_PATH,
+    isAccountsHubCommandKey,
+  } from "$lib/kickagent/accountsOps";
+  import {
     isUnitsHubCommandKey,
     UNITS_OPS_PATH,
   } from "$lib/kickagent/unitsOps";
@@ -26,6 +30,10 @@
       await invalidateAll();
       if (isUnitsHubCommandKey(commandKey)) {
         await goto(UNITS_OPS_PATH);
+        return;
+      }
+      if (isAccountsHubCommandKey(commandKey)) {
+        await goto(ACCOUNTS_OPS_PATH);
         return;
       }
       if (!devConsole.consoleOpen) {
@@ -88,6 +96,7 @@
                     <p class="card__desc">{item.description}</p>
                     {#if item.itemType === "command" && item.commandKey}
                       {@const unitsCard = isUnitsHubCommandKey(item.commandKey)}
+                      {@const accountsCard = isAccountsHubCommandKey(item.commandKey)}
                       <button
                         type="button"
                         class="card__open card__run"
@@ -98,7 +107,9 @@
                           ? "Opening…"
                           : unitsCard
                             ? "Open units"
-                            : "Run command"}
+                            : accountsCard
+                              ? "Open accounts"
+                              : "Run command"}
                       </button>
                     {:else if item.hyperlink}
                       <a

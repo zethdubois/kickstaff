@@ -5,7 +5,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { devConsole } from "$lib/devConsole/state.svelte";
-  import { focusStack, Z_MAIN_ELEVATED } from "$lib/client/focusStack.svelte";
+  import { focusStack } from "$lib/client/focusStack.svelte";
   import { pointerTargetsConsoleBand } from "$lib/shellLayout";
 
   type Props = {
@@ -62,7 +62,6 @@
   class="mainSurface"
   class:mainSurface--elevated={elevated}
   class:mainSurface--fullWidth={fullWidth}
-  style:z-index={elevated ? Z_MAIN_ELEVATED : undefined}
   onfocusin={onMainFocusIn}
 >
   {@render children()}

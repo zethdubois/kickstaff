@@ -15,9 +15,15 @@
     resetHistoryNavigation,
   } from "./commandHistory";
   import { runCommand } from "./commands";
+  import KickagentAccountsSplitView from "$lib/kickagent/KickagentAccountsSplitView.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import KickagentUnitsSplitView from "$lib/kickagent/KickagentUnitsSplitView.svelte";
-  import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
+  import {
+    getGlDetailSchema,
+    getGlUpdateSchema,
+    getUnitsListSchema,
+    isGlListPresentationRef,
+  } from "$lib/kickagent/manifestResourceCache";
   import { UNITS_LIST_COMMAND } from "$lib/kickagent/unitsOps";
 
   let bodyEl: HTMLDivElement | undefined = $state();
@@ -42,6 +48,11 @@
 
   const unitsListSchema = $derived(
     devConsole.kickagentModeActive ? getUnitsListSchema() : null,
+  );
+
+  const showGlTable = $derived(
+    devConsole.tableOutcome != null &&
+      isGlListPresentationRef(devConsole.tableOutcome.presentationRef),
   );
 
 
@@ -112,6 +123,12 @@
       class="head"
       class:head--kickagent={devConsole.kickagentModeActive}
     >
+      <button
+        type="button"
+        class="close"
+        onclick={close}
+        aria-label="Close console">×</button
+      >
       <div class="headMain">
         <span class="title">KAM Console</span>
         {#if devConsole.dbStatus}
@@ -124,23 +141,26 @@
           </span>
         {/if}
       </div>
-      <button
-        type="button"
-        class="close"
-        onclick={close}
-        aria-label="Close console">×</button
-      >
     </header>
 
     <div class="body" bind:this={bodyEl}>
-      {#if unitsListSchema}
+      <div class="bodyContent">
+      {#if unitsListSchema && !showGlTable}
         <KickagentListFilters
           variant="console"
           schema={unitsListSchema}
           onRun={runUnitsListFromConsole}
         />
       {/if}
-      {#if devConsole.tableOutcome}
+      {#if showGlTable && devConsole.tableOutcome}
+        <KickagentAccountsSplitView
+          variant="console"
+          model={devConsole.tableOutcome}
+          detailSchema={getGlDetailSchema()}
+          updateSchema={getGlUpdateSchema()}
+          title="Accounts"
+        />
+      {:else if devConsole.tableOutcome}
         <KickagentUnitsSplitView
           variant="console"
           model={devConsole.tableOutcome}
@@ -165,6 +185,7 @@
           code to print here.
         </p>
       {/each}
+      </div>
     </div>
 
     <form
@@ -200,7 +221,7 @@
     top: var(--site-header-offset, 0px);
     left: 0;
     bottom: 0;
-    width: min(420px, 90vw);
+    width: var(--kam-console-width, min(420px, 90vw));
     background: #0b0d11;
     color: #d6d8de;
     border-right: 1px solid #2a2f3a;
@@ -213,8 +234,9 @@
   .head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.5rem 0.75rem;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem 0.35rem 0.2rem;
     border-bottom: 1px solid #1d2129;
     background: #0f1218;
   }
@@ -263,13 +285,14 @@
 
   .close {
     appearance: none;
+    flex: 0 0 auto;
     background: transparent;
     color: #9aa3b3;
     border: 0;
     font-size: 1.15rem;
     line-height: 1;
     cursor: pointer;
-    padding: 0.15rem 0.45rem;
+    padding: 0.2rem 0.4rem;
     border-radius: 4px;
   }
 
@@ -278,11 +301,35 @@
     color: #fff;
   }
 
+  /* direction:rtl parks the native vertical scrollbar on the left so it
+     stays clear of the ops page, which overlaps this pane's right edge. */
   .body {
     overflow-y: auto;
-    padding: 0.4rem 0.5rem;
+    direction: rtl;
+    scrollbar-gutter: stable;
+    scrollbar-color: #3a4254 #0b0d11;
     font-size: 0.78rem;
     line-height: 1.45;
+  }
+
+  .body::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .body::-webkit-scrollbar-track {
+    background: #0b0d11;
+  }
+
+  .body::-webkit-scrollbar-thumb {
+    background: #3a4254;
+    border-radius: 4px;
+  }
+
+  .bodyContent {
+    direction: ltr;
+    unicode-bidi: isolate;
+    padding: 0.4rem 0.5rem;
+    min-height: 100%;
   }
 
   .row {

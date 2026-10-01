@@ -3,7 +3,7 @@
 A lightweight in-app dev console for admins. Two surfaces:
 
 - **Command palette** — modal one-shot command input; **`Ctrl+/`** (or **`Cmd+/`**) to open/close. **`` ` `` (backtick)** focuses the KAM Console pane (left); **`Esc`** closes the palette when it is open.
-- **KAM Console pane** — left-side "terminal" that shows klog output and has its own inline prompt.
+- **KAM Console pane** — left-side "terminal" that shows klog output and has its own inline prompt. The close control and the scrollback scrollbar sit on the **left** edge of the pane. While the pane is open, page content (including `/ops`) is laid out in the lane to the right of it, so the pane and the page do not cover each other when focus moves between them.
 
 Opening the palette and running `console` toggles the pane.
 

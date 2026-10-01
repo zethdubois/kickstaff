@@ -1,6 +1,9 @@
 import { env } from '$env/dynamic/public';
 import {
 	parseManifestResources,
+	type ManifestGlDetailResource,
+	type ManifestGlListResource,
+	type ManifestGlUpdateResource,
 	type ManifestResources,
 	type ManifestUnitsDetailResource,
 	type ManifestUnitsListResource
@@ -13,21 +16,35 @@ export type KickagentManifestResourcesLoad = {
 	resources: ManifestResources | null;
 	unitsList: ManifestUnitsListResource | null;
 	unitsDetail: ManifestUnitsDetailResource | null;
+	glList: ManifestGlListResource | null;
+	glDetail: ManifestGlDetailResource | null;
+	glUpdate: ManifestGlUpdateResource | null;
 	error: string | null;
 };
+
+function emptyLoad(
+	error: string | null,
+	partial: Partial<KickagentManifestResourcesLoad> = {}
+): KickagentManifestResourcesLoad {
+	return {
+		manifestUrl: null,
+		manifestVersion: null,
+		resources: null,
+		unitsList: null,
+		unitsDetail: null,
+		glList: null,
+		glDetail: null,
+		glUpdate: null,
+		error,
+		...partial
+	};
+}
 
 /** Server-side manifest fetch for ops pages (does not depend on browser reload timing). */
 export async function fetchKickagentManifestResources(): Promise<KickagentManifestResourcesLoad> {
 	const manifestUrl = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim() ?? null;
 	if (!manifestUrl) {
-		return {
-			manifestUrl: null,
-			manifestVersion: null,
-			resources: null,
-			unitsList: null,
-			unitsDetail: null,
-			error: 'PUBLIC_KICKAGENT_MANIFEST_URL is not set'
-		};
+		return emptyLoad('PUBLIC_KICKAGENT_MANIFEST_URL is not set');
 	}
 
 	try {
@@ -35,14 +52,9 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 			headers: { accept: 'application/json' }
 		});
 		if (!res.ok) {
-			return {
-				manifestUrl,
-				manifestVersion: null,
-				resources: null,
-				unitsList: null,
-				unitsDetail: null,
-				error: `manifest fetch failed: ${res.status} ${res.statusText}`
-			};
+			return emptyLoad(`manifest fetch failed: ${res.status} ${res.statusText}`, {
+				manifestUrl
+			});
 		}
 
 		const raw = (await res.json()) as Record<string, unknown>;
@@ -51,6 +63,9 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 		const resources = parseManifestResources(raw.resources);
 		const unitsList = resources?.units.list ?? null;
 		const unitsDetail = resources?.units.detail ?? null;
+		const glList = resources?.gl?.list ?? null;
+		const glDetail = resources?.gl?.detail ?? null;
+		const glUpdate = resources?.gl?.update ?? null;
 
 		if (!unitsList) {
 			const hint =
@@ -59,14 +74,7 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 					: manifestVersion
 						? `manifest v${manifestVersion} has no parseable resources.units.list`
 						: 'manifest missing resources.units.list';
-			return {
-				manifestUrl,
-				manifestVersion,
-				resources: null,
-				unitsList: null,
-				unitsDetail: null,
-				error: hint
-			};
+			return emptyLoad(hint, { manifestUrl, manifestVersion });
 		}
 
 		return {
@@ -75,17 +83,13 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 			resources,
 			unitsList,
 			unitsDetail,
+			glList,
+			glDetail,
+			glUpdate,
 			error: null
 		};
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
-		return {
-			manifestUrl,
-			manifestVersion: null,
-			resources: null,
-			unitsList: null,
-			unitsDetail: null,
-			error: message
-		};
+		return emptyLoad(message, { manifestUrl });
 	}
 }

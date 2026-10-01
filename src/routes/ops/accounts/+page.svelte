@@ -1,15 +1,17 @@
 <!--
-  @docs: docs/guides/ops-units-ui-map.md
+  @docs: docs/guides/ops-accounts-ui-map.md
 -->
 <script lang="ts">
   import { browser } from "$app/environment";
   import { invalidateAll } from "$app/navigation";
   import { onMount } from "svelte";
-  import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
-  import KickagentUnitsSplitView from "$lib/kickagent/KickagentUnitsSplitView.svelte";
+  import KickagentAccountsListControls from "$lib/kickagent/KickagentAccountsListControls.svelte";
+  import KickagentAccountsSplitView from "$lib/kickagent/KickagentAccountsSplitView.svelte";
+  import { outcomeLogText } from "$lib/kickagent/glAccountForm";
   import {
-    getUnitsDetailSchema,
-    getUnitsListSchema,
+    getGlDetailSchema,
+    getGlListSchema,
+    getGlUpdateSchema,
     setManifestResourceCache,
   } from "$lib/kickagent/manifestResourceCache";
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
@@ -19,35 +21,33 @@
     type ResourceTableModel,
   } from "$lib/kickagent/outcomeToTableModel";
   import { runManifestCommand } from "$lib/kickagent/runManifestCommand";
-  import { UNITS_LIST_COMMAND } from "$lib/kickagent/unitsOps";
 
   let { data } = $props();
 
-  /** Prefer server-loaded schema (no race with layout reload); fall back to client cache. */
-  const schema = $derived(
-    data.manifest.unitsList ?? getUnitsListSchema(),
-  );
-
+  const schema = $derived(data.manifest.glList ?? getGlListSchema());
   const detailSchema = $derived(
-    data.manifest.unitsDetail ?? getUnitsDetailSchema(),
+    data.manifest.glDetail ?? getGlDetailSchema(),
+  );
+  const updateSchema = $derived(
+    data.manifest.glUpdate ?? getGlUpdateSchema(),
   );
 
   let loading = $state(false);
   let reloadingManifest = $state(false);
   let error = $state<string | null>(null);
+  let notice = $state<string | null>(null);
   let table = $state<ResourceTableModel | null>(null);
+  let autoLoaded = $state(false);
 
   function syncServerSchemaToClientCache(): void {
     if (!browser || !data.manifest.resources) return;
-    if (getUnitsListSchema()) return;
+    if (getGlListSchema()) return;
     setManifestResourceCache(data.manifest.resources);
   }
 
-  let autoLoaded = $state(false);
-
   onMount(() => {
     syncServerSchemaToClientCache();
-    if (data.manifest.error) error = data.manifest.error;
+    if (data.manifest.error && !schema) error = data.manifest.error;
   });
 
   async function runList(args: string[]) {
@@ -55,25 +55,31 @@
     if (!listSchema) {
       error =
         data.manifest.error ??
-        "Units list schema not loaded. Deploy kickagent ≥ 0.0.3 and reload manifest.";
+        "Accounts list schema not loaded. Reload the kickagent manifest.";
       return;
     }
     loading = true;
     error = null;
+    notice = null;
     try {
-      const outcome = await runManifestCommand(UNITS_LIST_COMMAND, args);
+      const outcome = await runManifestCommand(listSchema.command, args);
       const model = outcomeToTableModel(outcome, listSchema);
       if (model) {
         table = model;
-      } else {
-        table = null;
-        error =
-          tableOutcomeMissingHint(outcome, listSchema) ??
-          "No table data in response.";
+        return;
       }
-    } catch (e) {
       table = null;
-      error = e instanceof Error ? e.message : String(e);
+      if (!outcome.data && !outcome.presentationRef) {
+        notice = outcomeLogText(outcome) ?? "No accounts found.";
+        return;
+      }
+      error =
+        tableOutcomeMissingHint(outcome, listSchema) ??
+        outcomeLogText(outcome) ??
+        "No table data in response.";
+    } catch (caught) {
+      table = null;
+      error = caught instanceof Error ? caught.message : String(caught);
     } finally {
       loading = false;
     }
@@ -83,22 +89,32 @@
     reloadingManifest = true;
     error = null;
     try {
-      const r = await reloadKickagentPluginFromManifest({ force: true });
-      if (!r.ok) {
-        error = r.error;
+      const result = await reloadKickagentPluginFromManifest({ force: true });
+      if (!result.ok) {
+        error = result.error;
         return;
       }
-      if (!r.resourcesCached) {
-        error = `kickagent ${r.version} loaded but manifest has no resources.units.list — deploy kickagent ≥ 0.0.3`;
+      if (!getGlListSchema()) {
+        error = `kickagent ${result.version} loaded but manifest has no resources.gl.list`;
         return;
       }
       await invalidateAll();
       autoLoaded = false;
-    } catch (e) {
-      error = e instanceof Error ? e.message : String(e);
+    } catch (caught) {
+      error = caught instanceof Error ? caught.message : String(caught);
     } finally {
       reloadingManifest = false;
     }
+  }
+
+  function onAccountUpdated(account: Record<string, unknown>) {
+    if (!table) return;
+    const key = table.primaryKey;
+    const id = account[key];
+    table = {
+      ...table,
+      rows: table.rows.map((row) => (row[key] === id ? { ...row, ...account } : row)),
+    };
   }
 
   $effect(() => {
@@ -109,23 +125,23 @@
 </script>
 
 <svelte:head>
-  <title>Units</title>
+  <title>Accounts</title>
 </svelte:head>
 
 <div class="ops">
   <nav class="ops__nav" aria-label="Ops">
     <a class="ops__navLink" href="/">Dashboard</a>
     <span class="ops__navSep" aria-hidden="true">·</span>
-    <span class="ops__navCurrent">Units</span>
+    <a class="ops__navLink" href="/ops/units">Units</a>
     <span class="ops__navSep" aria-hidden="true">·</span>
-    <a class="ops__navLink" href="/ops/accounts">Accounts</a>
+    <span class="ops__navCurrent">Accounts</span>
   </nav>
 
   <header class="ops__header">
-    <h1 class="ops__title">Units</h1>
+    <h1 class="ops__title">Accounts</h1>
     <p class="ops__lead">
-      Operations units from kickagent. Select a unit in the list to load its detail form.
-      ↑↓ navigate · Space menu.
+      Chart of accounts from kickagent. The table uses manifest columns. Select a
+      row to load its detail, then save changes.
     </p>
     {#if data.manifest.manifestVersion}
       <p class="ops__meta">
@@ -143,7 +159,7 @@
         {#if data.manifest.error}
           {data.manifest.error}
         {:else}
-          Manifest <code>resources.units.list</code> is not available.
+          Manifest <code>resources.gl.list</code> is not available.
         {/if}
       </p>
       <button
@@ -156,19 +172,26 @@
       </button>
     </div>
   {:else}
-    <KickagentListFilters {schema} {loading} onRun={runList} />
+    <KickagentAccountsListControls {loading} onRun={runList} />
 
     {#if error}
       <p class="ops__err" role="alert">{error}</p>
     {/if}
 
+    {#if notice}
+      <p class="ops__empty">{notice}</p>
+    {/if}
+
     {#if table}
-      <KickagentUnitsSplitView
+      <p class="ops__count">{table.rows.length} shown</p>
+      <KickagentAccountsSplitView
         model={table}
-        detailSchema={detailSchema}
-        title="Units"
+        {detailSchema}
+        {updateSchema}
+        title="Accounts"
+        {onAccountUpdated}
       />
-    {:else if !loading && !error}
+    {:else if !loading && !error && !notice}
       <p class="ops__empty">No rows returned.</p>
     {/if}
   {/if}
@@ -231,10 +254,6 @@
     word-break: break-all;
   }
 
-  .ops__lead code {
-    font-size: 0.9em;
-  }
-
   .ops__errBlock {
     margin-top: 1rem;
   }
@@ -263,8 +282,13 @@
     cursor: not-allowed;
   }
 
-  .ops__empty {
-    margin: 1rem 0 0;
+  .ops__empty,
+  .ops__count {
+    margin: 0.75rem 0 0;
     color: color-mix(in srgb, currentColor 60%, transparent);
+  }
+
+  .ops__count {
+    font-size: 0.85rem;
   }
 </style>
