@@ -21,7 +21,8 @@ describe('outcomeToTableModel', () => {
 					columns: [{ key: 'name', label: 'Name', type: 'string' }],
 					filters: []
 				}
-			}
+			},
+			listDetail: {}
 		});
 		const outcome: CommandOutcome = {
 			presentationRef: 'units.list',
@@ -47,23 +48,42 @@ describe('outcomeToTableModel', () => {
 					filters: []
 				}
 			},
-			gl: {
-				version: 1,
-				list: {
-					command: 'gl-list',
-					primaryKey: 'id',
-					rowsKey: 'rows',
-					columns: [
-						{ key: 'number', label: 'Number', type: 'string' },
-						{ key: 'name', label: 'Name', type: 'string' }
-					]
-				},
-				detail: {
-					command: 'gl-show',
-					titleKey: 'name',
-					submitCommand: 'gl-update'
-				},
-				update: { command: 'gl-update', editableFields: ['name'] }
+			listDetail: {
+				gl: {
+					name: 'gl',
+					class: 'list-detail',
+					version: 2,
+					list: {
+						command: 'gl-list',
+						primaryKey: 'id',
+						rowsKey: 'rows',
+						columns: [
+							{ key: 'number', label: 'Number', type: 'string' },
+							{ key: 'name', label: 'Name', type: 'string' }
+						],
+						filters: []
+					},
+					detail: {
+						command: 'gl-show',
+						titleKey: 'name',
+						recordKey: 'account',
+						submitCommand: 'gl-update',
+						fields: [
+							{
+								key: 'name',
+								label: 'Name',
+								type: 'string',
+								editable: true,
+								flag: '--name'
+							}
+						]
+					},
+					update: {
+						command: 'gl-update',
+						editableFields: ['name'],
+						fields: [{ key: 'name', flag: '--name' }]
+					}
+				}
 			}
 		});
 		const outcome: CommandOutcome = {

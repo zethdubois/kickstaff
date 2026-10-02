@@ -13,10 +13,11 @@ Filename prefix = **audience** (who should read it), not which repo wrote the fi
 
 ## Start here (kickstaff developers)
 
-1. [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md) — **host/subscriber** guide (phases, security, what kickstaff owns).
-2. [../platform-overview.md](../platform-overview.md) — **data, storage, and product boundaries** (one DB, two schemas).
-3. [kickstaff-hello-world.md](kickstaff-hello-world.md) — Phase 1 hello wiring in this codebase.
-4. [../kam-console.md](../kam-console.md) — KAM console, kickagent mode, `[KA] >`.
+1. [../host-mission.md](../host-mission.md) — **why this host stays generic** (builders by UI class; kickagent publisher ask).
+2. [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md) — **host/subscriber** guide (phases, security, what kickstaff owns).
+3. [../platform-overview.md](../platform-overview.md) — **data, storage, and product boundaries** (one DB, two schemas).
+4. [kickstaff-hello-world.md](kickstaff-hello-world.md) — Phase 1 hello wiring in this codebase.
+5. [../kam-console.md](../kam-console.md) — KAM console, kickagent mode, `[KA] >`.
 
 ## Kickagent platform (kickagent repo)
 

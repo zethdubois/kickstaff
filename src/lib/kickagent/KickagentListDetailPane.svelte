@@ -1,18 +1,15 @@
 <!--
   @docs: docs/sop-svelte-and-components.md
-  @component: KickagentAccountDetailPane.svelte
+  @component: KickagentListDetailPane.svelte
 -->
 <script lang="ts">
-  import {
-    GL_AVAILABILITY,
-    type GlDetailField,
-  } from "./glAccountForm";
+  import type { ManifestListDetailField } from "./manifestResourceCache";
   import { formatReadonlyField } from "./presentationFieldInput";
 
   type Props = {
     titleKey: string;
-    fields: GlDetailField[];
-    account: Record<string, unknown> | null;
+    fields: ManifestListDetailField[];
+    record: Record<string, unknown> | null;
     loading?: boolean;
     saving?: boolean;
     error?: string | null;
@@ -23,7 +20,7 @@
   let {
     titleKey,
     fields,
-    account,
+    record,
     loading = false,
     saving = false,
     error = null,
@@ -36,9 +33,9 @@
   let syncedKey = "";
 
   const title = $derived.by(() => {
-    if (!account) return "Account details";
-    const value = account[titleKey];
-    return value != null && value !== "" ? String(value) : "Account details";
+    if (!record) return "Details";
+    const value = record[titleKey];
+    return value != null && value !== "" ? String(value) : "Details";
   });
 
   const editableFields = $derived(fields.filter((field) => field.editable));
@@ -46,15 +43,15 @@
   const busy = $derived(loading || saving);
 
   $effect(() => {
-    const id = account ? String(account.id ?? account.number ?? "") : "";
-    const revision = account
-      ? `${String(account.updatedAt ?? "")}|${String(account.retiredAt ?? "")}|${String(account.hidden ?? "")}`
+    const id = record ? String(record.id ?? record.number ?? "") : "";
+    const revision = record
+      ? `${String(record.updatedAt ?? "")}|${String(record.retiredAt ?? "")}|${String(record.hidden ?? "")}`
       : "";
     const key = `${id}|${revision}`;
     if (key === syncedKey) return;
     const previousId = syncedKey.split("|")[0] ?? "";
     syncedKey = key;
-    draft = account ? { ...account } : {};
+    draft = record ? { ...record } : {};
     if (previousId && previousId !== id) status = null;
   });
 
@@ -63,9 +60,9 @@
     status = null;
   }
 
-  function availabilityOptions(current: unknown): string[] {
+  function optionsFor(field: ManifestListDetailField, current: unknown): string[] {
+    const options = [...(field.options ?? [])];
     const value = current == null ? "" : String(current);
-    const options: string[] = [...GL_AVAILABILITY];
     if (value && !options.includes(value)) options.unshift(value);
     return options;
   }
@@ -82,7 +79,7 @@
 <section
   class="detailPane"
   class:detailPane--console={variant === "console"}
-  aria-label="Account details"
+  aria-label="Record details"
 >
   <header class="head">
     <h2 class="title">{title}</h2>
@@ -95,9 +92,9 @@
 
   {#if error}
     <p class="err" role="alert">{error}</p>
-  {:else if !account && !loading}
-    <p class="placeholder">Select an account from the list.</p>
-  {:else if account}
+  {:else if !record && !loading}
+    <p class="placeholder">Select a row from the list.</p>
+  {:else if record}
     <form class="form" onsubmit={save}>
       {#if readonlyFields.length > 0}
         <fieldset class="group">
@@ -106,7 +103,7 @@
             {#each readonlyFields as field (field.key)}
               <div class="readonlyRow">
                 <dt>{field.label}</dt>
-                <dd>{formatReadonlyField(account[field.key], field.type)}</dd>
+                <dd>{formatReadonlyField(record[field.key], field.type)}</dd>
               </div>
             {/each}
           </dl>
@@ -128,7 +125,7 @@
                     onchange={(event) =>
                       setField(field.key, event.currentTarget.checked)}
                   />
-                {:else if field.key === "availableTo"}
+                {:else if field.options && field.options.length > 0}
                   <select
                     disabled={busy}
                     value={draft[field.key] == null
@@ -137,7 +134,7 @@
                     onchange={(event) =>
                       setField(field.key, event.currentTarget.value)}
                   >
-                    {#each availabilityOptions(draft[field.key]) as option (option)}
+                    {#each optionsFor(field, draft[field.key]) as option (option)}
                       <option value={option}>{option}</option>
                     {/each}
                   </select>
@@ -198,20 +195,10 @@
     background: color-mix(in srgb, currentColor 4%, transparent);
   }
 
-  .detailPane--console .head {
-    border-bottom-color: #1d2129;
-    background: #121820;
-  }
-
   .title {
     margin: 0;
     font-size: 0.95rem;
     font-weight: 700;
-  }
-
-  .detailPane--console .title {
-    font-size: 0.82rem;
-    color: #e2e4ea;
   }
 
   .status,
@@ -308,13 +295,6 @@
     border-radius: 4px;
     background: var(--resource-filter-input-bg, #fff);
     color: inherit;
-  }
-
-  .detailPane--console .field input:not([type="checkbox"]),
-  .detailPane--console .field select {
-    border-color: #2a3548;
-    background: #0b0d11;
-    color: #d6d8de;
   }
 
   .field input[type="checkbox"] {

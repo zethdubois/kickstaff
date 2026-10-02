@@ -2,7 +2,13 @@
 
 import type { CommandPresentationFieldType } from './contracts';
 
-export type ManifestFilterMatch = 'substring' | 'wildcard' | 'exact' | 'range' | 'date';
+export type ManifestFilterMatch =
+	| 'substring'
+	| 'wildcard'
+	| 'exact'
+	| 'range'
+	| 'date'
+	| 'presence';
 
 export type ManifestListFilter = {
 	key: string;
@@ -47,6 +53,7 @@ export type ManifestUnitsUpdateResource = {
 	editableFields: string[];
 };
 
+/** Units v1 leftover — keep until kickagent lifts units to list-detail. */
 export type ManifestUnitsResource = {
 	version: number;
 	list: ManifestUnitsListResource;
@@ -54,40 +61,69 @@ export type ManifestUnitsResource = {
 	update?: ManifestUnitsUpdateResource;
 };
 
-/** Shared list shape for presentationRef resolution (`units.list`, `gl.list`). */
+/** Shared list columns for presentationRef resolution. */
 export type ManifestListSchema = {
 	command: string;
 	primaryKey: string;
 	rowsKey: string;
 	columns: ManifestResourceColumn[];
+	filters?: ManifestListFilter[];
 };
 
-/** Chart of accounts list. v1 has no filters, sortKeys, or defaultLimit. */
-export type ManifestGlListResource = ManifestListSchema;
+/** list-detail class field (resource version ≥ 2). */
+export type ManifestListDetailField = {
+	key: string;
+	label: string;
+	type: CommandPresentationFieldType;
+	editable: boolean;
+	flag?: string;
+	options?: string[];
+	clearValue?: string;
+};
 
-export type ManifestGlDetailResource = {
+export type ManifestListDetailList = ManifestListSchema & {
+	filters: ManifestListFilter[];
+	defaultLimit?: number;
+	sortKeys?: string[];
+};
+
+export type ManifestListDetailDetail = {
 	command: string;
 	titleKey: string;
+	recordKey: string;
 	submitCommand: string;
+	fields: ManifestListDetailField[];
 };
 
-export type ManifestGlUpdateResource = {
+export type ManifestListDetailUpdate = {
 	command: string;
 	editableFields: string[];
+	fields: Array<{ key: string; flag: string }>;
 };
 
-export type ManifestGlResource = {
+/** One `resources.<name>` block with `class: "list-detail"`. */
+export type ManifestListDetailResource = {
+	name: string;
+	class: 'list-detail';
 	version: number;
-	list: ManifestGlListResource;
-	detail: ManifestGlDetailResource;
-	update: ManifestGlUpdateResource;
+	list: ManifestListDetailList;
+	detail: ManifestListDetailDetail;
+	update: ManifestListDetailUpdate;
 };
 
 export type ManifestResources = {
-	units: ManifestUnitsResource;
-	/** Present when the manifest publishes `resources.gl`. Units-only manifests stay valid. */
-	gl?: ManifestGlResource;
+	/** Thin v1 path for `/ops/units` until units is lifted. */
+	units: ManifestUnitsResource | null;
+	/** All list-detail instances, keyed by resource name (`gl`, …). */
+	listDetail: Record<string, ManifestListDetailResource>;
 };
+
+/** @deprecated Prefer `getListDetailResource('gl')`. */
+export type ManifestGlListResource = ManifestListDetailList;
+/** @deprecated Prefer `getListDetailResource('gl')`. */
+export type ManifestGlDetailResource = ManifestListDetailDetail;
+/** @deprecated Prefer `getListDetailResource('gl')`. */
+export type ManifestGlUpdateResource = ManifestListDetailUpdate;
 
 let cached: ManifestResources | null = null;
 
@@ -104,23 +140,27 @@ export function getManifestResources(): ManifestResources | null {
 }
 
 export function getUnitsListSchema(): ManifestUnitsListResource | null {
-	return cached?.units.list ?? null;
+	return cached?.units?.list ?? null;
 }
 
 export function getUnitsDetailSchema(): ManifestUnitsDetailResource | null {
-	return cached?.units.detail ?? null;
+	return cached?.units?.detail ?? null;
 }
 
-export function getGlListSchema(): ManifestGlListResource | null {
-	return cached?.gl?.list ?? null;
+export function getListDetailResource(name: string): ManifestListDetailResource | null {
+	return cached?.listDetail[name] ?? null;
 }
 
-export function getGlDetailSchema(): ManifestGlDetailResource | null {
-	return cached?.gl?.detail ?? null;
+export function getGlListSchema(): ManifestListDetailList | null {
+	return cached?.listDetail.gl?.list ?? null;
 }
 
-export function getGlUpdateSchema(): ManifestGlUpdateResource | null {
-	return cached?.gl?.update ?? null;
+export function getGlDetailSchema(): ManifestListDetailDetail | null {
+	return cached?.listDetail.gl?.detail ?? null;
+}
+
+export function getGlUpdateSchema(): ManifestListDetailUpdate | null {
+	return cached?.listDetail.gl?.update ?? null;
 }
 
 export function isGlListPresentationRef(ref: string): boolean {
@@ -128,25 +168,30 @@ export function isGlListPresentationRef(ref: string): boolean {
 	return key === 'gl.list' || key === 'gl-list';
 }
 
-/** Resolve a list `presentationRef` to cached manifest columns (`units` or `gl`). */
-export function resolvePresentationRef(ref: string): ManifestListSchema | null {
-	if (!cached) return null;
+function splitPresentationRef(ref: string): { name: string; kind: 'list' | 'detail' } | null {
 	const key = ref.trim().toLowerCase();
-	if (key === 'units.list' || key === 'units-list') {
-		return cached.units.list;
-	}
-	if (key === 'gl.list' || key === 'gl-list') {
-		return cached.gl?.list ?? null;
-	}
+	const dot = key.match(/^([a-z][a-z0-9-]*)\.(list|detail)$/);
+	if (dot) return { name: dot[1]!, kind: dot[2] as 'list' | 'detail' };
+	const dash = key.match(/^([a-z][a-z0-9-]*)-(list|detail)$/);
+	if (dash) return { name: dash[1]!, kind: dash[2] as 'list' | 'detail' };
 	return null;
 }
 
-/** Resolve `gl.detail` to cached `resources.gl.detail` (`data.account`). */
-export function resolveDetailPresentationRef(ref: string): ManifestGlDetailResource | null {
-	if (!cached?.gl) return null;
-	const key = ref.trim().toLowerCase();
-	if (key === 'gl.detail') return cached.gl.detail;
-	return null;
+/** Resolve a list `presentationRef` to cached list schema. */
+export function resolvePresentationRef(ref: string): ManifestListSchema | null {
+	if (!cached) return null;
+	const parts = splitPresentationRef(ref);
+	if (!parts || parts.kind !== 'list') return null;
+	if (parts.name === 'units' && cached.units) return cached.units.list;
+	return cached.listDetail[parts.name]?.list ?? null;
+}
+
+/** Resolve a detail `presentationRef` to list-detail detail schema. */
+export function resolveDetailPresentationRef(ref: string): ManifestListDetailDetail | null {
+	if (!cached) return null;
+	const parts = splitPresentationRef(ref);
+	if (!parts || parts.kind !== 'detail') return null;
+	return cached.listDetail[parts.name]?.detail ?? null;
 }
 
 function isFieldType(v: unknown): v is CommandPresentationFieldType {
@@ -180,7 +225,14 @@ function parseColumns(raw: unknown): ManifestResourceColumn[] {
 
 function parseFilters(raw: unknown): ManifestListFilter[] {
 	if (!Array.isArray(raw)) return [];
-	const matches = new Set(['substring', 'wildcard', 'exact', 'range', 'date']);
+	const matches = new Set([
+		'substring',
+		'wildcard',
+		'exact',
+		'range',
+		'date',
+		'presence'
+	]);
 	const out: ManifestListFilter[] = [];
 	for (const item of raw) {
 		if (!item || typeof item !== 'object') continue;
@@ -279,84 +331,174 @@ const DEFAULT_UNITS_UPDATE: ManifestUnitsUpdateResource = {
 	editableFields: []
 };
 
-const DEFAULT_GL_DETAIL: ManifestGlDetailResource = {
-	command: 'gl-show',
-	titleKey: 'name',
-	submitCommand: 'gl-update'
-};
+function parseListDetailFields(raw: unknown): ManifestListDetailField[] {
+	if (!Array.isArray(raw)) return [];
+	const out: ManifestListDetailField[] = [];
+	for (const item of raw) {
+		if (!item || typeof item !== 'object') continue;
+		const row = item as Record<string, unknown>;
+		const key = typeof row.key === 'string' ? row.key.trim() : '';
+		if (!key || !isFieldType(row.type)) continue;
+		const flag =
+			typeof row.flag === 'string' && row.flag.trim() !== '' ? row.flag.trim() : undefined;
+		const clearValue =
+			typeof row.clearValue === 'string' && row.clearValue.trim() !== ''
+				? row.clearValue.trim()
+				: undefined;
+		const options = Array.isArray(row.options)
+			? row.options.filter((o): o is string => typeof o === 'string' && o.trim() !== '')
+			: undefined;
+		out.push({
+			key,
+			label: typeof row.label === 'string' ? row.label.trim() : key,
+			type: row.type,
+			editable: row.editable === true,
+			...(flag ? { flag } : {}),
+			...(options && options.length > 0 ? { options } : {}),
+			...(clearValue ? { clearValue } : {})
+		});
+	}
+	return out;
+}
 
-const DEFAULT_GL_UPDATE: ManifestGlUpdateResource = {
-	command: 'gl-update',
-	editableFields: []
-};
-
-function parseGlList(raw: unknown): ManifestGlListResource | null {
+function parseListDetailList(raw: unknown): ManifestListDetailList | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const o = raw as Record<string, unknown>;
-	const command = typeof o.command === 'string' ? o.command.trim() : 'gl-list';
+	const command = typeof o.command === 'string' ? o.command.trim() : '';
 	const primaryKey = typeof o.primaryKey === 'string' ? o.primaryKey.trim() : 'id';
 	const rowsKey = typeof o.rowsKey === 'string' ? o.rowsKey.trim() : 'rows';
 	const columns = parseColumns(o.columns);
-	if (columns.length === 0) return null;
-	return { command, primaryKey, rowsKey, columns };
+	if (!command || columns.length === 0) return null;
+	const defaultLimit =
+		typeof o.defaultLimit === 'number' && Number.isFinite(o.defaultLimit)
+			? o.defaultLimit
+			: undefined;
+	const sortKeys = Array.isArray(o.sortKeys)
+		? o.sortKeys.filter((k): k is string => typeof k === 'string')
+		: undefined;
+	return {
+		command,
+		primaryKey,
+		rowsKey,
+		columns,
+		filters: parseFilters(o.filters),
+		...(defaultLimit !== undefined ? { defaultLimit } : {}),
+		...(sortKeys && sortKeys.length > 0 ? { sortKeys } : {})
+	};
 }
 
-function parseGlDetail(raw: unknown): ManifestGlDetailResource | null {
+function parseListDetailDetail(raw: unknown): ManifestListDetailDetail | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const o = raw as Record<string, unknown>;
-	const command = typeof o.command === 'string' ? o.command.trim() : 'gl-show';
+	const command = typeof o.command === 'string' ? o.command.trim() : '';
 	const titleKey = typeof o.titleKey === 'string' ? o.titleKey.trim() : 'name';
-	const submitCommand =
-		typeof o.submitCommand === 'string' ? o.submitCommand.trim() : 'gl-update';
-	return { command, titleKey, submitCommand };
+	const recordKey = typeof o.recordKey === 'string' ? o.recordKey.trim() : '';
+	const submitCommand = typeof o.submitCommand === 'string' ? o.submitCommand.trim() : '';
+	const fields = parseListDetailFields(o.fields);
+	if (!command || !recordKey || !submitCommand || fields.length === 0) return null;
+	return { command, titleKey, recordKey, submitCommand, fields };
 }
 
-function parseGlUpdate(raw: unknown): ManifestGlUpdateResource | null {
-	if (!raw || typeof raw !== 'object') return null;
+function parseListDetailUpdate(
+	raw: unknown,
+	detail: ManifestListDetailDetail
+): ManifestListDetailUpdate {
+	const fallbackFields = detail.fields
+		.filter((f) => f.editable && f.flag)
+		.map((f) => ({ key: f.key, flag: f.flag! }));
+	if (!raw || typeof raw !== 'object') {
+		return {
+			command: detail.submitCommand,
+			editableFields: fallbackFields.map((f) => f.key),
+			fields: fallbackFields
+		};
+	}
 	const o = raw as Record<string, unknown>;
-	const command = typeof o.command === 'string' ? o.command.trim() : 'gl-update';
+	const command =
+		typeof o.command === 'string' && o.command.trim() !== ''
+			? o.command.trim()
+			: detail.submitCommand;
 	const editableFields = Array.isArray(o.editableFields)
 		? o.editableFields.filter((k): k is string => typeof k === 'string' && k.trim() !== '')
-		: [];
-	return { command, editableFields };
+		: fallbackFields.map((f) => f.key);
+	const fields: Array<{ key: string; flag: string }> = [];
+	if (Array.isArray(o.fields)) {
+		for (const item of o.fields) {
+			if (!item || typeof item !== 'object') continue;
+			const row = item as Record<string, unknown>;
+			const key = typeof row.key === 'string' ? row.key.trim() : '';
+			const flag = typeof row.flag === 'string' ? row.flag.trim() : '';
+			if (!key || !flag) continue;
+			fields.push({ key, flag });
+		}
+	}
+	return {
+		command,
+		editableFields,
+		fields: fields.length > 0 ? fields : fallbackFields
+	};
 }
 
-function parseGlResource(raw: unknown): ManifestGlResource | null {
+function parseListDetailResource(
+	name: string,
+	raw: unknown
+): ManifestListDetailResource | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const g = raw as Record<string, unknown>;
-	const list = parseGlList(g.list);
+	if (g.class !== 'list-detail') return null;
+	const version = typeof g.version === 'number' && Number.isFinite(g.version) ? g.version : 0;
+	if (version < 2) return null;
+	const list = parseListDetailList(g.list);
+	const detail = parseListDetailDetail(g.detail);
+	if (!list || !detail) return null;
+	return {
+		name,
+		class: 'list-detail',
+		version,
+		list,
+		detail,
+		update: parseListDetailUpdate(g.update, detail)
+	};
+}
+
+function parseUnitsResource(raw: unknown): ManifestUnitsResource | null {
+	if (!raw || typeof raw !== 'object') return null;
+	const u = raw as Record<string, unknown>;
+	if (u.class === 'list-detail') return null;
+	const list = parseUnitsList(u.list);
 	if (!list) return null;
-	const version = typeof g.version === 'number' && Number.isFinite(g.version) ? g.version : 1;
+	const version = typeof u.version === 'number' && Number.isFinite(u.version) ? u.version : 1;
 	return {
 		version,
 		list,
-		detail: parseGlDetail(g.detail) ?? DEFAULT_GL_DETAIL,
-		update: parseGlUpdate(g.update) ?? DEFAULT_GL_UPDATE
+		detail: parseUnitsDetail(u.detail) ?? DEFAULT_UNITS_DETAIL,
+		update: parseUnitsUpdate(u.update) ?? DEFAULT_UNITS_UPDATE
 	};
 }
 
 /**
  * Parse manifest `resources`.
- * Requires a valid `units.list`. Keeps `resources.gl` when its list columns parse.
- * A units-only manifest still returns the units resource.
+ * Discovers every key. `list-detail` (version ≥ 2) goes in `listDetail`.
+ * Units without `class` stays on the thin v1 path when present.
  */
 export function parseManifestResources(raw: unknown): ManifestResources | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const o = raw as Record<string, unknown>;
-	const unitsRaw = o.units;
-	if (!unitsRaw || typeof unitsRaw !== 'object') return null;
-	const u = unitsRaw as Record<string, unknown>;
-	const list = parseUnitsList(u.list);
-	if (!list) return null;
-	const version = typeof u.version === 'number' && Number.isFinite(u.version) ? u.version : 1;
-	const gl = parseGlResource(o.gl);
-	return {
-		units: {
-			version,
-			list,
-			detail: parseUnitsDetail(u.detail) ?? DEFAULT_UNITS_DETAIL,
-			update: parseUnitsUpdate(u.update) ?? DEFAULT_UNITS_UPDATE
-		},
-		...(gl ? { gl } : {})
-	};
+	const listDetail: Record<string, ManifestListDetailResource> = {};
+	let units: ManifestUnitsResource | null = null;
+
+	for (const [name, block] of Object.entries(o)) {
+		if (!/^[a-z][a-z0-9-]*$/.test(name)) continue;
+		const ld = parseListDetailResource(name, block);
+		if (ld) {
+			listDetail[name] = ld;
+			continue;
+		}
+		if (name === 'units') {
+			units = parseUnitsResource(block);
+		}
+	}
+
+	if (!units && Object.keys(listDetail).length === 0) return null;
+	return { units, listDetail };
 }

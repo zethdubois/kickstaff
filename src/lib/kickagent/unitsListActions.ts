@@ -36,7 +36,7 @@ export function buildUnitsListActions(
 	}
 ): UnitsListActionSet {
 	const detailCommand =
-		getManifestResources()?.units.detail?.command ?? 'units-show';
+		getManifestResources()?.units?.detail?.command ?? 'units-show';
 
 	const primary: UnitsListAction = {
 		id: 'show',

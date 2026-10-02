@@ -3,7 +3,6 @@
   import {
     devConsole,
     KAM_CONSOLE_FOCUS_INPUT_EVENT,
-    klogInfo,
   } from "./state.svelte";
   import {
     focusStack,
@@ -15,15 +14,9 @@
     resetHistoryNavigation,
   } from "./commandHistory";
   import { runCommand } from "./commands";
-  import KickagentAccountsSplitView from "$lib/kickagent/KickagentAccountsSplitView.svelte";
+  import { showsKlogTimestamp } from "./klogStamp";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
-  import KickagentUnitsSplitView from "$lib/kickagent/KickagentUnitsSplitView.svelte";
-  import {
-    getGlDetailSchema,
-    getGlUpdateSchema,
-    getUnitsListSchema,
-    isGlListPresentationRef,
-  } from "$lib/kickagent/manifestResourceCache";
+  import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
   import { UNITS_LIST_COMMAND } from "$lib/kickagent/unitsOps";
 
   let bodyEl: HTMLDivElement | undefined = $state();
@@ -49,12 +42,6 @@
   const unitsListSchema = $derived(
     devConsole.kickagentModeActive ? getUnitsListSchema() : null,
   );
-
-  const showGlTable = $derived(
-    devConsole.tableOutcome != null &&
-      isGlListPresentationRef(devConsole.tableOutcome.presentationRef),
-  );
-
 
   async function runUnitsListFromConsole(args: string[]) {
     const parts = [UNITS_LIST_COMMAND, ...args];
@@ -145,30 +132,16 @@
 
     <div class="body" bind:this={bodyEl}>
       <div class="bodyContent">
-      {#if unitsListSchema && !showGlTable}
+      {#if unitsListSchema}
         <KickagentListFilters
           variant="console"
-          schema={unitsListSchema}
+          filters={unitsListSchema.filters}
+          command={unitsListSchema.command}
           onRun={runUnitsListFromConsole}
         />
       {/if}
-      {#if showGlTable && devConsole.tableOutcome}
-        <KickagentAccountsSplitView
-          variant="console"
-          model={devConsole.tableOutcome}
-          detailSchema={getGlDetailSchema()}
-          updateSchema={getGlUpdateSchema()}
-          title="Accounts"
-        />
-      {:else if devConsole.tableOutcome}
-        <KickagentUnitsSplitView
-          variant="console"
-          model={devConsole.tableOutcome}
-          title="Units"
-          onActionMessage={(msg) => klogInfo(msg)}
-        />
-      {/if}
-      {#each devConsole.entries as entry (entry.id)}
+      {#each devConsole.entries as entry, i (entry.id)}
+        {@const previous = i > 0 ? devConsole.entries[i - 1] : null}
         <div
           class="row"
           class:row--err={entry.level === "error"}
@@ -176,7 +149,7 @@
           class:row--info={entry.level === "info"}
           class:row--prompt={entry.source === "kam:prompt"}
         >
-          <span class="ts">{fmtTs(entry.ts)}</span>
+          <span class="ts">{showsKlogTimestamp(entry, previous) ? fmtTs(entry.ts) : ""}</span>
           <pre class="msg">{entry.message}</pre>
         </div>
       {:else}

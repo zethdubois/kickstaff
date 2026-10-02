@@ -5,13 +5,11 @@
   import { browser } from "$app/environment";
   import { invalidateAll } from "$app/navigation";
   import { onMount } from "svelte";
-  import KickagentAccountsListControls from "$lib/kickagent/KickagentAccountsListControls.svelte";
-  import KickagentAccountsSplitView from "$lib/kickagent/KickagentAccountsSplitView.svelte";
-  import { outcomeLogText } from "$lib/kickagent/glAccountForm";
+  import KickagentListDetailSplitView from "$lib/kickagent/KickagentListDetailSplitView.svelte";
+  import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
+  import { outcomeLogText } from "$lib/kickagent/listDetailForm";
   import {
-    getGlDetailSchema,
-    getGlListSchema,
-    getGlUpdateSchema,
+    getListDetailResource,
     setManifestResourceCache,
   } from "$lib/kickagent/manifestResourceCache";
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
@@ -24,13 +22,10 @@
 
   let { data } = $props();
 
-  const schema = $derived(data.manifest.glList ?? getGlListSchema());
-  const detailSchema = $derived(
-    data.manifest.glDetail ?? getGlDetailSchema(),
+  const resource = $derived(
+    data.manifest.glResource ?? getListDetailResource("gl"),
   );
-  const updateSchema = $derived(
-    data.manifest.glUpdate ?? getGlUpdateSchema(),
-  );
+  const schema = $derived(resource?.list ?? null);
 
   let loading = $state(false);
   let reloadingManifest = $state(false);
@@ -41,7 +36,7 @@
 
   function syncServerSchemaToClientCache(): void {
     if (!browser || !data.manifest.resources) return;
-    if (getGlListSchema()) return;
+    if (getListDetailResource("gl")) return;
     setManifestResourceCache(data.manifest.resources);
   }
 
@@ -94,8 +89,8 @@
         error = result.error;
         return;
       }
-      if (!getGlListSchema()) {
-        error = `kickagent ${result.version} loaded but manifest has no resources.gl.list`;
+      if (!getListDetailResource("gl")) {
+        error = `kickagent ${result.version} loaded but manifest has no list-detail resources.gl`;
         return;
       }
       await invalidateAll();
@@ -107,13 +102,15 @@
     }
   }
 
-  function onAccountUpdated(account: Record<string, unknown>) {
+  function onRecordUpdated(record: Record<string, unknown>) {
     if (!table) return;
     const key = table.primaryKey;
-    const id = account[key];
+    const id = record[key];
     table = {
       ...table,
-      rows: table.rows.map((row) => (row[key] === id ? { ...row, ...account } : row)),
+      rows: table.rows.map((row) =>
+        row[key] === id ? { ...row, ...record } : row,
+      ),
     };
   }
 
@@ -140,8 +137,8 @@
   <header class="ops__header">
     <h1 class="ops__title">Accounts</h1>
     <p class="ops__lead">
-      Chart of accounts from kickagent. The table uses manifest columns. Select a
-      row to load its detail, then save changes.
+      Chart of accounts from kickagent list-detail schema. Filters, columns, and
+      save flags come from the manifest.
     </p>
     {#if data.manifest.manifestVersion}
       <p class="ops__meta">
@@ -153,13 +150,13 @@
     {/if}
   </header>
 
-  {#if !schema}
+  {#if !resource || !schema}
     <div class="ops__errBlock" role="alert">
       <p class="ops__err">
         {#if data.manifest.error}
           {data.manifest.error}
         {:else}
-          Manifest <code>resources.gl.list</code> is not available.
+          Manifest <code>resources.gl</code> list-detail is not available.
         {/if}
       </p>
       <button
@@ -172,7 +169,12 @@
       </button>
     </div>
   {:else}
-    <KickagentAccountsListControls {loading} onRun={runList} />
+    <KickagentListFilters
+      filters={schema.filters}
+      command={schema.command}
+      {loading}
+      onRun={runList}
+    />
 
     {#if error}
       <p class="ops__err" role="alert">{error}</p>
@@ -184,12 +186,11 @@
 
     {#if table}
       <p class="ops__count">{table.rows.length} shown</p>
-      <KickagentAccountsSplitView
+      <KickagentListDetailSplitView
         model={table}
-        {detailSchema}
-        {updateSchema}
+        {resource}
         title="Accounts"
-        {onAccountUpdated}
+        {onRecordUpdated}
       />
     {:else if !loading && !error && !notice}
       <p class="ops__empty">No rows returned.</p>

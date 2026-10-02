@@ -156,7 +156,12 @@
       </button>
     </div>
   {:else}
-    <KickagentListFilters {schema} {loading} onRun={runList} />
+    <KickagentListFilters
+      filters={schema.filters}
+      command={schema.command}
+      {loading}
+      onRun={runList}
+    />
 
     {#if error}
       <p class="ops__err" role="alert">{error}</p>

@@ -4,6 +4,8 @@
 
 **Purpose:** What kickstaff must provide as the KAM **host/subscriber**, how integration works today, and what we plan to add for dynamic plugin load and API-backed jobs. Implementation details for kickagent CI, S3, and the KA API live in the kickagent repo — [platform spec](../../../kickagent/docs/kickagent-platform-spec.md) (sibling checkout `../kickagent`).
 
+**Mission (generic consumer):** [host-mission.md](../host-mission.md) — builders by UI class; same-shape `resources.*` is a reload.
+
 ---
 
 ## Roles

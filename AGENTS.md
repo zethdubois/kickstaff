@@ -8,6 +8,7 @@ Portable procedure (now/plan, closing a phase, commit, shared-data writes): **[.
 1. **[docs/now.md](docs/now.md)** — this week’s work; do the first unchecked item
 2. **[docs/plan.md](docs/plan.md)** — roadmap + phase outcomes (only the linked section)
 3. **[.agent/SOP.md](.agent/SOP.md)** — how we work (shared across projects)
+4. **Kickagent / KAM / `resources.*` work:** read **[docs/guides/host-mission.md](docs/guides/host-mission.md)** before coding — generic host, not per-command pages
 
 ## Working rules
 
@@ -108,6 +109,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 - **Developer / agent guides** live under `[docs/guides/](docs/guides/)` — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Operations handoff (kickagent):** `[docs/upgrade/README.md](docs/upgrade/README.md)` — primers + ETL reference (no bill code in this repo).
 - **KAM dev console + command palette** (palette: `Ctrl+/`; focus console pane: ``` (backtick); `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
+- **Host mission (kickagent UI):** `[docs/guides/host-mission.md](docs/guides/host-mission.md)` — kickstaff is a generic manifest consumer; new same-class resources are a reload.
 - **kickagent integration** (no npm/git dependency in kickstaff — Phase 2 manifest + ESM): sibling `../kickagent` only to publish/serve artifacts; `[docs/guides/contracts/kickstaff-kickagent-consumer.md](docs/guides/contracts/kickstaff-kickagent-consumer.md)`.
 - **New kickagent command (checklist):** `[docs/guides/register-kickagent-command.md](docs/guides/register-kickagent-command.md)` — catalog in kickagent, auto-register in kickstaff, KAM verify, optional hub card.
 - **Human setup (local dev):** [README.md → Development](README.md#development).

@@ -30,7 +30,7 @@
   }: Props = $props();
 
   const resolvedDetailSchema = $derived(
-    detailSchema ?? getManifestResources()?.units.detail ?? null,
+    detailSchema ?? getManifestResources()?.units?.detail ?? null,
   );
 
   const listActions = $derived.by(() => {

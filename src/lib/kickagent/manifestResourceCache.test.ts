@@ -9,7 +9,7 @@ import {
 } from './manifestResourceCache.ts';
 
 describe('parseManifestResources', () => {
-	it('caches units.list when detail and update are missing', () => {
+	it('caches units v1 when detail and update are missing', () => {
 		const parsed = parseManifestResources({
 			units: {
 				version: 1,
@@ -22,13 +22,13 @@ describe('parseManifestResources', () => {
 			}
 		});
 		assert.ok(parsed);
-		assert.equal(parsed!.units.list.command, 'units-list');
-		assert.equal(parsed!.gl, undefined);
-		assert.ok(parsed!.units.detail);
-		assert.ok(parsed!.units.update);
+		assert.equal(parsed!.units?.list.command, 'units-list');
+		assert.deepEqual(parsed!.listDetail, {});
+		assert.ok(parsed!.units?.detail);
+		assert.ok(parsed!.units?.update);
 	});
 
-	it('keeps resources.gl and still accepts resources.units', () => {
+	it('discovers list-detail gl by class and keeps units', () => {
 		const parsed = parseManifestResources({
 			units: {
 				version: 1,
@@ -38,38 +38,67 @@ describe('parseManifestResources', () => {
 				}
 			},
 			gl: {
-				version: 1,
+				class: 'list-detail',
+				version: 2,
 				list: {
 					command: 'gl-list',
 					primaryKey: 'id',
 					rowsKey: 'rows',
-					columns: [{ key: 'number', label: 'Number', type: 'string' }]
+					columns: [{ key: 'number', label: 'Number', type: 'string' }],
+					filters: [
+						{
+							key: 'includeHidden',
+							flag: '--include-hidden',
+							type: 'boolean',
+							match: 'presence',
+							label: 'Include hidden'
+						}
+					]
 				},
 				detail: {
 					command: 'gl-show',
 					titleKey: 'name',
-					submitCommand: 'gl-update'
+					recordKey: 'account',
+					submitCommand: 'gl-update',
+					fields: [
+						{
+							key: 'name',
+							label: 'Name',
+							type: 'string',
+							editable: true,
+							flag: '--name'
+						},
+						{
+							key: 'id',
+							label: 'Id',
+							type: 'uuid',
+							editable: false,
+							flag: '--id'
+						}
+					]
 				},
 				update: {
 					command: 'gl-update',
-					editableFields: ['name', 'hidden']
+					editableFields: ['name'],
+					fields: [{ key: 'name', flag: '--name' }]
 				}
 			}
 		});
-		assert.ok(parsed?.gl);
-		assert.equal(parsed!.units.list.command, 'units-list');
-		assert.equal(parsed!.gl!.list.columns[0]!.label, 'Number');
-		assert.equal(parsed!.gl!.detail.submitCommand, 'gl-update');
+		assert.ok(parsed?.listDetail.gl);
+		assert.equal(parsed!.listDetail.gl!.class, 'list-detail');
+		assert.equal(parsed!.listDetail.gl!.list.filters[0]!.match, 'presence');
+		assert.equal(parsed!.listDetail.gl!.detail.recordKey, 'account');
+		assert.equal(parsed!.units?.list.command, 'units-list');
 		setManifestResourceCache(parsed);
 		assert.equal(resolvePresentationRef('gl.list')?.rowsKey, 'rows');
 		assert.equal(resolvePresentationRef('gl-list')?.command, 'gl-list');
 		assert.equal(resolvePresentationRef('units.list')?.command, 'units-list');
 		assert.equal(resolveDetailPresentationRef('gl.detail')?.submitCommand, 'gl-update');
-		assert.equal(resolveDetailPresentationRef('gl.list'), null);
 		clearManifestResourceCache();
 	});
 
-	it('returns null when list columns are empty', () => {
+	it('returns null when nothing parseable', () => {
+		assert.equal(parseManifestResources({}), null);
 		assert.equal(
 			parseManifestResources({
 				units: { version: 1, list: { columns: [] } }

@@ -2,6 +2,8 @@
 
 **Audience:** Developers wiring kickagent list commands into kickstaff.
 
+Standing mission: [host-mission.md](host-mission.md) — one builder per UI class; do not add per-resource flag tables.
+
 ## Contract
 
 | Layer | Responsibility |

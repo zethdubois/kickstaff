@@ -13,11 +13,13 @@ export type ResourceListItem = {
 export function resolveListLabelKey(model: ResourceTableModel): string {
 	const resources = getManifestResources();
 	const ref = model.presentationRef.trim().toLowerCase();
-	if (ref === 'gl.list' || ref === 'gl-list') {
-		const titleKey = resources?.gl?.detail.titleKey;
-		if (titleKey) return titleKey;
-	} else {
-		const titleKey = resources?.units.detail?.titleKey;
+	const name =
+		ref.match(/^([a-z][a-z0-9-]*)[.-]list$/)?.[1] ??
+		(ref.endsWith('.list') ? ref.slice(0, -5) : null);
+	if (name) {
+		const titleKey =
+			resources?.listDetail[name]?.detail.titleKey ??
+			(name === 'units' ? resources?.units?.detail?.titleKey : undefined);
 		if (titleKey) return titleKey;
 	}
 	if (model.columns.some((c) => c.key === 'name')) return 'name';

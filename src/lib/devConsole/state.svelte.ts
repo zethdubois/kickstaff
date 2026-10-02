@@ -233,6 +233,16 @@ export function klogWithSource(
   push(level, args, { source });
 }
 
+/** One timestamp shared by every line of a single command result. */
+export function klogAt(
+  level: KlogLevel,
+  source: string | null,
+  message: string,
+  ts: number,
+): void {
+  push(level, [message], { source, ts });
+}
+
 /**
  * Fetch the last N klogs for the current user and merge them into the pane
  * as non-persisting history entries. Call once per page load (from +layout).

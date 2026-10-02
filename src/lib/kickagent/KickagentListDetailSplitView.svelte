@@ -1,54 +1,37 @@
 <!--
   @docs: docs/sop-svelte-and-components.md
-  @component: KickagentAccountsSplitView.svelte
+  @component: KickagentListDetailSplitView.svelte
 -->
 <script lang="ts">
-  import KickagentAccountDetailPane from "./KickagentAccountDetailPane.svelte";
+  import KickagentListDetailPane from "./KickagentListDetailPane.svelte";
   import { formatPresentationCell } from "./formatPresentationCell";
   import {
-    accountFromShowOutcome,
-    accountOutcomeMessage,
-    buildGlUpdateArgs,
-    glDetailFields,
-  } from "./glAccountForm";
-  import {
-    getManifestResources,
-    type ManifestGlDetailResource,
-    type ManifestGlUpdateResource,
-  } from "./manifestResourceCache";
+    buildListDetailUpdateArgs,
+    recordFromShowOutcome,
+    recordOutcomeMessage,
+  } from "./listDetailForm";
+  import type { ManifestListDetailResource } from "./manifestResourceCache";
   import type { ResourceTableModel } from "./outcomeToTableModel";
   import { runManifestCommand } from "./runManifestCommand";
 
   type Props = {
     model: ResourceTableModel;
-    detailSchema?: ManifestGlDetailResource | null;
-    updateSchema?: ManifestGlUpdateResource | null;
+    resource: ManifestListDetailResource;
     title?: string;
     variant?: "console" | "page";
-    onAccountUpdated?: (account: Record<string, unknown>) => void;
+    onRecordUpdated?: (record: Record<string, unknown>) => void;
   };
 
   let {
     model,
-    detailSchema = null,
-    updateSchema = null,
-    title = "Accounts",
+    resource,
+    title = "Results",
     variant = "page",
-    onAccountUpdated,
+    onRecordUpdated,
   }: Props = $props();
 
-  const resolvedDetail = $derived(
-    detailSchema ?? getManifestResources()?.gl?.detail ?? null,
-  );
-  const resolvedUpdate = $derived(
-    updateSchema ?? getManifestResources()?.gl?.update ?? null,
-  );
-  const fields = $derived(
-    glDetailFields(model.columns, resolvedUpdate?.editableFields ?? []),
-  );
-
   let selectedId = $state<string | null>(null);
-  let detailAccount = $state<Record<string, unknown> | null>(null);
+  let detailRecord = $state<Record<string, unknown> | null>(null);
   let detailLoading = $state(false);
   let detailSaving = $state(false);
   let detailError = $state<string | null>(null);
@@ -61,16 +44,10 @@
   }
 
   async function loadDetail(row: Record<string, unknown>) {
-    const schema = resolvedDetail;
     const id = rowId(row);
     selectedId = id;
-    if (!schema) {
-      detailAccount = null;
-      detailError = "Account detail schema not loaded.";
-      return;
-    }
     if (!id) {
-      detailAccount = null;
+      detailRecord = null;
       detailError = "Selected row has no id.";
       return;
     }
@@ -79,20 +56,23 @@
     detailLoading = true;
     detailError = null;
     try {
-      const outcome = await runManifestCommand(schema.command, ["--id", id]);
+      const outcome = await runManifestCommand(resource.detail.command, [
+        "--id",
+        id,
+      ]);
       if (gen !== detailLoadGen) return;
-      const account = accountFromShowOutcome(outcome);
-      if (account) {
-        detailAccount = account;
+      const record = recordFromShowOutcome(outcome, resource.detail.recordKey);
+      if (record) {
+        detailRecord = record;
         detailError = null;
       } else {
-        detailAccount = null;
-        detailError = accountOutcomeMessage(outcome);
+        detailRecord = null;
+        detailError = recordOutcomeMessage(outcome, resource.detail.recordKey);
       }
-    } catch (error) {
+    } catch (caught) {
       if (gen !== detailLoadGen) return;
-      detailAccount = null;
-      detailError = error instanceof Error ? error.message : String(error);
+      detailRecord = null;
+      detailError = caught instanceof Error ? caught.message : String(caught);
     } finally {
       if (gen === detailLoadGen) detailLoading = false;
     }
@@ -101,28 +81,29 @@
   async function saveDetail(
     draft: Record<string, unknown>,
   ): Promise<string | void> {
-    const detail = resolvedDetail;
-    const update = resolvedUpdate;
-    const current = detailAccount;
-    if (!detail || !update || !current) return "Account detail schema not loaded.";
-    const args = buildGlUpdateArgs(current, draft, update.editableFields);
-    if (args === null) return "Account has no id or number.";
+    const current = detailRecord;
+    if (!current) return "No record loaded.";
+    const args = buildListDetailUpdateArgs(current, draft, resource.detail);
+    if (args === null) return "Record has no identity flag.";
     if (args.length === 0) return "No changes to save.";
 
     detailSaving = true;
     detailError = null;
     try {
-      const outcome = await runManifestCommand(detail.submitCommand, args);
-      const account = accountFromShowOutcome(outcome);
-      if (!account) {
-        detailError = accountOutcomeMessage(outcome);
+      const outcome = await runManifestCommand(
+        resource.detail.submitCommand,
+        args,
+      );
+      const record = recordFromShowOutcome(outcome, resource.detail.recordKey);
+      if (!record) {
+        detailError = recordOutcomeMessage(outcome, resource.detail.recordKey);
         return;
       }
-      detailAccount = account;
-      onAccountUpdated?.(account);
+      detailRecord = record;
+      onRecordUpdated?.(record);
       return "Saved.";
-    } catch (error) {
-      detailError = error instanceof Error ? error.message : String(error);
+    } catch (caught) {
+      detailError = caught instanceof Error ? caught.message : String(caught);
     } finally {
       detailSaving = false;
     }
@@ -134,14 +115,14 @@
     if (!stillThere) {
       detailLoadGen += 1;
       selectedId = null;
-      detailAccount = null;
+      detailRecord = null;
       detailLoading = false;
       detailError = null;
     }
   });
 </script>
 
-<div class="accounts" class:accounts--console={variant === "console"}>
+<div class="split" class:split--console={variant === "console"}>
   <section class="tableWrap" aria-label={title}>
     <div class="scroll">
       <table>
@@ -177,26 +158,20 @@
     </div>
   </section>
 
-  {#if resolvedDetail}
-    <KickagentAccountDetailPane
-      titleKey={resolvedDetail.titleKey}
-      {fields}
-      account={detailAccount}
-      loading={detailLoading}
-      saving={detailSaving}
-      error={detailError}
-      {variant}
-      onSave={saveDetail}
-    />
-  {:else}
-    <section class="detailMissing" aria-label="Account details">
-      <p>Detail schema not available. Reload kickagent manifest.</p>
-    </section>
-  {/if}
+  <KickagentListDetailPane
+    titleKey={resource.detail.titleKey}
+    fields={resource.detail.fields}
+    record={detailRecord}
+    loading={detailLoading}
+    saving={detailSaving}
+    error={detailError}
+    {variant}
+    onSave={saveDetail}
+  />
 </div>
 
 <style>
-  .accounts {
+  .split {
     display: grid;
     gap: 0.75rem;
     margin: 0.75rem 0 1rem;
@@ -209,7 +184,7 @@
     background: var(--resource-table-bg, #fff);
   }
 
-  .accounts--console .tableWrap {
+  .split--console .tableWrap {
     border-color: #2a3548;
     background: #0e1219;
   }
@@ -242,27 +217,11 @@
     background: color-mix(in srgb, currentColor 6%, #fff);
   }
 
-  .accounts--console th {
-    background: #121820;
-    color: #9aa3b3;
-  }
-
   tr {
     cursor: pointer;
   }
 
   tr.selected {
     background: color-mix(in srgb, #1565c0 14%, transparent);
-  }
-
-  .accounts--console tr.selected {
-    background: #1a2638;
-  }
-
-  .detailMissing {
-    margin: 0;
-    padding: 1rem 0.75rem;
-    font-size: 0.9rem;
-    color: color-mix(in srgb, currentColor 60%, transparent);
   }
 </style>

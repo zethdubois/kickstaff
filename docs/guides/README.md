@@ -7,6 +7,7 @@
 
 | Doc                                                                | Purpose                                                                    |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [host-mission.md](host-mission.md)                                   | **Standing mission** — generic kickagent consumer; read before `resources.*` / KAM UI work |
 | [platform-overview.md](platform-overview.md)                         | **Architecture** — kickstaff vs kickagent, one DB / two schemas, KAM / KAM-UI |
 | [database-targeting.md](database-targeting.md)                       | **Dev vs prod DB** — `KICKSTAFF_DB_DEFAULT`, CLI vs KAM cookie (aligned with kickagent) |
 | [README.md](../../README.md#development)                           | **Local dev setup** — install, DB, seed, `pnpm dev`, troubleshooting       |

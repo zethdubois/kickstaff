@@ -17,7 +17,7 @@
     klogInfo,
     klogWarn,
   } from "$lib/devConsole/state.svelte";
-  import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
+  import { getGlListSchema, getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
   import {
     registerRefreshTarget,
     unregisterRefreshTarget,
@@ -105,7 +105,7 @@
     const manifestUrl = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
     const shouldForceReload =
       lastKickagentBootUserId !== user.id ||
-      (manifestUrl && !getUnitsListSchema());
+      (manifestUrl && !getUnitsListSchema() && !getGlListSchema());
 
     if (lastKickagentBootUserId === user.id && !shouldForceReload) return;
     lastKickagentBootUserId = user.id;
@@ -116,11 +116,11 @@
           if (r.ok) {
             if (r.resourcesCached) {
               klogInfo(
-                `kickagent ${r.version} loaded (resources.units.list ready)`,
+                `kickagent ${r.version} loaded (resources ready${getGlListSchema() ? "; list-detail gl" : ""}${getUnitsListSchema() ? "; units" : ""})`,
               );
             } else {
               klogWarn(
-                `kickagent ${r.version} loaded but manifest has no resources.units.list — deploy kickagent ≥ 0.0.3`,
+                `kickagent ${r.version} loaded but manifest has no parseable resources`,
               );
             }
           } else {

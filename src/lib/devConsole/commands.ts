@@ -21,6 +21,7 @@ import {
 import {
   devConsole,
   fetchDbStatus,
+  klogAt,
   klogError,
   klogWithSource,
   type KlogLevel,
@@ -29,11 +30,8 @@ import type { CommandOutcome } from "$lib/kickagent/contracts";
 
 export type { CommandOutcome };
 import { materializeDashboardCommand } from "../client/dashboardCommandMaterialize";
-import { getGlListSchema } from "$lib/kickagent/manifestResourceCache";
-import {
-  outcomeToTableModel,
-  tableOutcomeMissingHint,
-} from "$lib/kickagent/outcomeToTableModel";
+import { getGlListSchema, getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
+import { listRowLines } from "./listRowLine";
 import {
   executeHistoryCommand,
   expandHistoryBang,
@@ -288,24 +286,31 @@ export async function runCommand(input: string): Promise<CommandResult> {
     }
   }
 
-  logLines(outcome, source);
-  maybeStashTableOutcome(outcome);
+  logCommandOutput(outcome, source);
   if (resolved.startsWith(KICKAGENT_NS)) {
     void materializeDashboardCommand(resolved);
   }
   return { ok: true };
 }
 
-function maybeStashTableOutcome(outcome: CommandOutcome | void): void {
+/**
+ * One command result: the summary log, then each `data.rows` line.
+ * Every line shares one timestamp so the console clocks the return, not each row.
+ */
+function logCommandOutput(outcome: CommandOutcome | void, source: string): void {
+  devConsole.clearTableOutcome();
   if (!outcome) return;
-  const model = outcomeToTableModel(outcome);
-  if (model) {
-    devConsole.setTableOutcome(model);
-    return;
+  const ts = Date.now();
+  const level: KlogLevel = outcome.level ?? "log";
+  if (outcome.log !== undefined) {
+    const lines = Array.isArray(outcome.log) ? outcome.log : [outcome.log];
+    for (const line of lines) {
+      if (line === undefined || line === null) continue;
+      klogAt(level, source, String(line), ts);
+    }
   }
-  const hint = tableOutcomeMissingHint(outcome);
-  if (hint) {
-    klogWithSource("warn", "kickagent:table", hint);
+  for (const line of listRowLines(outcome.data) ?? []) {
+    klogAt("log", source, line, ts);
   }
 }
 
@@ -719,12 +724,12 @@ registerCommand("kam:reload-kickagent", async (): Promise<CommandOutcome> => {
     throw new Error(r.error);
   }
   const resourceNote = [
-    r.resourcesCached
+    getUnitsListSchema()
       ? "resources.units.list cached"
-      : "WARNING: no resources.units.list in manifest — deploy kickagent ≥ 0.0.3",
+      : "no resources.units.list",
     getGlListSchema()
-      ? "resources.gl.list cached"
-      : "no resources.gl.list",
+      ? "resources.gl list-detail cached"
+      : "no resources.gl list-detail",
   ].join("; ");
   return {
     log: `kickagent plugin reloaded (manifest v${r.version}; ${resourceNote})`,

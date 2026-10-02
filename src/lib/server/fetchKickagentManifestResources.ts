@@ -1,9 +1,7 @@
 import { env } from '$env/dynamic/public';
 import {
 	parseManifestResources,
-	type ManifestGlDetailResource,
-	type ManifestGlListResource,
-	type ManifestGlUpdateResource,
+	type ManifestListDetailResource,
 	type ManifestResources,
 	type ManifestUnitsDetailResource,
 	type ManifestUnitsListResource
@@ -12,13 +10,13 @@ import {
 export type KickagentManifestResourcesLoad = {
 	manifestUrl: string | null;
 	manifestVersion: string | null;
-	/** Parsed manifest resources when fetch succeeds. */
 	resources: ManifestResources | null;
 	unitsList: ManifestUnitsListResource | null;
 	unitsDetail: ManifestUnitsDetailResource | null;
-	glList: ManifestGlListResource | null;
-	glDetail: ManifestGlDetailResource | null;
-	glUpdate: ManifestGlUpdateResource | null;
+	glResource: ManifestListDetailResource | null;
+	glList: ManifestListDetailResource['list'] | null;
+	glDetail: ManifestListDetailResource['detail'] | null;
+	glUpdate: ManifestListDetailResource['update'] | null;
 	error: string | null;
 };
 
@@ -32,6 +30,7 @@ function emptyLoad(
 		resources: null,
 		unitsList: null,
 		unitsDetail: null,
+		glResource: null,
 		glList: null,
 		glDetail: null,
 		glUpdate: null,
@@ -61,20 +60,17 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 		const manifestVersion =
 			typeof raw.version === 'string' ? raw.version.trim() : null;
 		const resources = parseManifestResources(raw.resources);
-		const unitsList = resources?.units.list ?? null;
-		const unitsDetail = resources?.units.detail ?? null;
-		const glList = resources?.gl?.list ?? null;
-		const glDetail = resources?.gl?.detail ?? null;
-		const glUpdate = resources?.gl?.update ?? null;
+		const unitsList = resources?.units?.list ?? null;
+		const unitsDetail = resources?.units?.detail ?? null;
+		const glResource = resources?.listDetail.gl ?? null;
 
-		if (!unitsList) {
-			const hint =
-				manifestVersion && manifestVersion < '0.0.3'
-					? `manifest v${manifestVersion} is too old — deploy kickagent ≥ 0.0.3 with resources`
-					: manifestVersion
-						? `manifest v${manifestVersion} has no parseable resources.units.list`
-						: 'manifest missing resources.units.list';
-			return emptyLoad(hint, { manifestUrl, manifestVersion });
+		if (!resources) {
+			return emptyLoad(
+				manifestVersion
+					? `manifest v${manifestVersion} has no parseable resources`
+					: 'manifest missing resources',
+				{ manifestUrl, manifestVersion }
+			);
 		}
 
 		return {
@@ -83,9 +79,10 @@ export async function fetchKickagentManifestResources(): Promise<KickagentManife
 			resources,
 			unitsList,
 			unitsDetail,
-			glList,
-			glDetail,
-			glUpdate,
+			glResource,
+			glList: glResource?.list ?? null,
+			glDetail: glResource?.detail ?? null,
+			glUpdate: glResource?.update ?? null,
 			error: null
 		};
 	} catch (e) {

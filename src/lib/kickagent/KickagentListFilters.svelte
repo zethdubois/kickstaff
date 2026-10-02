@@ -1,32 +1,35 @@
+<!--
+  @docs: docs/sop-svelte-and-components.md
+  @component: KickagentListFilters.svelte
+-->
 <script lang="ts">
-  import type { ManifestUnitsListResource } from "./manifestResourceCache";
-
-  type FilterValues = Record<string, string>;
+  import {
+    buildListFilterArgs,
+    type ListFilterValues,
+  } from "./listDetailForm";
+  import type { ManifestListFilter } from "./manifestResourceCache";
 
   type Props = {
-    schema: ManifestUnitsListResource;
+    filters: ManifestListFilter[];
+    command?: string;
     onRun: (args: string[]) => Promise<void>;
     loading?: boolean;
     variant?: "console" | "page";
   };
 
-  let { schema, onRun, loading = false, variant = "page" }: Props = $props();
+  let {
+    filters,
+    command = "list",
+    onRun,
+    loading = false,
+    variant = "page",
+  }: Props = $props();
 
-  let values = $state<FilterValues>({});
-
-  function buildArgs(): string[] {
-    const args: string[] = [];
-    for (const filter of schema.filters) {
-      const raw = values[filter.key]?.trim();
-      if (!raw) continue;
-      args.push(filter.flag, raw);
-    }
-    return args;
-  }
+  let values = $state<ListFilterValues>({});
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
-    await onRun(buildArgs());
+    await onRun(buildListFilterArgs(filters, values));
   }
 
   function clearFilters() {
@@ -34,7 +37,7 @@
   }
 </script>
 
-{#if schema.filters.length > 0}
+{#if filters.length > 0}
   <form
     class="filters"
     class:filters--console={variant === "console"}
@@ -42,26 +45,43 @@
     aria-label="List filters"
   >
     <div class="filterGrid">
-      {#each schema.filters as filter (filter.key)}
-        <label class="field">
-          <span class="label">{filter.label}</span>
-          <input
-            type="text"
-            placeholder={filter.match === "wildcard" ? "*pattern*" : ""}
-            disabled={loading}
-            bind:value={
-              () => values[filter.key] ?? "",
-              (v) => {
-                values = { ...values, [filter.key]: v };
+      {#each filters as filter (filter.key)}
+        {#if filter.match === "presence"}
+          <label class="check">
+            <input
+              type="checkbox"
+              disabled={loading}
+              checked={values[filter.key] === true}
+              onchange={(event) => {
+                values = {
+                  ...values,
+                  [filter.key]: event.currentTarget.checked,
+                };
+              }}
+            />
+            <span class="label">{filter.label}</span>
+          </label>
+        {:else}
+          <label class="field">
+            <span class="label">{filter.label}</span>
+            <input
+              type="text"
+              placeholder={filter.match === "wildcard" ? "*pattern*" : ""}
+              disabled={loading}
+              bind:value={
+                () => String(values[filter.key] ?? ""),
+                (v) => {
+                  values = { ...values, [filter.key]: v };
+                }
               }
-            }
-          />
-        </label>
+            />
+          </label>
+        {/if}
       {/each}
     </div>
     <div class="actions">
       <button type="submit" class="run" disabled={loading}>
-        {loading ? "Loading…" : `Run ${schema.command}`}
+        {loading ? "Loading…" : `Run ${command}`}
       </button>
       <button
         type="button"
@@ -94,6 +114,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
     gap: 0.5rem 0.75rem;
+    align-items: end;
   }
 
   .field {
@@ -103,6 +124,14 @@
     min-width: 0;
   }
 
+  .check {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-bottom: 0.35rem;
+    font-size: 0.9rem;
+  }
+
   .label {
     font-size: 0.7rem;
     text-transform: uppercase;
@@ -110,9 +139,21 @@
     color: color-mix(in srgb, currentColor 55%, transparent);
   }
 
+  .check .label {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.9rem;
+    color: inherit;
+  }
+
   .filters--console .label {
     font-size: 0.62rem;
     color: #7a8496;
+  }
+
+  .filters--console .check .label {
+    font-size: 0.78rem;
+    color: #d6d8de;
   }
 
   .field input {
@@ -133,16 +174,6 @@
     color: #d6d8de;
   }
 
-  .field input:focus {
-    outline: 2px solid color-mix(in srgb, currentColor 35%, transparent);
-    outline-offset: 1px;
-  }
-
-  .filters--console .field input:focus {
-    outline: 1px solid #62d4a3;
-    border-color: #62d4a3;
-  }
-
   .actions {
     display: flex;
     gap: 0.5rem;
@@ -159,35 +190,14 @@
     border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
   }
 
-  .filters--console .run,
-  .filters--console .clear {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.55rem;
-    border-color: #2a3548;
-  }
-
   .run {
     background: color-mix(in srgb, currentColor 8%, transparent);
     font-weight: 600;
   }
 
-  .filters--console .run {
-    background: #1a3d2e;
-    color: #62d4a3;
-    border-color: #2d5c45;
-  }
-
-  .filters--console .run:hover:not(:disabled) {
-    background: #224a38;
-  }
-
   .clear {
     background: transparent;
     color: color-mix(in srgb, currentColor 65%, transparent);
-  }
-
-  .filters--console .clear:hover:not(:disabled) {
-    background: #1a1f29;
   }
 
   .run:disabled,

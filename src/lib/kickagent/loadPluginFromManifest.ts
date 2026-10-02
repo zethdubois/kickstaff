@@ -169,7 +169,10 @@ export async function reloadKickagentPluginFromManifest(options?: {
       return {
         ok: true,
         version: manifest.version,
-        resourcesCached: Boolean(manifest.resources?.units.list),
+        resourcesCached: Boolean(
+          manifest.resources?.units?.list ||
+            Object.keys(manifest.resources?.listDetail ?? {}).length > 0,
+        ),
       };
     }
 
@@ -265,7 +268,10 @@ export async function reloadKickagentPluginFromManifest(options?: {
     return {
       ok: true,
       version: manifest.version,
-      resourcesCached: Boolean(manifest.resources?.units.list),
+      resourcesCached: Boolean(
+        manifest.resources?.units?.list ||
+          Object.keys(manifest.resources?.listDetail ?? {}).length > 0,
+      ),
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

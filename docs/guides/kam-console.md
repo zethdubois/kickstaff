@@ -113,8 +113,8 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 
 ### Resource tables (kickagent data UI)
 
-- List commands (e.g. **`units-list`**) return **`outcome.data`** + **`presentationRef`**; columns come from manifest **`resources`** (cached on `kam:reload-kickagent`).
-- KAM may show a small table **above** scrollback when stash succeeds; **pipe log lines are not parsed** for layout.
+- List commands (e.g. **`units-list`**, **`gl-list`**) return **`outcome.data`** + **`presentationRef`**. The accounts and units pages render tables from that data and manifest columns.
+- The console stays text. After the summary log (`accounts: 83`), it prints one line per `data.rows` entry (accounts: number, name, type). It does not mount a table widget.
 - **Primary units UI:** hub card **Open units** or [`/ops/units`](../../src/routes/ops/units/+page.svelte). See [kickagent-resource-ui.md](kickagent-resource-ui.md).
 
 ### Command history (bash-style)
