@@ -207,12 +207,18 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    min-height: 0;
+    min-height: 100%;
     max-width: 72rem;
     width: 100%;
     margin: 0 auto;
     padding: 1.25rem 1rem 1rem;
     overflow: hidden;
+  }
+
+  /* List is at its floor and detail still does not fit: let main scroll. */
+  :global(.ops:has(.split--pageScroll)) {
+    height: auto;
+    overflow: visible;
   }
 
   .ops__chrome {

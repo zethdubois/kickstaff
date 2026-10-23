@@ -171,8 +171,8 @@
   .detailPane {
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 0 0 auto;
+    height: auto;
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 8px;
     background: var(--resource-table-bg, #fff);
@@ -223,8 +223,8 @@
   }
 
   .form {
-    flex: 1;
-    overflow-y: auto;
+    flex: 0 0 auto;
+    overflow: visible;
     padding: 0.65rem 0.75rem 1rem;
   }
 

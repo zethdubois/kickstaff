@@ -38,10 +38,43 @@
   let detailError = $state<string | null>(null);
   let detailLoadGen = 0;
   let scrollEl: HTMLDivElement | undefined = $state();
+  let splitEl: HTMLDivElement | undefined = $state();
+  /** List is at its 5-row floor and detail still does not fit: main scrolls. */
+  let pageScroll = $state(false);
 
   const detailOpen = $derived(
     selectedId != null || detailLoading || detailError != null,
   );
+
+  function measureFit() {
+    if (variant === "console") return;
+    const split = splitEl;
+    if (!split) return;
+    const ops = split.closest(".ops");
+    const main = split.closest("main");
+    if (!(ops instanceof HTMLElement) || !(main instanceof HTMLElement)) return;
+
+    if (!detailOpen) {
+      pageScroll = false;
+      return;
+    }
+
+    const detail = split.querySelector(".detailSlot");
+    if (!(detail instanceof HTMLElement)) return;
+
+    if (!pageScroll) {
+      // List scrollHeight must not count. Only the detail box extending
+      // past the ops box means the list is already at its floor.
+      const detailBottom = detail.getBoundingClientRect().bottom;
+      const opsBottom = ops.getBoundingClientRect().bottom;
+      if (detailBottom > opsBottom + 2) pageScroll = true;
+      return;
+    }
+
+    if (ops.getBoundingClientRect().height <= main.clientHeight + 2) {
+      pageScroll = false;
+    }
+  }
 
   function rowId(row: Record<string, unknown>): string | null {
     const id = row[model.primaryKey];
@@ -168,12 +201,40 @@
     const stillThere = model.rows.some((row) => rowId(row) === selectedId);
     if (!stillThere) clearSelection();
   });
+
+  $effect(() => {
+    detailOpen;
+    detailRecord;
+    detailLoading;
+    detailError;
+    pageScroll;
+    const split = splitEl;
+    if (!split || variant === "console") return;
+
+    measureFit();
+    const ops = split.closest(".ops");
+    const main = split.closest("main");
+    const ro = new ResizeObserver(() => measureFit());
+    ro.observe(split);
+    if (ops) ro.observe(ops);
+    if (main) ro.observe(main);
+    const slot = split.querySelector(".detailSlot");
+    if (slot) ro.observe(slot);
+    return () => ro.disconnect();
+  });
+
+  $effect(() => {
+    if (!selectedId || variant === "console") return;
+    pageScroll;
+    void recenterAfterLayout(selectedId);
+  });
 </script>
 
 <div
   class="split"
   class:split--console={variant === "console"}
-  class:split--hasDetail={detailOpen && variant === "page"}
+  class:split--pageScroll={pageScroll}
+  bind:this={splitEl}
 >
   <section class="tableWrap" aria-label={title}>
     <div class="scroll" bind:this={scrollEl}>
@@ -243,6 +304,13 @@
     margin: 0.5rem 0 0;
   }
 
+  /* Detail no longer fits above the list floor: size to content so main scrolls. */
+  .split--pageScroll {
+    flex: 0 0 auto;
+    min-height: min-content;
+    overflow: visible;
+  }
+
   .split--console {
     flex: 0 0 auto;
     min-height: unset;
@@ -250,7 +318,7 @@
   }
 
   .tableWrap {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-height: var(--list-min-height);
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 8px;
@@ -261,8 +329,14 @@
     min-width: 0;
   }
 
+  .split--pageScroll .tableWrap {
+    flex: 0 0 var(--list-min-height);
+    height: var(--list-min-height);
+  }
+
   .split--console .tableWrap {
     flex: 0 0 auto;
+    height: auto;
     min-height: unset;
     border-color: #2a3548;
     background: #0e1219;
@@ -279,20 +353,17 @@
   }
 
   .detailSlot {
-    flex: 0 1 auto;
-    min-height: 0;
-    max-height: calc(100% - var(--list-min-height) - 0.75rem);
-    overflow: auto;
+    flex: 0 0 auto;
+    min-height: min-content;
+    overflow: visible;
     display: flex;
     flex-direction: column;
   }
 
-  .split--console .detailSlot {
-    max-height: none;
-  }
-
   .detailSlot :global(.detailPane) {
-    min-height: 0;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: unset;
   }
 
   table {

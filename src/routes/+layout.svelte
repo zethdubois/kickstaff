@@ -341,6 +341,7 @@
   class="main"
   class:main--hub={isHub}
   class:main--city={!isHub}
+  class:main--fill={mainSurfaceFillHeight}
   style:--rental-viewport-offset={showInternalNav
     ? "calc(3.75rem + 1px + 0.125rem)"
     : "0px"}
@@ -394,6 +395,11 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+  }
+
+  .main--fill {
+    display: flex;
+    flex-direction: column;
   }
 
   .nav {

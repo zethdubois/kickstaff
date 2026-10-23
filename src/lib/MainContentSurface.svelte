@@ -86,13 +86,18 @@
   }
 
   .mainSurface--fillHeight {
+    flex: 1 0 auto;
     height: 100%;
+    min-height: 100%;
     width: 100%;
     max-width: none;
     margin: 0;
     display: flex;
     flex-direction: column;
-    min-height: 0;
+  }
+
+  .mainSurface--fillHeight:has(:global(.split--pageScroll)) {
+    height: auto;
   }
 
   .mainSurface--elevated {
