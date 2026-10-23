@@ -1,15 +1,17 @@
 # Host port 5043 — KAM 50xx family (+43 Postgres slot). Container still listens on 5432 inside.
 services:
   postgres:
-    image: postgres:16
+    image: postgres:18
     ports:
       - "5043:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: kickstaff_dev
+    # PG 18 image stores data at /var/lib/postgresql/18/docker. Mount the parent
+    # directory; mounting .../data is the PG 16 layout and will not persist.
     volumes:
-      - kickstaff_pg_data:/var/lib/postgresql/data
+      - kickstaff_pg_data:/var/lib/postgresql
 
 volumes:
   kickstaff_pg_data:

@@ -34,8 +34,8 @@ docker_up_standalone() {
 		-e POSTGRES_PASSWORD=postgres \
 		-e POSTGRES_DB=kickstaff_dev \
 		-p 5043:5432 \
-		-v "${VOLUME_NAME}:/var/lib/postgresql/data" \
-		postgres:16
+		-v "${VOLUME_NAME}:/var/lib/postgresql" \
+		postgres:18
 	echo "Created and started $CONTAINER_NAME (docker run; matches docker-compose.yml)"
 }
 
