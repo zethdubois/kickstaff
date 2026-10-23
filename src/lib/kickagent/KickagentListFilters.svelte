@@ -95,7 +95,7 @@
 
 <style>
   .filters {
-    margin: 0.75rem 0;
+    margin: 0.5rem 0;
     padding: 0.55rem 0.85rem;
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 8px;

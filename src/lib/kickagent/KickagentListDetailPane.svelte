@@ -171,6 +171,8 @@
   .detailPane {
     display: flex;
     flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 8px;
     background: var(--resource-table-bg, #fff);

@@ -126,25 +126,27 @@
 </svelte:head>
 
 <div class="ops">
-  <nav class="ops__nav" aria-label="Ops">
-    <a class="ops__navLink" href="/">Dashboard</a>
-    <span class="ops__navSep" aria-hidden="true">·</span>
-    <a class="ops__navLink" href="/ops/units">Units</a>
-    <span class="ops__navSep" aria-hidden="true">·</span>
-    <span class="ops__navCurrent">Accounts</span>
-  </nav>
+  <div class="ops__chrome">
+    <nav class="ops__nav" aria-label="Ops">
+      <a class="ops__navLink" href="/">Dashboard</a>
+      <span class="ops__navSep" aria-hidden="true">·</span>
+      <a class="ops__navLink" href="/ops/units">Units</a>
+      <span class="ops__navSep" aria-hidden="true">·</span>
+      <span class="ops__navCurrent">Accounts</span>
+    </nav>
 
-  <header class="ops__header">
-    <h1 class="ops__title">
-      Accounts
-      <span
-        class="ops__info"
-        tabindex="0"
-        title="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
-        aria-label="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
-      >i</span>
-    </h1>
-  </header>
+    <header class="ops__header">
+      <h1 class="ops__title">
+        Accounts
+        <span
+          class="ops__info"
+          tabindex="0"
+          title="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
+          aria-label="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
+        >i</span>
+      </h1>
+    </header>
+  </div>
 
   {#if !resource || !schema}
     <div class="ops__errBlock" role="alert">
@@ -165,23 +167,28 @@
       </button>
     </div>
   {:else}
-    <KickagentListFilters
-      filters={schema.filters}
-      command={schema.command}
-      {loading}
-      onRun={runList}
-    />
+    <div class="ops__chrome">
+      <KickagentListFilters
+        filters={schema.filters}
+        command={schema.command}
+        {loading}
+        onRun={runList}
+      />
 
-    {#if error}
-      <p class="ops__err" role="alert">{error}</p>
-    {/if}
+      {#if error}
+        <p class="ops__err" role="alert">{error}</p>
+      {/if}
 
-    {#if notice}
-      <p class="ops__empty">{notice}</p>
-    {/if}
+      {#if notice}
+        <p class="ops__empty">{notice}</p>
+      {/if}
+
+      {#if table}
+        <p class="ops__count">{table.rows.length} shown</p>
+      {/if}
+    </div>
 
     {#if table}
-      <p class="ops__count">{table.rows.length} shown</p>
       <KickagentListDetailSplitView
         model={table}
         {resource}
@@ -196,13 +203,24 @@
 
 <style>
   .ops {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
     max-width: 72rem;
+    width: 100%;
     margin: 0 auto;
-    padding: 1.25rem 1rem 2rem;
+    padding: 1.25rem 1rem 1rem;
+    overflow: hidden;
+  }
+
+  .ops__chrome {
+    flex: 0 0 auto;
   }
 
   .ops__nav {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     font-size: 0.88rem;
     color: color-mix(in srgb, currentColor 65%, transparent);
   }
@@ -223,7 +241,7 @@
   }
 
   .ops__header {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
   }
 
   .ops__title {
@@ -290,11 +308,12 @@
 
   .ops__empty,
   .ops__count {
-    margin: 0.75rem 0 0;
+    margin: 0.5rem 0 0;
     color: color-mix(in srgb, currentColor 60%, transparent);
   }
 
   .ops__count {
     font-size: 0.85rem;
+    margin-bottom: 0;
   }
 </style>

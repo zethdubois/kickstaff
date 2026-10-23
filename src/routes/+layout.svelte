@@ -61,6 +61,9 @@
       page.route.id === "/account/password",
   );
 
+  /** Accounts fills the main column; list/detail manage their own scroll. */
+  const mainSurfaceFillHeight = $derived(page.route.id === "/ops/accounts");
+
   let useExternalLink = $state(false);
   let rentalMenuOpen = $state(false);
   let userMenuOpen = $state(false);
@@ -342,7 +345,10 @@
     ? "calc(3.75rem + 1px + 0.125rem)"
     : "0px"}
 >
-  <MainContentSurface fullWidth={mainSurfaceFullWidth}>
+  <MainContentSurface
+    fullWidth={mainSurfaceFullWidth}
+    fillHeight={mainSurfaceFillHeight}
+  >
     {@render children()}
   </MainContentSurface>
 </main>

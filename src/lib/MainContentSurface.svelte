@@ -12,9 +12,11 @@
     children: import("svelte").Snippet;
     /** Full viewport width (rental landings). Default shrink-wraps to route content. */
     fullWidth?: boolean;
+    /** Fill the main column height (ops pages that manage their own scroll). */
+    fillHeight?: boolean;
   };
 
-  let { children, fullWidth = false }: Props = $props();
+  let { children, fullWidth = false, fillHeight = false }: Props = $props();
 
   let surfaceEl: HTMLDivElement | undefined = $state();
 
@@ -62,6 +64,7 @@
   class="mainSurface"
   class:mainSurface--elevated={elevated}
   class:mainSurface--fullWidth={fullWidth}
+  class:mainSurface--fillHeight={fillHeight}
   onfocusin={onMainFocusIn}
 >
   {@render children()}
@@ -80,6 +83,16 @@
 
   .mainSurface--fullWidth {
     width: 100%;
+  }
+
+  .mainSurface--fillHeight {
+    height: 100%;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
   .mainSurface--elevated {
