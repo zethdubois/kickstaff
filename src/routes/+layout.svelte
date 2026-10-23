@@ -353,28 +353,41 @@
 <Palette />
 
 <style>
-  /* Column 0 is the console track. Column 1 is the header and page, and
-     keeps its own max-width and centering. The pane is position:fixed in
-     that track; the empty column only reserves the width. */
+  /* Column 0 is the console track. Column 1 is header + main. The pane is
+     position:fixed in that track; the empty column only reserves the width. */
   .appShell--console {
     display: grid;
     grid-template-columns: var(--kam-console-width, min(370px, 90vw)) minmax(0, 1fr);
-    align-items: start;
-    min-height: 100vh;
+    align-items: stretch;
+    height: 100vh;
+    height: 100dvh;
   }
 
   .appShell--console > .appColumn {
     grid-column: 2;
+  }
+
+  /* Header is its own row; main is the only vertical scroller in this column. */
+  .appColumn {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
+    height: 100vh;
+    height: 100dvh;
   }
 
   .site-header {
-    position: sticky;
-    top: 0;
+    flex: 0 0 auto;
     border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
     background: color-mix(in srgb, Canvas 88%, transparent);
     backdrop-filter: blur(10px);
     padding: 0.75rem 1.25rem;
+  }
+
+  .main {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
   }
 
   .nav {

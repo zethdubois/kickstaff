@@ -7,8 +7,9 @@
 ## Layout
 
 - Nav: Dashboard · Units · **Accounts**
-- Filters: [`KickagentListFilters`](../../src/lib/kickagent/KickagentListFilters.svelte) from `resources.gl.list.filters` (`presence` + exact)
-- Split: [`KickagentListDetailSplitView`](../../src/lib/kickagent/KickagentListDetailSplitView.svelte) — table from `list.columns` + `data.rows`; detail from `detail.fields` + `data[recordKey]`; save via field `flag`s
+- Title: **Accounts** plus an `i` hover tip (list-detail / manifest note). No inline lead or manifest URL line.
+- Filters: [`KickagentListFilters`](../../src/lib/kickagent/KickagentListFilters.svelte) from `resources.gl.list.filters` — one horizontal row (`presence` + exact + run/clear)
+- Split: [`KickagentListDetailSplitView`](../../src/lib/kickagent/KickagentListDetailSplitView.svelte) — table from `list.columns` + `data.rows`; detail pane mounts only after a row is selected
 - Empty list: log only (`no accounts found`)
 
 ## Hub entry

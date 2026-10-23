@@ -171,7 +171,6 @@
   .detailPane {
     display: flex;
     flex-direction: column;
-    min-height: 16rem;
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 8px;
     background: var(--resource-table-bg, #fff);
@@ -179,7 +178,6 @@
   }
 
   .detailPane--console {
-    min-height: 12rem;
     border-color: #2a3548;
     border-radius: 6px;
     background: #0e1219;

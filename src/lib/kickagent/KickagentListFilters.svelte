@@ -44,7 +44,7 @@
     onsubmit={submit}
     aria-label="List filters"
   >
-    <div class="filterGrid">
+    <div class="filterRow">
       {#each filters as filter (filter.key)}
         {#if filter.match === "presence"}
           <label class="check">
@@ -78,17 +78,17 @@
           </label>
         {/if}
       {/each}
-    </div>
-    <div class="actions">
-      <button type="submit" class="run" disabled={loading}>
-        {loading ? "Loading…" : `Run ${command}`}
-      </button>
-      <button
-        type="button"
-        class="clear"
-        disabled={loading}
-        onclick={clearFilters}>Clear</button
-      >
+      <div class="actions">
+        <button type="submit" class="run" disabled={loading}>
+          {loading ? "Loading…" : `Run ${command}`}
+        </button>
+        <button
+          type="button"
+          class="clear"
+          disabled={loading}
+          onclick={clearFilters}>Clear</button
+        >
+      </div>
     </div>
   </form>
 {/if}
@@ -96,7 +96,7 @@
 <style>
   .filters {
     margin: 0.75rem 0;
-    padding: 0.75rem 1rem;
+    padding: 0.55rem 0.85rem;
     border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
     border-radius: 8px;
     background: color-mix(in srgb, currentColor 3%, transparent);
@@ -104,32 +104,32 @@
 
   .filters--console {
     margin: 0.35rem 0;
-    padding: 0.45rem 0.5rem;
+    padding: 0.35rem 0.5rem;
     border-color: #2a3548;
     border-radius: 6px;
     background: #0e1219;
   }
 
-  .filterGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
-    gap: 0.5rem 0.75rem;
-    align-items: end;
+  .filterRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem 0.9rem;
   }
 
   .field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     min-width: 0;
   }
 
   .check {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding-bottom: 0.35rem;
+    gap: 0.35rem;
     font-size: 0.9rem;
+    white-space: nowrap;
   }
 
   .label {
@@ -137,6 +137,7 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: color-mix(in srgb, currentColor 55%, transparent);
+    white-space: nowrap;
   }
 
   .check .label {
@@ -163,7 +164,8 @@
   .field input {
     font: inherit;
     font-size: 0.875rem;
-    padding: 0.35rem 0.5rem;
+    padding: 0.3rem 0.5rem;
+    min-width: 7rem;
     border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
     border-radius: 4px;
     background: var(--resource-filter-input-bg, #fff);
@@ -178,25 +180,27 @@
   .filters--console .field input {
     font-size: 0.62rem;
     padding: 0.2rem 0.35rem;
+    min-width: 5rem;
     border-color: #2a3548;
     background: #0b0d11;
     color: #d6d8de;
   }
 
   .actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.6rem;
+    display: inline-flex;
+    gap: 0.4rem;
+    margin-left: auto;
   }
 
   .run,
   .clear {
     font: inherit;
     font-size: 0.875rem;
-    padding: 0.35rem 0.75rem;
+    padding: 0.3rem 0.7rem;
     border-radius: 4px;
     cursor: pointer;
     border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+    white-space: nowrap;
   }
 
   .run {

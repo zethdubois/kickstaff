@@ -43,8 +43,21 @@
     return String(id);
   }
 
-  async function loadDetail(row: Record<string, unknown>) {
+  function clearSelection() {
+    detailLoadGen += 1;
+    selectedId = null;
+    detailRecord = null;
+    detailLoading = false;
+    detailError = null;
+  }
+
+  async function selectRow(row: Record<string, unknown>) {
     const id = rowId(row);
+    if (id != null && id === selectedId) {
+      clearSelection();
+      return;
+    }
+
     selectedId = id;
     if (!id) {
       detailRecord = null;
@@ -112,13 +125,7 @@
   $effect(() => {
     if (!selectedId) return;
     const stillThere = model.rows.some((row) => rowId(row) === selectedId);
-    if (!stillThere) {
-      detailLoadGen += 1;
-      selectedId = null;
-      detailRecord = null;
-      detailLoading = false;
-      detailError = null;
-    }
+    if (!stillThere) clearSelection();
   });
 </script>
 
@@ -140,11 +147,11 @@
               class:selected={id != null && id === selectedId}
               aria-selected={id != null && id === selectedId}
               tabindex="0"
-              onclick={() => loadDetail(row)}
+              onclick={() => selectRow(row)}
               onkeydown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  void loadDetail(row);
+                  void selectRow(row);
                 }
               }}
             >
@@ -158,16 +165,18 @@
     </div>
   </section>
 
-  <KickagentListDetailPane
-    titleKey={resource.detail.titleKey}
-    fields={resource.detail.fields}
-    record={detailRecord}
-    loading={detailLoading}
-    saving={detailSaving}
-    error={detailError}
-    {variant}
-    onSave={saveDetail}
-  />
+  {#if selectedId != null || detailLoading || detailError}
+    <KickagentListDetailPane
+      titleKey={resource.detail.titleKey}
+      fields={resource.detail.fields}
+      record={detailRecord}
+      loading={detailLoading}
+      saving={detailSaving}
+      error={detailError}
+      {variant}
+      onSave={saveDetail}
+    />
+  {/if}
 </div>
 
 <style>

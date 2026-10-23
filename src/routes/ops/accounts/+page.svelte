@@ -135,19 +135,15 @@
   </nav>
 
   <header class="ops__header">
-    <h1 class="ops__title">Accounts</h1>
-    <p class="ops__lead">
-      Chart of accounts from kickagent list-detail schema. Filters, columns, and
-      save flags come from the manifest.
-    </p>
-    {#if data.manifest.manifestVersion}
-      <p class="ops__meta">
-        Manifest v{data.manifest.manifestVersion}
-        {#if data.manifest.manifestUrl}
-          · <code>{data.manifest.manifestUrl}</code>
-        {/if}
-      </p>
-    {/if}
+    <h1 class="ops__title">
+      Accounts
+      <span
+        class="ops__info"
+        tabindex="0"
+        title="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
+        aria-label="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
+      >i</span>
+    </h1>
   </header>
 
   {#if !resource || !schema}
@@ -231,28 +227,37 @@
   }
 
   .ops__title {
-    margin: 0 0 0.35rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
     font-size: 1.75rem;
     font-weight: 700;
     letter-spacing: -0.02em;
   }
 
-  .ops__lead {
-    margin: 0;
-    color: color-mix(in srgb, currentColor 70%, transparent);
-    line-height: 1.45;
-    max-width: 42rem;
-  }
-
-  .ops__meta {
-    margin: 0.5rem 0 0;
-    font-size: 0.82rem;
+  .ops__info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
     color: color-mix(in srgb, currentColor 55%, transparent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+    cursor: help;
+    user-select: none;
   }
 
-  .ops__meta code {
-    font-size: 0.92em;
-    word-break: break-all;
+  .ops__info:hover,
+  .ops__info:focus-visible {
+    color: inherit;
+    border-color: color-mix(in srgb, currentColor 55%, transparent);
+    outline: none;
   }
 
   .ops__errBlock {
