@@ -1,9 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import {
-    devConsole,
-    KAM_CONSOLE_FOCUS_INPUT_EVENT,
-  } from "./state.svelte";
+  import { devConsole, KAM_CONSOLE_FOCUS_INPUT_EVENT } from "./state.svelte";
   import {
     focusStack,
     Z_CONSOLE_BASE,
@@ -106,10 +103,7 @@
     onfocusin={onConsoleInteract}
     onpointerdown={onConsoleInteract}
   >
-    <header
-      class="head"
-      class:head--kickagent={devConsole.kickagentModeActive}
-    >
+    <header class="head" class:head--kickagent={devConsole.kickagentModeActive}>
       <button
         type="button"
         class="close"
@@ -132,32 +126,36 @@
 
     <div class="body" bind:this={bodyEl}>
       <div class="bodyContent">
-      {#if unitsListSchema}
-        <KickagentListFilters
-          variant="console"
-          filters={unitsListSchema.filters}
-          command={unitsListSchema.command}
-          onRun={runUnitsListFromConsole}
-        />
-      {/if}
-      {#each devConsole.entries as entry, i (entry.id)}
-        {@const previous = i > 0 ? devConsole.entries[i - 1] : null}
-        <div
-          class="row"
-          class:row--err={entry.level === "error"}
-          class:row--warn={entry.level === "warn"}
-          class:row--info={entry.level === "info"}
-          class:row--prompt={entry.source === "kam:prompt"}
-        >
-          <span class="ts">{showsKlogTimestamp(entry, previous) ? fmtTs(entry.ts) : ""}</span>
-          <pre class="msg">{entry.message}</pre>
-        </div>
-      {:else}
-        <p class="empty">
-          no klogs yet — call <code>klog(...)</code> from anywhere in client
-          code to print here.
-        </p>
-      {/each}
+        {#if unitsListSchema}
+          <KickagentListFilters
+            variant="console"
+            filters={unitsListSchema.filters}
+            command={unitsListSchema.command}
+            onRun={runUnitsListFromConsole}
+          />
+        {/if}
+        {#each devConsole.entries as entry, i (entry.id)}
+          {@const previous = i > 0 ? devConsole.entries[i - 1] : null}
+          <div
+            class="row"
+            class:row--err={entry.level === "error"}
+            class:row--warn={entry.level === "warn"}
+            class:row--info={entry.level === "info"}
+            class:row--prompt={entry.source === "kam:prompt"}
+          >
+            <span class="ts"
+              >{showsKlogTimestamp(entry, previous)
+                ? fmtTs(entry.ts)
+                : ""}</span
+            >
+            <pre class="msg">{entry.message}</pre>
+          </div>
+        {:else}
+          <p class="empty">
+            no klogs yet — call <code>klog(...)</code> from anywhere in client code
+            to print here.
+          </p>
+        {/each}
       </div>
     </div>
 
@@ -167,8 +165,10 @@
       aria-label={promptAriaLabel}
       onsubmit={submit}
     >
-      <span class="caret" class:caret--kickagent={devConsole.kickagentModeActive} aria-hidden="true"
-        >{promptPrefix}</span
+      <span
+        class="caret"
+        class:caret--kickagent={devConsole.kickagentModeActive}
+        aria-hidden="true">{promptPrefix}</span
       >
       <input
         bind:this={inlineInputEl}
@@ -191,16 +191,17 @@
 <style>
   .kamConsole {
     position: fixed;
-    top: var(--site-header-offset, 0px);
+    top: 0;
     left: 0;
     bottom: 0;
-    width: var(--kam-console-width, min(420px, 90vw));
+    width: var(--kam-console-width, min(370px, 90vw));
     background: #0b0d11;
     color: #d6d8de;
     border-right: 1px solid #2a2f3a;
     display: grid;
     grid-template-rows: auto 1fr auto;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.9rem;
     box-shadow: 8px 0 30px rgba(0, 0, 0, 0.35);
   }
 
@@ -229,13 +230,13 @@
   .title {
     font-weight: 600;
     letter-spacing: 0.06em;
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     color: #9aa3b3;
     text-transform: uppercase;
   }
 
   .dbBadge {
-    font-size: 0.68rem;
+    font-size: 0.58rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -262,7 +263,7 @@
     background: transparent;
     color: #9aa3b3;
     border: 0;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     line-height: 1;
     cursor: pointer;
     padding: 0.2rem 0.4rem;
@@ -274,14 +275,10 @@
     color: #fff;
   }
 
-  /* direction:rtl parks the native vertical scrollbar on the left so it
-     stays clear of the ops page, which overlaps this pane's right edge. */
   .body {
     overflow-y: auto;
-    direction: rtl;
-    scrollbar-gutter: stable;
     scrollbar-color: #3a4254 #0b0d11;
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     line-height: 1.45;
   }
 
@@ -299,17 +296,18 @@
   }
 
   .bodyContent {
-    direction: ltr;
-    unicode-bidi: isolate;
-    padding: 0.4rem 0.5rem;
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.3rem;
+    padding: 0.4rem 0.5rem 0.4rem 5px;
     min-height: 100%;
   }
 
   .row {
     display: grid;
-    grid-template-columns: 4.4rem 1fr;
-    gap: 0.4rem;
-    padding: 0.1rem 0.15rem;
+    /* 8ch fits HH:MM:SS; empty timestamps still reserve the column. */
+    grid-template-columns: 8ch 1fr;
+    column-gap: 0.5rem;
     border-radius: 3px;
   }
 
@@ -350,7 +348,7 @@
   .empty {
     color: #5a6373;
     padding: 0.6rem 0.4rem;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     line-height: 1.5;
   }
 
@@ -395,6 +393,6 @@
     color: inherit;
     outline: none;
     font: inherit;
-    font-size: 0.82rem;
+    font-size: 0.72rem;
   }
 </style>

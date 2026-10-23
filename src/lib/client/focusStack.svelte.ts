@@ -2,9 +2,10 @@
  * Tracks which shell layer sits above the KAM console.
  * Console wins by default when open; main content rises on pointer/focus.
  *
- * The site header stays above the console. Page content is not given its
- * own z-index, so scrolling it cannot cover the header, and popup overlays
- * (command palette, contact dialog) can still sit above the header.
+ * The console is a full-height left column. The site header lives in the
+ * content column and does not cover the console. Page content is not given
+ * its own z-index, so scrolling it cannot cover the header, and popup
+ * overlays (command palette, contact dialog) can still sit above the header.
  */
 
 export type FocusStackLayer = "console" | "main";

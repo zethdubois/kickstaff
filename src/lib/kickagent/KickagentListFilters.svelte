@@ -146,13 +146,17 @@
     color: inherit;
   }
 
+  .filters--console .check {
+    font-size: 0.8rem;
+  }
+
   .filters--console .label {
-    font-size: 0.62rem;
+    font-size: 0.52rem;
     color: #7a8496;
   }
 
   .filters--console .check .label {
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     color: #d6d8de;
   }
 
@@ -166,8 +170,13 @@
     color: inherit;
   }
 
+  .filters--console .run,
+  .filters--console .clear {
+    font-size: 0.775rem;
+  }
+
   .filters--console .field input {
-    font-size: 0.72rem;
+    font-size: 0.62rem;
     padding: 0.2rem 0.35rem;
     border-color: #2a3548;
     background: #0b0d11;

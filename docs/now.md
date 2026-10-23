@@ -1,6 +1,6 @@
 # Now
 
-**Updated:** 2026-10-02  
+**Updated:** 2026-10-23  
 **Focus:** [Phase H1](plan.md) — generic list-detail host (respond to kickagent `resources.gl` / 0.3.0)
 
 Much of the active queue is a **host response to kickagent publisher updates** (manifest `resources.*`, CHANGELOG, wiki). Prefer reload + generic builders over one-off screens. Standing aim: [host-mission.md](guides/host-mission.md). Publisher contract (wiki when up): [manifest-resources](http://127.0.0.1:7097/kickagent/architecture/manifest-resources.md) · [CHANGELOG](http://127.0.0.1:7097/kickagent/CHANGELOG.md).
@@ -23,6 +23,7 @@ Keep ≤7 active bullets.
 
 ## Done recently
 
+- KAM console is a full-height left column (`min(370px, 90vw)`). Header and page stay in the other column and take the full width when the pane is closed. Console type is 0.1rem smaller; timestamps sit 5px from the left edge.
 - List-detail library: `KickagentListFilters`, `KickagentListDetailSplitView` / pane, `listDetailForm`
 - KAM console: text lines for `data.rows` (CLI-like); one timestamp per command result
 - `/ops/accounts` driven from schema (no `glAccountForm`)
