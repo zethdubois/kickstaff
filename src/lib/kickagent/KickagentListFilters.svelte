@@ -15,6 +15,16 @@
     onRun: (args: string[]) => Promise<void>;
     loading?: boolean;
     variant?: "console" | "page";
+    /** Control values; bind to persist them. Uncontrolled when not bound. */
+    values?: ListFilterValues;
+    /** Show only presence (checkbox) filters; text/range filters are replaced by column quick filters. */
+    presenceOnly?: boolean;
+    /** Re-run the command as soon as a checkbox changes. */
+    autoRunPresence?: boolean;
+    /** Whether Clear is enabled. Default: any control has a value. */
+    canClear?: boolean;
+    /** Replaces the default clear (reset controls); use to also reset sort/prefs and reload. */
+    onClear?: () => void | Promise<void>;
   };
 
   let {
@@ -23,21 +33,43 @@
     onRun,
     loading = false,
     variant = "page",
+    values = $bindable({}),
+    presenceOnly = false,
+    autoRunPresence = false,
+    canClear,
+    onClear,
   }: Props = $props();
 
-  let values = $state<ListFilterValues>({});
+  const shown = $derived(
+    presenceOnly ? filters.filter((f) => f.match === "presence") : filters,
+  );
+
+  const hasValues = $derived(
+    Object.values(values).some((v) => v === true || (typeof v === "string" && v !== "")),
+  );
+  const clearEnabled = $derived(canClear ?? hasValues);
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
-    await onRun(buildListFilterArgs(filters, values));
+    await onRun(buildListFilterArgs(shown, values));
   }
 
-  function clearFilters() {
+  async function togglePresence(key: string, checked: boolean) {
+    const next = { ...values, [key]: checked };
+    values = next;
+    if (autoRunPresence) await onRun(buildListFilterArgs(shown, next));
+  }
+
+  async function clearFilters() {
+    if (onClear) {
+      await onClear();
+      return;
+    }
     values = {};
   }
 </script>
 
-{#if filters.length > 0}
+{#if shown.length > 0 || onClear}
   <form
     class="filters"
     class:filters--console={variant === "console"}
@@ -45,19 +77,15 @@
     aria-label="List filters"
   >
     <div class="filterRow">
-      {#each filters as filter (filter.key)}
+      {#each shown as filter (filter.key)}
         {#if filter.match === "presence"}
           <label class="check">
             <input
               type="checkbox"
               disabled={loading}
               checked={values[filter.key] === true}
-              onchange={(event) => {
-                values = {
-                  ...values,
-                  [filter.key]: event.currentTarget.checked,
-                };
-              }}
+              onchange={(event) =>
+                togglePresence(filter.key, event.currentTarget.checked)}
             />
             <span class="label">{filter.label}</span>
           </label>
@@ -79,13 +107,19 @@
         {/if}
       {/each}
       <div class="actions">
-        <button type="submit" class="run" disabled={loading}>
-          {loading ? "Loading…" : `Run ${command}`}
+        <button
+          type="submit"
+          class="run"
+          disabled={loading}
+          title={`Run ${command}`}
+        >
+          {loading ? "Loading…" : "Refresh"}
         </button>
         <button
           type="button"
           class="clear"
-          disabled={loading}
+          disabled={loading || !clearEnabled}
+          title="Reset filters, sort, and saved preferences to defaults"
           onclick={clearFilters}>Clear</button
         >
       </div>
@@ -217,5 +251,10 @@
   .clear:disabled {
     opacity: 0.6;
     cursor: wait;
+  }
+
+  .clear:disabled {
+    opacity: 0.4;
+    cursor: default;
   }
 </style>

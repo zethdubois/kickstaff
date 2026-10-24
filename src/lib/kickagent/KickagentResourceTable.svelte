@@ -1,4 +1,5 @@
 <script lang="ts">
+  import KickagentBoolMark from "./KickagentBoolMark.svelte";
   import { formatPresentationCell } from "./formatPresentationCell";
   import type { ResourceTableModel } from "./outcomeToTableModel";
 
@@ -46,7 +47,13 @@
         {#each model.rows as row, i (`${row[model.primaryKey] ?? i}`)}
           <tr>
             {#each model.columns as col (col.key)}
-              <td>{formatPresentationCell(row[col.key], col.type)}</td>
+              <td class:tdBool={col.type === "boolean"}>
+                {#if col.type === "boolean"}
+                  <KickagentBoolMark value={row[col.key]} />
+                {:else}
+                  {formatPresentationCell(row[col.key], col.type)}
+                {/if}
+              </td>
             {/each}
           </tr>
         {:else}
@@ -178,5 +185,9 @@
   .resourceTable--console .empty {
     color: #5a6373;
     padding: 0.6rem;
+  }
+
+  .tdBool {
+    text-align: center;
   }
 </style>

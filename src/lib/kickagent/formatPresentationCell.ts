@@ -22,7 +22,7 @@ export function formatPresentationCell(
 			? d.toLocaleDateString()
 			: d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
 	}
-	if (type === 'boolean') return value ? 'yes' : 'no';
+	if (type === 'boolean') return value ? '✓' : '';
 	if (type === 'integer' || type === 'number') {
 		const n = Number(value);
 		return Number.isFinite(n) ? String(n) : String(value);

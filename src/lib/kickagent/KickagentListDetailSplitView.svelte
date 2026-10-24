@@ -3,7 +3,8 @@
   @component: KickagentListDetailSplitView.svelte
 -->
 <script lang="ts">
-  import { tick } from "svelte";
+  import { tick, untrack } from "svelte";
+  import KickagentBoolMark from "./KickagentBoolMark.svelte";
   import KickagentListDetailPane from "./KickagentListDetailPane.svelte";
   import { formatPresentationCell } from "./formatPresentationCell";
   import {
@@ -11,6 +12,14 @@
     recordFromShowOutcome,
     recordOutcomeMessage,
   } from "./listDetailForm";
+  import type { ListSort } from "./listPrefs";
+  import {
+    effectiveSort,
+    filterRows,
+    isFilterableColumn,
+    nextSort,
+    sortRows,
+  } from "./listTable";
   import type { ManifestListDetailResource } from "./manifestResourceCache";
   import type { ResourceTableModel } from "./outcomeToTableModel";
   import { runManifestCommand } from "./runManifestCommand";
@@ -21,6 +30,12 @@
     title?: string;
     variant?: "console" | "page";
     onRecordUpdated?: (record: Record<string, unknown>) => void;
+    /** Sort override; `null` = default (first column ascending). */
+    sort?: ListSort | null;
+    /** Quick substring filter per column key. */
+    columnFilters?: Record<string, string>;
+    /** Rows left after quick filters (for "x of y shown"). */
+    visibleCount?: number;
   };
 
   let {
@@ -29,7 +44,37 @@
     title = "Results",
     variant = "page",
     onRecordUpdated,
+    sort = $bindable(null),
+    columnFilters = $bindable({}),
+    visibleCount = $bindable(0),
   }: Props = $props();
+
+  const activeSort = $derived(effectiveSort(model.columns, sort));
+  const displayRows = $derived(
+    sortRows(
+      filterRows(model.rows, model.columns, columnFilters),
+      model.columns,
+      activeSort,
+    ),
+  );
+
+  $effect(() => {
+    visibleCount = displayRows.length;
+  });
+
+  function toggleSort(key: string) {
+    sort = nextSort(model.columns, sort, key);
+  }
+
+  function setColumnFilter(key: string, value: string) {
+    const next = { ...columnFilters };
+    if (value.trim() === "") delete next[key];
+    else next[key] = value;
+    columnFilters = next;
+  }
+
+  const ARROW_LOAD_DELAY_MS = 150;
+  let loadTimer: ReturnType<typeof setTimeout> | undefined;
 
   let selectedId = $state<string | null>(null);
   let detailRecord = $state<Record<string, unknown> | null>(null);
@@ -83,6 +128,7 @@
   }
 
   function clearSelection() {
+    clearTimeout(loadTimer);
     detailLoadGen += 1;
     selectedId = null;
     detailRecord = null;
@@ -90,7 +136,7 @@
     detailError = null;
   }
 
-  function centerSelectedRow(id: string) {
+  function centerSelectedRow(id: string, behavior: ScrollBehavior = "smooth") {
     const scroller = scrollEl;
     if (!scroller) return;
     const row = scroller.querySelector(
@@ -98,36 +144,65 @@
     ) as HTMLTableRowElement | null;
     if (!row) return;
 
+    // The sticky header covers the top of the scroll box; center in what remains.
+    const headH =
+      scroller.querySelector("thead")?.getBoundingClientRect().height ?? 0;
     const scRect = scroller.getBoundingClientRect();
     const rowRect = row.getBoundingClientRect();
     const target =
       scroller.scrollTop +
       (rowRect.top - scRect.top) -
-      scRect.height / 2 +
+      headH -
+      (scRect.height - headH) / 2 +
       rowRect.height / 2;
     const max = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
     scroller.scrollTo({
       top: Math.min(max, Math.max(0, target)),
-      behavior: "smooth",
+      behavior,
     });
   }
 
-  async function recenterAfterLayout(id: string) {
+  async function recenterAfterLayout(
+    id: string,
+    behavior: ScrollBehavior = "smooth",
+  ) {
     await tick();
     requestAnimationFrame(() => {
-      centerSelectedRow(id);
+      centerSelectedRow(id, behavior);
       // Detail mount changes list height; center again after that reflow.
-      requestAnimationFrame(() => centerSelectedRow(id));
+      requestAnimationFrame(() => centerSelectedRow(id, behavior));
     });
   }
 
-  async function selectRow(row: Record<string, unknown>) {
+  /** Up/Down: move to the neighbouring row in the displayed (sorted, filtered) order. */
+  function moveSelection(delta: 1 | -1) {
+    const rows = displayRows;
+    if (rows.length === 0) return;
+    const index =
+      selectedId == null
+        ? -1
+        : rows.findIndex((candidate) => rowId(candidate) === selectedId);
+    const nextIndex =
+      index < 0
+        ? delta > 0
+          ? 0
+          : rows.length - 1
+        : Math.min(rows.length - 1, Math.max(0, index + delta));
+    if (nextIndex === index) return;
+    void selectRow(rows[nextIndex], { keyboard: true });
+  }
+
+  async function selectRow(
+    row: Record<string, unknown>,
+    options: { keyboard?: boolean } = {},
+  ) {
     const id = rowId(row);
-    if (id != null && id === selectedId) {
+    if (!options.keyboard && id != null && id === selectedId) {
       clearSelection();
       return;
     }
 
+    clearTimeout(loadTimer);
     selectedId = id;
     if (!id) {
       detailRecord = null;
@@ -135,8 +210,27 @@
       return;
     }
 
-    void recenterAfterLayout(id);
+    void recenterAfterLayout(id, options.keyboard ? "auto" : "smooth");
 
+    if (options.keyboard) {
+      // Holding the arrow key must not fire one detail request per row.
+      detailLoadGen += 1;
+      detailLoading = true;
+      detailError = null;
+      loadTimer = setTimeout(() => {
+        if (selectedId === id) void loadDetail(id);
+      }, ARROW_LOAD_DELAY_MS);
+      await tick();
+      scrollEl
+        ?.querySelector<HTMLElement>(`tr[data-row-id="${CSS.escape(id)}"]`)
+        ?.focus({ preventScroll: true });
+      return;
+    }
+
+    await loadDetail(id);
+  }
+
+  async function loadDetail(id: string) {
     const gen = ++detailLoadGen;
     detailLoading = true;
     detailError = null;
@@ -228,6 +322,14 @@
     pageScroll;
     void recenterAfterLayout(selectedId);
   });
+
+  // Sorting or filtering moves the selected row: keep it centered.
+  $effect(() => {
+    activeSort;
+    displayRows;
+    const id = untrack(() => selectedId);
+    if (id && variant !== "console") void recenterAfterLayout(id, "auto");
+  });
 </script>
 
 <div
@@ -242,12 +344,58 @@
         <thead>
           <tr>
             {#each model.columns as column (column.key)}
-              <th>{column.label}</th>
+              {@const dir =
+                activeSort?.key === column.key ? activeSort.dir : null}
+              <th
+                class:thBool={column.type === "boolean"}
+                aria-sort={dir === "asc"
+                  ? "ascending"
+                  : dir === "desc"
+                    ? "descending"
+                    : "none"}
+              >
+                <div class="thInner">
+                  {#if isFilterableColumn(column)}
+                    <input
+                      class="colFilter"
+                      type="text"
+                      placeholder="filter"
+                      autocomplete="off"
+                      aria-label={`Filter ${column.label}`}
+                      value={columnFilters[column.key] ?? ""}
+                      oninput={(event) =>
+                        setColumnFilter(column.key, event.currentTarget.value)}
+                    />
+                  {:else}
+                    <span class="colFilter colFilter--none" aria-hidden="true"
+                    ></span>
+                  {/if}
+                  <button
+                    type="button"
+                    class="sortBtn"
+                    class:sortBtn--active={dir !== null}
+                    title={`Sort by ${column.label}`}
+                    onclick={() => toggleSort(column.key)}
+                  >
+                    <span>{column.label}</span>
+                    <span class="sortBadge" aria-hidden="true"
+                      >{dir === "asc" ? "▲" : dir === "desc" ? "▼" : "↕"}</span
+                    >
+                  </button>
+                </div>
+              </th>
             {/each}
           </tr>
         </thead>
         <tbody>
-          {#each model.rows as row, index (`${rowId(row) ?? index}`)}
+          {#if displayRows.length === 0}
+            <tr class="emptyRow">
+              <td colspan={Math.max(1, model.columns.length)}
+                >No rows match the filters.</td
+              >
+            </tr>
+          {/if}
+          {#each displayRows as row, index (`${rowId(row) ?? index}`)}
             {@const id = rowId(row)}
             <tr
               data-row-id={id ?? undefined}
@@ -259,11 +407,23 @@
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   void selectRow(row);
+                } else if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  moveSelection(1);
+                } else if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  moveSelection(-1);
                 }
               }}
             >
               {#each model.columns as column (column.key)}
-                <td>{formatPresentationCell(row[column.key], column.type)}</td>
+                <td class:tdBool={column.type === "boolean"}>
+                  {#if column.type === "boolean"}
+                    <KickagentBoolMark value={row[column.key]} />
+                  {:else}
+                    {formatPresentationCell(row[column.key], column.type)}
+                  {/if}
+                </td>
               {/each}
             </tr>
           {/each}
@@ -290,7 +450,7 @@
 
 <style>
   .split {
-    --list-head-height: 2rem;
+    --list-head-height: 3.6rem;
     --list-row-height: 2.25rem;
     --list-min-height: calc(
       var(--list-head-height) + 5 * var(--list-row-height)
@@ -387,6 +547,79 @@
     letter-spacing: 0.03em;
     text-transform: uppercase;
     background: color-mix(in srgb, currentColor 6%, #fff);
+    vertical-align: bottom;
+  }
+
+  .thInner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    align-items: flex-start;
+  }
+
+  .colFilter {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 4.5rem;
+    height: 1.45rem;
+    font: inherit;
+    font-size: 0.72rem;
+    letter-spacing: 0;
+    text-transform: none;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    border-radius: 4px;
+    background: var(--resource-filter-input-bg, #fff);
+    color: inherit;
+  }
+
+  .colFilter--none {
+    display: block;
+    border: 0;
+    background: transparent;
+  }
+
+  .sortBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .sortBadge {
+    font-size: 0.65rem;
+    opacity: 0;
+  }
+
+  .sortBtn:hover .sortBadge,
+  .sortBtn:focus-visible .sortBadge {
+    opacity: 0.45;
+  }
+
+  .sortBtn--active .sortBadge,
+  .sortBtn--active:hover .sortBadge {
+    opacity: 1;
+  }
+
+  .emptyRow td {
+    cursor: default;
+    color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
+  .thBool,
+  .tdBool {
+    text-align: center;
+  }
+
+  .thBool .thInner {
+    align-items: center;
   }
 
   tr {

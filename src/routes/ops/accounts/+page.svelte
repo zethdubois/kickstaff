@@ -4,12 +4,28 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { invalidateAll } from "$app/navigation";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
+  import {
+    clearListPrefs,
+    getListPrefs,
+    saveListPrefs,
+  } from "$lib/client/uiSettings.svelte";
   import KickagentListDetailSplitView from "$lib/kickagent/KickagentListDetailSplitView.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
-  import { outcomeLogText } from "$lib/kickagent/listDetailForm";
+  import {
+    buildListFilterArgs,
+    outcomeLogText,
+    type ListFilterValues,
+  } from "$lib/kickagent/listDetailForm";
+  import {
+    isEmptyListPrefs,
+    normalizeListPrefs,
+    type ListSort,
+  } from "$lib/kickagent/listPrefs";
+  import { visibleColumns } from "$lib/kickagent/listTable";
   import {
     getListDetailResource,
+    type ManifestListFilter,
     setManifestResourceCache,
   } from "$lib/kickagent/manifestResourceCache";
   import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
@@ -34,6 +50,32 @@
   let table = $state<ResourceTableModel | null>(null);
   let autoLoaded = $state(false);
 
+  // Saved in the browser (uiSettings.listPrefs[resource]); empty = defaults.
+  const prefsKey = $derived(resource?.name ?? "gl");
+  let filterValues = $state<ListFilterValues>({});
+  let columnFilters = $state<Record<string, string>>({});
+  let sort = $state<ListSort | null>(null);
+  let visibleCount = $state(0);
+  let prefsReady = $state(false);
+
+  const hasPrefs = $derived(
+    !isEmptyListPrefs(normalizeListPrefs({ filterValues, columnFilters, sort })),
+  );
+
+  const displayModel = $derived<ResourceTableModel | null>(
+    table && schema
+      ? {
+          ...table,
+          columns: visibleColumns(table.columns, schema.filters, filterValues),
+        }
+      : null,
+  );
+
+  /** Text/range filters are replaced by column quick filters; only checkboxes reach the command. */
+  function presenceFilters(filters: ManifestListFilter[]): ManifestListFilter[] {
+    return filters.filter((f) => f.match === "presence");
+  }
+
   function syncServerSchemaToClientCache(): void {
     if (!browser || !data.manifest.resources) return;
     if (getListDetailResource("gl")) return;
@@ -43,7 +85,32 @@
   onMount(() => {
     syncServerSchemaToClientCache();
     if (data.manifest.error && !schema) error = data.manifest.error;
+    const saved = getListPrefs(untrack(() => prefsKey));
+    filterValues = { ...saved.filterValues };
+    columnFilters = { ...saved.columnFilters };
+    sort = saved.sort;
+    prefsReady = true;
   });
+
+  $effect(() => {
+    if (!prefsReady) return;
+    saveListPrefs(prefsKey, {
+      filterValues: $state.snapshot(filterValues),
+      columnFilters: $state.snapshot(columnFilters),
+      sort: $state.snapshot(sort),
+    });
+  });
+
+  /** Clear: filters, quick filters, sort, and the saved prefs; reload if the query changed. */
+  async function clearAll() {
+    const queryChanged =
+      !!schema && buildListFilterArgs(presenceFilters(schema.filters), filterValues).length > 0;
+    filterValues = {};
+    columnFilters = {};
+    sort = null;
+    clearListPrefs(prefsKey);
+    if (queryChanged) await runList([]);
+  }
 
   async function runList(args: string[]) {
     const listSchema = schema;
@@ -115,9 +182,11 @@
   }
 
   $effect(() => {
-    if (!schema || autoLoaded) return;
+    if (!schema || !prefsReady || autoLoaded) return;
     autoLoaded = true;
-    void runList([]);
+    void runList(
+      untrack(() => buildListFilterArgs(presenceFilters(schema.filters), filterValues)),
+    );
   });
 </script>
 
@@ -173,6 +242,11 @@
         command={schema.command}
         {loading}
         onRun={runList}
+        bind:values={filterValues}
+        presenceOnly
+        autoRunPresence
+        canClear={hasPrefs}
+        onClear={clearAll}
       />
 
       {#if error}
@@ -184,16 +258,23 @@
       {/if}
 
       {#if table}
-        <p class="ops__count">{table.rows.length} shown</p>
+        <p class="ops__count">
+          {visibleCount === table.rows.length
+            ? `${table.rows.length} shown`
+            : `${visibleCount} of ${table.rows.length} shown`}
+        </p>
       {/if}
     </div>
 
-    {#if table}
+    {#if displayModel}
       <KickagentListDetailSplitView
-        model={table}
+        model={displayModel}
         {resource}
         title="Accounts"
         {onRecordUpdated}
+        bind:sort
+        bind:columnFilters
+        bind:visibleCount
       />
     {:else if !loading && !error && !notice}
       <p class="ops__empty">No rows returned.</p>

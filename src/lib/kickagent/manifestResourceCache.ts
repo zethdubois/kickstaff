@@ -22,6 +22,8 @@ export type ManifestResourceColumn = {
 	key: string;
 	label: string;
 	type: CommandPresentationFieldType;
+	/** Show this column only while the presence filter with this key is checked. */
+	visibleWhen?: string;
 };
 
 export type ManifestUnitsListResource = {
@@ -229,7 +231,11 @@ function parseColumns(raw: unknown): ManifestResourceColumn[] {
 		const key = typeof row.key === 'string' ? row.key.trim() : '';
 		const label = typeof row.label === 'string' ? row.label.trim() : key;
 		if (!key || !isFieldType(row.type)) continue;
-		out.push({ key, label, type: row.type });
+		const visibleWhen =
+			typeof row.visibleWhen === 'string' && row.visibleWhen.trim() !== ''
+				? row.visibleWhen.trim()
+				: undefined;
+		out.push({ key, label, type: row.type, ...(visibleWhen ? { visibleWhen } : {}) });
 	}
 	return out;
 }

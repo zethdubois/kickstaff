@@ -49,6 +49,7 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 - Shared client UI preferences live in `src/lib/client/uiSettings.svelte.ts`.
 - Current persisted shape includes:
   - `consoleOpen` (KAM console visibility)
+  - `listPrefs` (per list-detail resource: include-flags, column quick filters, sort — see `docs/guides/ops-accounts-ui-map.md`)
   - `kamMode` (`default | kickagent` — **[KA]** shell; enter with `shell kickagent`, or shortcut like `ka` via `alias kickagent ka`)
 - KAM **command aliases** (`alias` / `unalias`; `kickstaff.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
   - When adding/removing/changing fields, bump `UI_SETTINGS_VERSION`.

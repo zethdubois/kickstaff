@@ -11,7 +11,7 @@ This week’s work queue. Phase outcomes live in [plan.md](plan.md) — link out
 
 - [x] Consume `resources.gl` as `class: "list-detail"` v2 — filters (`presence`), `recordKey`, field `flag`s; delete accounts-only form constants
 - [x] Host mission doc + agent start ladder ([host-mission.md](guides/host-mission.md), [AGENTS.md](../AGENTS.md))
-- [ ] Smoke `/ops/accounts` against live manifest **0.6.0** (after Kickdesk `p` + `kam:reload-kickagent`): list, include-hidden/retired, type filter, show, save; tick **Retired** → confirm → saved → box locks and **Retired on** fills
+- [ ] Smoke `/ops/accounts` against live manifest **0.6.0** (after Kickdesk `p` + `kam:reload-kickagent`): list, include-hidden/retired (columns appear + list reloads), column quick filters, sort, ↑/↓ keys, Clear, show, save; tick **Retired** → confirm → saved → box locks and **Retired on** fills
 - [ ] When kickagent publishes `resources.properties` (list-detail): reload only — confirm generic builder; add `/ops/…` chrome only if needed ([kickagent now](../../kickagent/docs/now.md) phase 1b)
 - [ ] Keep `/ops/units` working on the thin v1 path until kickagent lifts units to list-detail
 
@@ -23,6 +23,7 @@ Keep ≤7 active bullets.
 
 ## Done recently
 
+- Accounts list: sort by header (default first column ↑), per-column quick filters, ↑/↓ row navigation, include boxes auto-reload and gate their columns, Refresh/Clear, prefs persisted in `uiSettings.listPrefs` (version 5). `type` filter dropped from the page.
 - Manifest 0.6.0 consumed: one-way fields (`irreversible` / `confirmText`) lock + confirm on Save; command `role` / `sugarFor` cached (only `structural` is a button candidate). Hide/Retire are fields, not buttons.
 - Accounts layout: list fills the column, detail sizes to content (list floor 5 rows), click selected row to deselect, one-row filters, `i` title tip
 - KAM console is a full-height left column (`min(370px, 90vw)`). Header and page stay in the other column and take the full width when the pane is closed. Console type is 0.1rem smaller; timestamps sit 5px from the left edge.
@@ -50,5 +51,6 @@ Low-priority ideas and polish. Not the week’s queue; pick up when idle or when
 - [ ] After kickagent lifts `resources.units` to list-detail: drop the thin v1 parser path and run units through the same builder as GL
 - [ ] Optional: shared list-detail ops chrome (one route param by resource name) so `/ops/accounts` and future properties share a shell
 - [ ] Toolbar button(s) for `role: "structural"` commands (e.g. **Add account** → `gl-create`) once kickagent publishes how a structural command is invoked (it needs a form: `--number`, `--name`, `--type` are required)
+- [ ] After kickagent adds column `visibleWhen` (spec sent): drop the interim `include<Name>` ↔ column-key convention in `listTable.columnGate`
 - [ ] After kickagent adds `group: "status"` on `hidden` (+ `retired`): drop the host interim that treats flag `--hidden` as status
 - [ ] After saving **Retired**, the row stays in the table until the list is re-run (default filters hide retired). Decide: drop the row, or leave it dimmed
