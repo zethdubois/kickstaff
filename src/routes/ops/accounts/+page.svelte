@@ -138,12 +138,12 @@
     <header class="ops__header">
       <h1 class="ops__title">
         Accounts
-        <span
+        <button
+          type="button"
           class="ops__info"
-          tabindex="0"
           title="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
           aria-label="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
-        >i</span>
+        >i</button>
       </h1>
     </header>
   </div>
@@ -261,6 +261,10 @@
   }
 
   .ops__info {
+    appearance: none;
+    padding: 0;
+    background: transparent;
+    font-family: inherit;
     display: inline-flex;
     align-items: center;
     justify-content: center;

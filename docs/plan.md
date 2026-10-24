@@ -27,6 +27,7 @@ Host phase ids use **H** so they are not confused with kickagent’s 1a/1b/… n
 - [x] Standing host mission documented; agents read it before `resources.*` work.
 - [x] Manifest parser discovers list-detail by `class` (and still accepts units v1).
 - [x] `/ops/accounts` list/detail/save driven from schema filters, `recordKey`, and field `flag`s.
+- [x] One-way fields (`irreversible`) lock and confirm; command `role` parsed so shortcuts are never buttons (kickagent 0.6.0).
 - [ ] Human smoke: accounts page against a live **0.3.0+** manifest (filters + save).
 
 **Acceptance:** An admin can list, filter, open, and save a GL account in kickstaff without host code that names `--include-hidden` or GL edit flags outside the cached schema.

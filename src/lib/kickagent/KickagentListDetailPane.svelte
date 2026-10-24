@@ -3,6 +3,14 @@
   @component: KickagentListDetailPane.svelte
 -->
 <script lang="ts">
+  import {
+    confirmMessage,
+    hasDisplayValue,
+    irreversibleChanges,
+    isFieldLocked,
+    isStatusField,
+    recordIdentityId,
+  } from "./listDetailForm";
   import type { ManifestListDetailField } from "./manifestResourceCache";
   import { formatReadonlyField } from "./presentationFieldInput";
 
@@ -38,14 +46,37 @@
     return value != null && value !== "" ? String(value) : "Details";
   });
 
-  const editableFields = $derived(fields.filter((field) => field.editable));
-  const readonlyFields = $derived(fields.filter((field) => !field.editable));
+  const titleId = $derived(recordIdentityId(record, fields));
+
+  /** Readonly meta: skip nulls, and skip the id shown in the title bar. */
+  const metaFields = $derived(
+    fields.filter((field) => {
+      if (field.editable) return false;
+      if (field.flag === "--id" || field.key === "id") return false;
+      if (!record) return false;
+      return hasDisplayValue(record[field.key]);
+    }),
+  );
+
+  const valueFields = $derived(
+    fields.filter((field) => field.editable && !isStatusField(field)),
+  );
+  const valueTextFields = $derived(
+    valueFields.filter((field) => field.type !== "boolean"),
+  );
+  const valueBoolFields = $derived(
+    valueFields.filter((field) => field.type === "boolean"),
+  );
+  const statusFields = $derived(
+    fields.filter((field) => field.editable && isStatusField(field)),
+  );
+
   const busy = $derived(loading || saving);
 
   $effect(() => {
     const id = record ? String(record.id ?? record.number ?? "") : "";
     const revision = record
-      ? `${String(record.updatedAt ?? "")}|${String(record.retiredAt ?? "")}|${String(record.hidden ?? "")}`
+      ? `${String(record.updatedAt ?? "")}|${String(record.retired ?? "")}|${String(record.retiredAt ?? "")}|${String(record.hidden ?? "")}`
       : "";
     const key = `${id}|${revision}`;
     if (key === syncedKey) return;
@@ -60,7 +91,10 @@
     status = null;
   }
 
-  function optionsFor(field: ManifestListDetailField, current: unknown): string[] {
+  function optionsFor(
+    field: ManifestListDetailField,
+    current: unknown,
+  ): string[] {
     const options = [...(field.options ?? [])];
     const value = current == null ? "" : String(current);
     if (value && !options.includes(value)) options.unshift(value);
@@ -71,6 +105,14 @@
     event.preventDefault();
     if (!onSave || busy) return;
     status = null;
+
+    // One-way fields (e.g. Retired): nothing is sent until the user confirms here.
+    const oneWay = record ? irreversibleChanges(record, draft, fields) : [];
+    if (oneWay.length > 0 && !window.confirm(confirmMessage(oneWay))) {
+      status = "Not saved.";
+      return;
+    }
+
     const message = await onSave({ ...draft });
     if (message) status = message;
   }
@@ -83,10 +125,13 @@
 >
   <header class="head">
     <h2 class="title">{title}</h2>
+    {#if titleId}
+      <span class="titleId" title="Record id">{titleId}</span>
+    {/if}
     {#if loading}
-      <span class="status">Loading…</span>
+      <span class="headStatus">Loading…</span>
     {:else if saving}
-      <span class="status">Saving…</span>
+      <span class="headStatus">Saving…</span>
     {/if}
   </header>
 
@@ -96,64 +141,104 @@
     <p class="placeholder">Select a row from the list.</p>
   {:else if record}
     <form class="form" onsubmit={save}>
-      {#if readonlyFields.length > 0}
-        <fieldset class="group">
-          <legend class="groupLabel">Read-only</legend>
-          <dl class="readonlyGrid">
-            {#each readonlyFields as field (field.key)}
-              <div class="readonlyRow">
-                <dt>{field.label}</dt>
-                <dd>{formatReadonlyField(record[field.key], field.type)}</dd>
-              </div>
-            {/each}
-          </dl>
-        </fieldset>
+      {#if metaFields.length > 0}
+        <dl class="meta">
+          {#each metaFields as field (field.key)}
+            <div class="metaItem">
+              <dt>{field.label}</dt>
+              <dd>{formatReadonlyField(record[field.key], field.type)}</dd>
+            </div>
+          {/each}
+        </dl>
       {/if}
 
-      {#if editableFields.length > 0}
-        <fieldset class="group">
-          <legend class="groupLabel">Fields</legend>
-          <div class="fieldGrid">
-            {#each editableFields as field (field.key)}
-              <label class="field">
-                <span class="label">{field.label}</span>
-                {#if field.type === "boolean"}
-                  <input
-                    type="checkbox"
-                    checked={draft[field.key] === true}
-                    disabled={busy}
-                    onchange={(event) =>
-                      setField(field.key, event.currentTarget.checked)}
-                  />
-                {:else if field.options && field.options.length > 0}
-                  <select
-                    disabled={busy}
-                    value={draft[field.key] == null
-                      ? ""
-                      : String(draft[field.key])}
-                    onchange={(event) =>
-                      setField(field.key, event.currentTarget.value)}
-                  >
-                    {#each optionsFor(field, draft[field.key]) as option (option)}
-                      <option value={option}>{option}</option>
-                    {/each}
-                  </select>
-                {:else}
-                  <input
-                    type="text"
-                    disabled={busy}
-                    value={draft[field.key] == null
-                      ? ""
-                      : String(draft[field.key])}
-                    oninput={(event) =>
-                      setField(field.key, event.currentTarget.value)}
-                  />
-                {/if}
-              </label>
-            {/each}
-          </div>
-        </fieldset>
+      {#if valueTextFields.length > 0}
+        <div class="fieldGrid">
+          {#each valueTextFields as field (field.key)}
+            <label class="field">
+              <span class="label">{field.label}</span>
+              {#if field.options && field.options.length > 0}
+                <select
+                  disabled={busy}
+                  value={draft[field.key] == null
+                    ? ""
+                    : String(draft[field.key])}
+                  onchange={(event) =>
+                    setField(field.key, event.currentTarget.value)}
+                >
+                  {#each optionsFor(field, draft[field.key]) as option (option)}
+                    <option value={option}>{option}</option>
+                  {/each}
+                </select>
+              {:else}
+                <input
+                  type="text"
+                  disabled={busy}
+                  value={draft[field.key] == null
+                    ? ""
+                    : String(draft[field.key])}
+                  oninput={(event) =>
+                    setField(field.key, event.currentTarget.value)}
+                />
+              {/if}
+            </label>
+          {/each}
+        </div>
+      {/if}
 
+      {#if valueBoolFields.length > 0 || statusFields.length > 0}
+        <div
+          class="checkRow"
+          class:checkRow--withStatus={statusFields.length > 0}
+        >
+          {#if valueBoolFields.length > 0}
+            <ul class="attrChecks">
+              {#each valueBoolFields as field (field.key)}
+                <li>
+                  <label class="check">
+                    <input
+                      type="checkbox"
+                      checked={draft[field.key] === true}
+                      disabled={busy}
+                      onchange={(event) =>
+                        setField(field.key, event.currentTarget.checked)}
+                    />
+                    <span>{field.label}</span>
+                  </label>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+
+          {#if statusFields.length > 0}
+            <fieldset class="statusCol">
+              <legend class="statusLabel">Status</legend>
+              <ul class="statusChecks">
+                {#each statusFields as field (field.key)}
+                  {@const locked = isFieldLocked(field, record)}
+                  <li>
+                    <label class="check" class:check--locked={locked}>
+                      <input
+                        type="checkbox"
+                        checked={locked || draft[field.key] === true}
+                        disabled={busy || locked}
+                        title={locked
+                          ? "Already set. This cannot be undone."
+                          : undefined}
+                        onchange={(event) =>
+                          setField(field.key, event.currentTarget.checked)}
+                      />
+                      <span>{field.label}</span>
+                    </label>
+                  </li>
+                {/each}
+              </ul>
+            </fieldset>
+          {/if}
+        </div>
+      {/if}
+
+      {#if valueFields.length > 0 || statusFields.length > 0}
         <div class="actions">
           <button type="submit" class="save" disabled={busy || !onSave}>
             {saving ? "Saving…" : "Save"}
@@ -187,9 +272,9 @@
 
   .head {
     display: flex;
+    flex-wrap: nowrap;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
+    gap: 0.75rem;
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
     background: color-mix(in srgb, currentColor 4%, transparent);
@@ -199,9 +284,34 @@
     margin: 0;
     font-size: 0.95rem;
     font-weight: 700;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .status,
+  .titleId {
+    margin-left: auto;
+    flex: 0 1 22rem;
+    max-width: 55%;
+    font-size: 0.68rem;
+    font-weight: 500;
+    font-style: italic;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: color-mix(in srgb, currentColor 42%, transparent);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .headStatus {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
   .note {
     font-size: 0.75rem;
     color: color-mix(in srgb, currentColor 55%, transparent);
@@ -226,52 +336,44 @@
     flex: 0 0 auto;
     overflow: visible;
     padding: 0.65rem 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
   }
 
-  .group {
-    margin: 0 0 1rem;
-    padding: 0;
-    border: 0;
+  .meta {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    font-size: 0.82rem;
+  }
+
+  .metaItem {
+    display: flex;
+    gap: 0.4rem;
     min-width: 0;
   }
 
-  .groupLabel {
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+  .metaItem dt {
+    margin: 0;
     color: color-mix(in srgb, currentColor 55%, transparent);
-    margin-bottom: 0.45rem;
-  }
-
-  .readonlyGrid {
-    margin: 0;
-    display: grid;
-    gap: 0.35rem 0.75rem;
-  }
-
-  .readonlyRow {
-    display: grid;
-    grid-template-columns: 8.5rem 1fr;
-    gap: 0.5rem;
-    font-size: 0.85rem;
-  }
-
-  .readonlyRow dt {
-    margin: 0;
-    color: color-mix(in srgb, currentColor 60%, transparent);
     font-weight: 600;
   }
 
-  .readonlyRow dd {
+  .metaItem dt::after {
+    content: ":";
+  }
+
+  .metaItem dd {
     margin: 0;
     word-break: break-word;
   }
 
   .fieldGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    gap: 0.65rem 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 0.55rem 0.75rem;
   }
 
   .field {
@@ -297,10 +399,101 @@
     color: inherit;
   }
 
-  .field input[type="checkbox"] {
+  /*
+    Attribute checks fill columns 1–2; Status occupies the final (3rd) column.
+    Without Status, attributes use up to 3 columns.
+  */
+  .checkRow {
+    display: grid;
+    gap: 0.65rem 1.25rem;
+    align-items: start;
+    width: 100%;
+  }
+
+  .checkRow--withStatus {
+    grid-template-columns: minmax(9.5rem, 1fr) minmax(9.5rem, 1fr) minmax(
+        10rem,
+        1fr
+      );
+  }
+
+  .checkRow--withStatus:not(:has(.attrChecks)) {
+    grid-template-columns: minmax(10rem, 14rem);
+  }
+
+  .checkRow--withStatus:not(:has(.attrChecks)) .statusCol {
+    grid-column: 1;
+  }
+
+  .checkRow:not(.checkRow--withStatus) {
+    grid-template-columns: 1fr;
+  }
+
+  .attrChecks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.4rem 1.25rem;
+  }
+
+  .checkRow--withStatus .attrChecks {
+    grid-column: 1 / 3;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .checkRow:not(.checkRow--withStatus) .attrChecks {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(max(9.5rem, calc((100% - 2.5rem) / 3)), 1fr)
+    );
+  }
+
+  .statusCol {
+    grid-column: 3;
+    margin: 0;
+    padding: 0.45rem 0.55rem 0.55rem;
+    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+    border-radius: 6px;
+    background: color-mix(in srgb, currentColor 3%, transparent);
+    min-width: 0;
+  }
+
+  .statusLabel {
+    padding: 0 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
+  .statusChecks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+
+  .check input {
     width: 1rem;
     height: 1rem;
-    align-self: flex-start;
+    margin: 0;
+  }
+
+  .check--locked {
+    color: color-mix(in srgb, currentColor 55%, transparent);
+    cursor: default;
   }
 
   .actions {

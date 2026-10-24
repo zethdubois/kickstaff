@@ -48,6 +48,22 @@ Before adding kickstaff code for a kickagent command:
 
 A new `resources.vendors` of the same shape as `resources.gl` is a **reload**, not a `/ops/vendors` rewrite. A dedicated route is optional chrome.
 
+### Field vs command (no button per command)
+
+If the resource's save command (`detail.submitCommand`) can express an effect as an editable flag, that effect is a **field** in the detail form. It is deferred: nothing is sent until Save. Retire and Hidden on `resources.gl` are fields, not buttons.
+
+| Manifest `role` | Host |
+| --------------- | ---- |
+| `query` | Not a button. Fills list/detail. |
+| `write` | Run by Save. |
+| `structural` (`gl-create`, `gl-import`) | Only button candidates (`listButtonCandidateCommands`). Not built yet. |
+| `shortcut` (`gl-hide`, `gl-retire`; `sugarFor` names the `write` command) | **Skipped.** CLI / KAM only. |
+| none | Unclassified. Not a button. |
+
+One-way fields (`irreversible: true`, e.g. `retired`): the control **locks** once the saved record value is `true`; a save that newly sets it asks the user to confirm (the field's `confirmText`, else a generic line). Locked fields are never sent. See `isFieldLocked`, `irreversibleChanges` in `listDetailForm.ts`.
+
+Detail layout: skip null / empty readonly meta (no “Retired on: —”). Record `id` sits on the title row, right-aligned (muted italic). Attribute checkboxes fill columns 1–2; **Status** (Hidden / Retired) occupies the final column as a stacked group. Fields with `group: "status"`, `irreversible`, or flag `--hidden` go there. Prefer publisher `group: "status"`; the `--hidden` match is interim until every hide field is marked.
+
 ### Console vs page
 
 | Surface | Job |

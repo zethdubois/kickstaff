@@ -74,6 +74,24 @@ describe('parseManifestResources', () => {
 							type: 'uuid',
 							editable: false,
 							flag: '--id'
+						},
+						{
+							key: 'retired',
+							label: 'Retired',
+							type: 'boolean',
+							editable: true,
+							flag: '--retired',
+							irreversible: true,
+							confirmText: 'Retire this account?',
+							group: 'status'
+						},
+						{
+							key: 'hidden',
+							label: 'Hidden',
+							type: 'boolean',
+							editable: true,
+							flag: '--hidden',
+							group: 'status'
 						}
 					]
 				},
@@ -88,6 +106,13 @@ describe('parseManifestResources', () => {
 		assert.equal(parsed!.listDetail.gl!.class, 'list-detail');
 		assert.equal(parsed!.listDetail.gl!.list.filters[0]!.match, 'presence');
 		assert.equal(parsed!.listDetail.gl!.detail.recordKey, 'account');
+		const fields = parsed!.listDetail.gl!.detail.fields;
+		const retired = fields.find((f) => f.key === 'retired');
+		assert.equal(retired?.irreversible, true);
+		assert.equal(retired?.confirmText, 'Retire this account?');
+		assert.equal(retired?.group, 'status');
+		assert.equal(fields.find((f) => f.key === 'hidden')?.group, 'status');
+		assert.equal(fields.find((f) => f.key === 'name')?.irreversible, undefined);
 		assert.equal(parsed!.units?.list.command, 'units-list');
 		setManifestResourceCache(parsed);
 		assert.equal(resolvePresentationRef('gl.list')?.rowsKey, 'rows');

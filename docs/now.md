@@ -1,7 +1,7 @@
 # Now
 
 **Updated:** 2026-10-23  
-**Focus:** [Phase H1](plan.md) — generic list-detail host (respond to kickagent `resources.gl` / 0.3.0)
+**Focus:** [Phase H1](plan.md) — generic list-detail host (respond to kickagent `resources.gl` / 0.6.0)
 
 Much of the active queue is a **host response to kickagent publisher updates** (manifest `resources.*`, CHANGELOG, wiki). Prefer reload + generic builders over one-off screens. Standing aim: [host-mission.md](guides/host-mission.md). Publisher contract (wiki when up): [manifest-resources](http://127.0.0.1:7097/kickagent/architecture/manifest-resources.md) · [CHANGELOG](http://127.0.0.1:7097/kickagent/CHANGELOG.md).
 
@@ -11,7 +11,7 @@ This week’s work queue. Phase outcomes live in [plan.md](plan.md) — link out
 
 - [x] Consume `resources.gl` as `class: "list-detail"` v2 — filters (`presence`), `recordKey`, field `flag`s; delete accounts-only form constants
 - [x] Host mission doc + agent start ladder ([host-mission.md](guides/host-mission.md), [AGENTS.md](../AGENTS.md))
-- [ ] Smoke `/ops/accounts` against live manifest **0.3.0+** (list, include-hidden/retired, type filter, show, save)
+- [ ] Smoke `/ops/accounts` against live manifest **0.6.0** (after Kickdesk `p` + `kam:reload-kickagent`): list, include-hidden/retired, type filter, show, save; tick **Retired** → confirm → saved → box locks and **Retired on** fills
 - [ ] When kickagent publishes `resources.properties` (list-detail): reload only — confirm generic builder; add `/ops/…` chrome only if needed ([kickagent now](../../kickagent/docs/now.md) phase 1b)
 - [ ] Keep `/ops/units` working on the thin v1 path until kickagent lifts units to list-detail
 
@@ -23,6 +23,8 @@ Keep ≤7 active bullets.
 
 ## Done recently
 
+- Manifest 0.6.0 consumed: one-way fields (`irreversible` / `confirmText`) lock + confirm on Save; command `role` / `sugarFor` cached (only `structural` is a button candidate). Hide/Retire are fields, not buttons.
+- Accounts layout: list fills the column, detail sizes to content (list floor 5 rows), click selected row to deselect, one-row filters, `i` title tip
 - KAM console is a full-height left column (`min(370px, 90vw)`). Header and page stay in the other column and take the full width when the pane is closed. Console type is 0.1rem smaller; timestamps sit 5px from the left edge.
 - List-detail library: `KickagentListFilters`, `KickagentListDetailSplitView` / pane, `listDetailForm`
 - KAM console: text lines for `data.rows` (CLI-like); one timestamp per command result
@@ -47,3 +49,6 @@ Low-priority ideas and polish. Not the week’s queue; pick up when idle or when
 - [ ] `kam:history` — show only the most recent of a repeated series (collapse consecutive duplicates)
 - [ ] After kickagent lifts `resources.units` to list-detail: drop the thin v1 parser path and run units through the same builder as GL
 - [ ] Optional: shared list-detail ops chrome (one route param by resource name) so `/ops/accounts` and future properties share a shell
+- [ ] Toolbar button(s) for `role: "structural"` commands (e.g. **Add account** → `gl-create`) once kickagent publishes how a structural command is invoked (it needs a form: `--number`, `--name`, `--type` are required)
+- [ ] After kickagent adds `group: "status"` on `hidden` (+ `retired`): drop the host interim that treats flag `--hidden` as status
+- [ ] After saving **Retired**, the row stays in the table until the list is re-run (default filters hide retired). Decide: drop the row, or leave it dimmed

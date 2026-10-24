@@ -74,9 +74,71 @@ function sameValue(field: ManifestListDetailField, before: unknown, after: unkno
 	return blankString(before) === blankString(after);
 }
 
+/** One-way field whose saved value is already `true`: the control is locked. */
+export function isFieldLocked(
+	field: ManifestListDetailField,
+	record: Record<string, unknown> | null
+): boolean {
+	return field.irreversible === true && record?.[field.key] === true;
+}
+
+/**
+ * Lifecycle / status fields (hide, retire). Prefer `group: "status"` from the
+ * manifest. Until publishers mark every hide field, `--hidden` and
+ * `irreversible` also count so both checkboxes land in Status.
+ */
+export function isStatusField(field: ManifestListDetailField): boolean {
+	if (field.group === 'status' || field.irreversible === true) return true;
+	return field.editable === true && field.flag === '--hidden';
+}
+
+/** True when a meta value is worth showing (skip null / empty / blank). */
+export function hasDisplayValue(value: unknown): boolean {
+	if (value === null || value === undefined) return false;
+	if (typeof value === 'string' && value.trim() === '') return false;
+	return true;
+}
+
+/** Record id for the title bar (uuid identity field, else `id` key). */
+export function recordIdentityId(
+	record: Record<string, unknown> | null,
+	fields: readonly ManifestListDetailField[]
+): string | null {
+	if (!record) return null;
+	const byFlag = fields.find((f) => !f.editable && f.flag === '--id');
+	const raw = byFlag ? record[byFlag.key] : record.id;
+	const text = raw == null ? '' : String(raw).trim();
+	return text || null;
+}
+
+/**
+ * One-way fields this draft would newly set to `true`. The host confirms these before
+ * sending (nothing is sent until Save).
+ */
+export function irreversibleChanges(
+	record: Record<string, unknown>,
+	draft: Record<string, unknown>,
+	fields: readonly ManifestListDetailField[]
+): ManifestListDetailField[] {
+	return fields.filter(
+		(field) =>
+			field.editable &&
+			field.irreversible === true &&
+			record[field.key] !== true &&
+			draft[field.key] === true
+	);
+}
+
+/** Confirmation text for one-way fields: the field's `confirmText`, else a generic line. */
+export function confirmMessage(fields: readonly ManifestListDetailField[]): string {
+	return fields
+		.map((field) => field.confirmText ?? `Set "${field.label}"? This cannot be undone.`)
+		.join('\n\n');
+}
+
 /**
  * Identity flags (`editable: false` with `flag`, preferring `--id` then `--number`)
- * plus changed editable field flags only.
+ * plus changed editable field flags only. A locked one-way field is never sent.
  * `[]` = nothing changed. `null` = no identity.
  */
 export function buildListDetailUpdateArgs(
@@ -97,6 +159,7 @@ export function buildListDetailUpdateArgs(
 
 	for (const field of detail.fields) {
 		if (!field.editable || !field.flag) continue;
+		if (isFieldLocked(field, record)) continue;
 		if (sameValue(field, record[field.key], draft[field.key])) continue;
 		changed = true;
 		if (field.type === 'boolean') {

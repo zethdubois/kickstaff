@@ -79,6 +79,17 @@ export type ManifestListDetailField = {
 	flag?: string;
 	options?: string[];
 	clearValue?: string;
+	/**
+	 * One-way boolean: lock once the saved value is `true`, and confirm before a save
+	 * that sets it to `true` (see `confirmText`).
+	 */
+	irreversible?: boolean;
+	confirmText?: string;
+	/**
+	 * Optional layout group. Hosts put `status` fields in a Status section
+	 * (lifecycle: hide, retire) separate from ordinary attribute checkboxes.
+	 */
+	group?: string;
 };
 
 export type ManifestListDetailList = ManifestListSchema & {
@@ -348,6 +359,14 @@ function parseListDetailFields(raw: unknown): ManifestListDetailField[] {
 		const options = Array.isArray(row.options)
 			? row.options.filter((o): o is string => typeof o === 'string' && o.trim() !== '')
 			: undefined;
+		const confirmText =
+			typeof row.confirmText === 'string' && row.confirmText.trim() !== ''
+				? row.confirmText.trim()
+				: undefined;
+		const group =
+			typeof row.group === 'string' && row.group.trim() !== ''
+				? row.group.trim()
+				: undefined;
 		out.push({
 			key,
 			label: typeof row.label === 'string' ? row.label.trim() : key,
@@ -355,7 +374,10 @@ function parseListDetailFields(raw: unknown): ManifestListDetailField[] {
 			editable: row.editable === true,
 			...(flag ? { flag } : {}),
 			...(options && options.length > 0 ? { options } : {}),
-			...(clearValue ? { clearValue } : {})
+			...(clearValue ? { clearValue } : {}),
+			...(row.irreversible === true ? { irreversible: true } : {}),
+			...(confirmText ? { confirmText } : {}),
+			...(group ? { group } : {})
 		});
 	}
 	return out;

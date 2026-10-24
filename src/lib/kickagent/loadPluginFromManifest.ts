@@ -10,7 +10,11 @@ import {
   clearKickagentCommands,
   registerKickagentCommand,
 } from "$lib/devConsole/commands";
-import { setManifestCommandCache } from "./manifestCommandCache";
+import {
+  MANIFEST_COMMAND_ROLES,
+  setManifestCommandCache,
+  type ManifestCommandRole,
+} from "./manifestCommandCache";
 import {
   parseManifestResources,
   setManifestResourceCache,
@@ -25,6 +29,8 @@ type KickagentManifestCommandJson = {
   category: string;
   execution: "local" | "remote";
   sortOrder?: number;
+  role?: ManifestCommandRole;
+  sugarFor?: string;
 };
 
 type KickagentManifestJson = {
@@ -115,7 +121,22 @@ function parseManifestCommands(raw: unknown): KickagentManifestCommandJson[] {
       typeof row.sortOrder === "number" && Number.isFinite(row.sortOrder)
         ? row.sortOrder
         : undefined;
-    out.push({ name, description, category, execution, sortOrder });
+    const role = MANIFEST_COMMAND_ROLES.find((r) => r === row.role);
+    const sugarFor =
+      role === "shortcut" &&
+      typeof row.sugarFor === "string" &&
+      row.sugarFor.trim() !== ""
+        ? row.sugarFor.trim()
+        : undefined;
+    out.push({
+      name,
+      description,
+      category,
+      execution,
+      sortOrder,
+      ...(role ? { role } : {}),
+      ...(sugarFor ? { sugarFor } : {}),
+    });
   }
   return out;
 }
