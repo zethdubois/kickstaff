@@ -115,6 +115,7 @@
         {#if devConsole.dbStatus}
           <span
             class="dbBadge"
+            class:dbBadge--staging={devConsole.dbStatus.target === "staging"}
             class:dbBadge--prod={devConsole.dbStatus.target === "prod"}
             title={devConsole.dbStatus.label}
           >
@@ -249,6 +250,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .dbBadge--staging {
+    background: #2a2818;
+    color: #d4c05a;
+    border-color: #5a5020;
   }
 
   .dbBadge--prod {

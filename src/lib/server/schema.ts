@@ -31,8 +31,27 @@ export const sessions = pgTable('sessions', {
 		.references(() => users.id, { onDelete: 'cascade' }),
 	tokenHash: text('token_hash').notNull().unique(),
 	expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+	createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+	/** Idle-timeout clock; bumped (throttled) on authenticated requests. */
+	lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).defaultNow().notNull()
 });
+
+/** One-time password-reset links (forgot-password / invite recovery). */
+export const passwordResetTokens = pgTable(
+	'password_reset_tokens',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		tokenHash: text('token_hash').notNull().unique(),
+		expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		userIdx: index('password_reset_tokens_user_idx').on(t.userId)
+	})
+);
 
 /** AppFolio / marketing URLs per city; editable in admin. */
 export const rentalLandingLinks = pgTable('rental_landing_links', {

@@ -1,12 +1,21 @@
 import type { Actions } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { SESSION_COOKIE, deleteSessionForToken } from '$lib/server/auth';
+import { signOutOfAllTargets, signOutOfTarget } from '$lib/server/auth';
+import { getActiveDbTarget, isDbSwitchingEnabled } from '$lib/server/dbTarget';
 
 export const actions: Actions = {
-	default: async ({ cookies }) => {
-		const token = cookies.get(SESSION_COOKIE);
-		await deleteSessionForToken(token);
-		cookies.delete(SESSION_COOKIE, { path: '/' });
-		throw redirect(303, '/login');
+	/**
+	 * Default: sign out of the database you're currently on (other databases' sessions stay).
+	 * `all=1`: sign out of every database this browser holds a session for.
+	 */
+	default: async ({ cookies, request }) => {
+		const form = await request.formData();
+		if (form.get('all') === '1') {
+			await signOutOfAllTargets(cookies);
+		} else {
+			await signOutOfTarget(getActiveDbTarget(), cookies);
+		}
+		const to = isDbSwitchingEnabled() ? `/login?db=${getActiveDbTarget()}` : '/login';
+		throw redirect(303, to);
 	}
 };

@@ -1,15 +1,21 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
+import type { Cookies } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { isLocalDevDatabaseFeaturesEnabled, isProductionRuntime } from '$lib/server/runtimeEnv';
 import {
 	getDefaultDbTarget,
 	getDbDisplayInfoFromEnv,
 	resolveConnectionStringFromEnv,
+	resolveRequestTarget,
 	type DbTarget,
-	type DbTargetEnv
+	type DbTargetEnv,
+	type RequestTargetResult
 } from './dbTargetCore';
 
 export type { DbTarget };
+export { parseDbTarget, toKickagentDbTarget } from './dbTargetCore';
 
+/** Preference cookie: which database this browser is pointed at (not a credential). */
 export const DB_TARGET_COOKIE = 'kickstaff_db_target';
 
 export type DbDisplayInfo = {
@@ -22,36 +28,36 @@ export type DbDisplayInfo = {
 function readDbTargetEnv(): DbTargetEnv {
 	return {
 		nodeEnv: process.env.NODE_ENV,
-		dbDefault: env.KICKSTAFF_DB_DEFAULT ?? process.env.KICKSTAFF_DB_DEFAULT,
+		railwayEnvironment:
+			process.env.RAILWAY_ENVIRONMENT_NAME?.trim() ||
+			process.env.RAILWAY_ENVIRONMENT?.trim() ||
+			undefined,
 		databaseUrlDev: env.DATABASE_URL_DEV,
+		databaseUrlStaging: env.DATABASE_URL_STAGING ?? process.env.DATABASE_URL_STAGING,
 		databaseUrl: env.DATABASE_URL
 	};
 }
 
-let activeTarget: DbTarget = getDefaultDbTarget(readDbTargetEnv());
+/**
+ * The database a request runs against. Set per request in hooks (AsyncLocalStorage),
+ * so two people on one server can use different databases without stepping on each other.
+ */
+const targetStore = new AsyncLocalStorage<DbTarget>();
 
+export function runWithDbTarget<T>(target: DbTarget, fn: () => T): T {
+	return targetStore.run(target, fn);
+}
+
+/** Local dev with a dev DB configured: cookie / `?db=` / KAM `db use` may change the target. */
 export function isDbSwitchingEnabled(): boolean {
 	return isLocalDevDatabaseFeaturesEnabled(env.DATABASE_URL_DEV);
 }
 
 export function getActiveDbTarget(): DbTarget {
-	if (isProductionRuntime()) return 'prod';
-	return activeTarget;
-}
-
-export function parseDbTargetCookie(value: string | undefined): DbTarget | null {
-	if (value === 'dev' || value === 'prod') return value;
-	return null;
-}
-
-export async function syncDbTargetFromCookie(cookieValue: string | undefined): Promise<void> {
-	if (isProductionRuntime()) return;
-	const fromCookie = parseDbTargetCookie(cookieValue);
-	if (!fromCookie) return;
-	if (fromCookie === activeTarget) return;
-	const dbEnv = readDbTargetEnv();
-	if (fromCookie === 'dev' && !dbEnv.databaseUrlDev?.trim()) return;
-	await setActiveDbTarget(fromCookie);
+	if (isProductionRuntime()) {
+		return getDefaultDbTarget(readDbTargetEnv());
+	}
+	return targetStore.getStore() ?? getDefaultDbTarget(readDbTargetEnv());
 }
 
 export function resolveConnectionString(target: DbTarget = getActiveDbTarget()): string {
@@ -62,34 +68,36 @@ export function getDbDisplayInfo(target: DbTarget = getActiveDbTarget()): DbDisp
 	return getDbDisplayInfoFromEnv(readDbTargetEnv(), target);
 }
 
-let switchPromise: Promise<void> | null = null;
-
-export async function setActiveDbTarget(target: DbTarget): Promise<void> {
-	if (isProductionRuntime()) {
-		throw new Error('Database target cannot be changed in production');
-	}
-	const dbEnv = readDbTargetEnv();
+/** Is this target's connection string configured on this server? */
+export function isDbTargetAvailable(target: DbTarget): boolean {
 	try {
-		resolveConnectionStringFromEnv(dbEnv, target);
-	} catch (e) {
-		const message = e instanceof Error ? e.message : 'Invalid database target';
-		throw new Error(message);
+		resolveConnectionStringFromEnv(readDbTargetEnv(), target);
+		return true;
+	} catch {
+		return false;
 	}
-	if (target === activeTarget) return;
+}
 
-	const run = async () => {
-		activeTarget = target;
-		const { resetDbPool } = await import('./db');
-		await resetDbPool();
-	};
+/** Decide the target for an incoming request (see `resolveRequestTarget`). */
+export function resolveTargetForRequest(input: {
+	pathname: string;
+	dbParam: string | null;
+	cookie: string | undefined;
+}): RequestTargetResult {
+	return resolveRequestTarget(readDbTargetEnv(), {
+		switchingEnabled: isDbSwitchingEnabled(),
+		pathname: input.pathname,
+		dbParam: input.dbParam,
+		cookie: input.cookie
+	});
+}
 
-	if (switchPromise) {
-		await switchPromise;
-	}
-	switchPromise = run();
-	try {
-		await switchPromise;
-	} finally {
-		switchPromise = null;
-	}
+export function setDbTargetCookie(cookies: Cookies, url: URL, target: DbTarget): void {
+	cookies.set(DB_TARGET_COOKIE, target, {
+		path: '/',
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: url.protocol === 'https:',
+		maxAge: 60 * 60 * 24 * 365
+	});
 }

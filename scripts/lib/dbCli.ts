@@ -16,7 +16,7 @@ import {
 
 export type CliDbTarget = DbTarget;
 
-const CLI_DB_USAGE = 'usage: pnpm db:<cmd> [--db dev|prod] [dev|prod]';
+const CLI_DB_USAGE = 'usage: pnpm db:<cmd> [--db dev|staging|prod] [dev|staging|prod]';
 
 export type ParsedCliDbArgv = {
 	argv: string[];
@@ -26,7 +26,7 @@ export type ParsedCliDbArgv = {
 	explicit: boolean;
 };
 
-/** Strip `--db dev|prod` and optional positional `dev|prod`; mirrors kickagent parseDbArgv. */
+/** Strip `--db dev|staging|prod` and optional positional target; mirrors kickagent parseDbArgv. */
 export function parseCliDbArgv(argv: string[]): ParsedCliDbArgv {
 	const rest: string[] = [];
 	let dbTarget: CliDbTarget | null = null;
@@ -34,7 +34,8 @@ export function parseCliDbArgv(argv: string[]): ParsedCliDbArgv {
 
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
-		if (arg === '--db' && argv[i + 1]) {
+		// Accept `--db` and the common typo `-db` (single dash).
+		if ((arg === '--db' || arg === '-db') && argv[i + 1]) {
 			const parsed = parseDbTarget(argv[i + 1]!.toLowerCase());
 			if (!parsed) {
 				throw new Error(CLI_DB_USAGE);
@@ -82,18 +83,24 @@ export function getCliDbDisplayInfo(target: CliDbTarget = getDefaultCliDbTarget(
 	return getDbDisplayInfoFromEnv(envFromProcess(), target);
 }
 
-/** Warn when argv explicitly selected prod (status / migrate-status). */
+/** Warn when argv explicitly selected prod or staging (status / migrate-status). */
 export function warnIfExplicitProdCliTarget(argv: string[] = []): void {
 	const { dbTarget, explicit } = parseCliDbArgv(argv);
 	const effective = dbTarget ?? getDefaultCliDbTarget();
 	if (explicit && effective === 'prod') {
 		console.warn('⚠ Using PRODUCTION database (DATABASE_URL)');
 	}
+	if (explicit && effective === 'staging') {
+		console.warn('⚠ Using STAGING database (DATABASE_URL_STAGING or staging deploy DATABASE_URL)');
+	}
 }
 
-/** Warn whenever effective target is prod (migrate). */
+/** Warn whenever effective target is prod or staging (migrate). */
 export function warnIfProdMigrateTarget(target: CliDbTarget): void {
 	if (target === 'prod') {
 		console.warn('⚠ Applying migrations to PRODUCTION (DATABASE_URL)');
+	}
+	if (target === 'staging') {
+		console.warn('⚠ Applying migrations to STAGING (DATABASE_URL_STAGING)');
 	}
 }

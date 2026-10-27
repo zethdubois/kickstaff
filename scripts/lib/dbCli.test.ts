@@ -42,7 +42,19 @@ describe('parseCliDbArgv', () => {
 		assert.deepEqual(r.argv, ['--help']);
 	});
 
+	it('parses --db staging', () => {
+		const r = parseCliDbArgv(['--db', 'staging']);
+		assert.equal(r.dbTarget, 'staging');
+		assert.equal(r.explicit, true);
+	});
+
+	it('parses -db staging (single-dash typo)', () => {
+		const r = parseCliDbArgv(['-db', 'staging']);
+		assert.equal(r.dbTarget, 'staging');
+		assert.equal(r.explicit, true);
+	});
+
 	it('throws on invalid --db value', () => {
-		assert.throws(() => parseCliDbArgv(['--db', 'staging']), /usage:/);
+		assert.throws(() => parseCliDbArgv(['--db', 'qa']), /usage:/);
 	});
 });

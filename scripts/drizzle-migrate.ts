@@ -1,14 +1,15 @@
 /**
- * Run drizzle-kit migrate against dev (default) or prod URL.
+ * Run drizzle-kit migrate against dev / staging / prod URL.
  *
  *   pnpm db:migrate
+ *   pnpm db:migrate --db staging
  *   pnpm db:migrate --db prod
- *   pnpm db:migrate prod   # positional alias
  */
 import 'dotenv/config';
 import { spawnSync } from 'node:child_process';
 import { DRIZZLE_DATABASE_URL_ENV } from '../src/lib/server/drizzleKitEnv.ts';
 import {
+	getCliDbDisplayInfo,
 	resolveCliConnectionString,
 	resolveCliDbTarget,
 	warnIfProdMigrateTarget
@@ -20,8 +21,7 @@ const target = resolveCliDbTarget(cliArgv);
 warnIfProdMigrateTarget(target);
 
 const url = resolveCliConnectionString(target);
-const info = target === 'dev' ? 'dev (DATABASE_URL_DEV)' : 'prod (DATABASE_URL)';
-console.log(`Migrating: ${info}`);
+console.log(`Migrating: ${getCliDbDisplayInfo(target).label}`);
 
 const result = spawnSync('pnpm', ['exec', 'drizzle-kit', 'migrate'], {
 	env: {

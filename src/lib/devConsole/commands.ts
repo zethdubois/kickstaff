@@ -369,7 +369,7 @@ registerCommand("help", (): CommandOutcome => {
     "Hotkey: Ctrl+/ (⌘+/) — palette · ` (backtick) — KAM Console pane",
   );
   blocks.push(
-    "Database: db status · db tables · db migrations · db use dev|prod (super only, local dev)",
+    "Database: db status · db tables · db migrations (admin) · db use dev|staging|prod (local dev; each DB needs its own sign-in)",
   );
   const targets = listRefreshTargets();
   if (targets.length > 0) {
@@ -533,7 +533,7 @@ registerCommand("shell", (args): CommandOutcome => {
 });
 
 type DbApiStatus = {
-  target: "dev" | "prod";
+  target: "dev" | "staging" | "prod";
   label: string;
   host: string;
   database: string;
@@ -635,13 +635,17 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
           ? "connected: ok"
           : "connected: unknown",
       status.canSwitch
-        ? "switch: db use dev | db use prod (super only)"
+        ? "switch: db use dev | db use staging | db use prod (each DB needs its own sign-in)"
         : "switch: disabled (production or DATABASE_URL_DEV unset)",
     ];
     return {
       log: lines.join("\n"),
       level:
-        status.target === "prod" || status.connected === false ? "warn" : "info",
+        status.target === "prod" ||
+        status.target === "staging" ||
+        status.connected === false
+          ? "warn"
+          : "info",
     };
   }
 
@@ -653,7 +657,7 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
   if (sub === "migrations" || sub === "migrate") {
     if (sub === "migrate") {
       return {
-        log: "db migrate is not available in KAM — use: pnpm db:migrate (dev) or pnpm db:migrate --db prod",
+        log: "db migrate is not available in KAM — use: pnpm db:migrate (dev) or pnpm db:migrate --db staging|prod",
         level: "warn",
       };
     }
@@ -668,14 +672,19 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
 
   if (sub === "use") {
     const target = args[1]?.toLowerCase();
-    if (target !== "dev" && target !== "prod") {
-      throw new Error("usage: db use dev | db use prod");
+    if (target !== "dev" && target !== "staging" && target !== "prod") {
+      throw new Error("usage: db use dev | db use staging | db use prod");
     }
 
     const warnLines: string[] = [];
     if (target === "prod") {
       warnLines.push(
         "⚠ switching to PRODUCTION database — migrations and writes affect live data",
+      );
+    }
+    if (target === "staging") {
+      warnLines.push(
+        "⚠ switching to STAGING database — shared team test data",
       );
     }
 
@@ -701,17 +710,29 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
       throw new Error(msg);
     }
 
-    const status = payload as DbApiStatus;
-    await fetchDbStatus();
+    const status = payload as DbApiStatus & {
+      hasSession?: boolean;
+      loginUrl?: string;
+    };
+
+    // Every database has its own sessions. Already signed in there → reload into it;
+    // otherwise go to that database's login (other sessions stay untouched).
+    const destination = status.hasSession
+      ? window.location.pathname + window.location.search
+      : (status.loginUrl ?? `/login?db=${target}`);
+    const note = status.hasSession
+      ? `signed in on ${target} — reloading…`
+      : `no ${target} session — opening sign-in for ${target}…`;
+    window.setTimeout(() => window.location.assign(destination), 600);
+
     return {
-      refresh: ["app.db"],
-      log: [...warnLines, `database: ${status.label}`].filter(Boolean),
-      level: target === "prod" ? "warn" : "info",
+      log: [...warnLines, `database: ${status.label}`, note].filter(Boolean),
+      level: target === "prod" || target === "staging" ? "warn" : "info",
     };
   }
 
   throw new Error(
-    "usage: db status | db tables | db migrations | db use dev | db use prod",
+    "usage: db status | db tables | db migrations | db use dev | db use staging | db use prod",
   );
 });
 

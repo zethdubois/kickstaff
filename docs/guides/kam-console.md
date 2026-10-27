@@ -29,9 +29,10 @@ shell default        → leave kickagent shell (same when already default)
 :exit                → leave kickagent shell from inside [KA] mode (host escape)
 unalias --all        → remove every saved alias (or: alias --clear)
 db status            → active DB target, host, connectivity (SELECT 1)
-db tables            → list public/drizzle tables (~row counts, local dev only)
-db migrations        → journal vs ledger (ok / pending:N); apply via pnpm db:migrate
-db use prod          → super only — switch runtime DB (local dev; warns on prod)
+db tables            → list public/drizzle tables (~row counts, local dev only, admin role)
+db migrations        → journal vs ledger (ok / pending:N); apply via pnpm db:migrate (admin role)
+db use staging       → point this browser at staging (local; needs DATABASE_URL_STAGING); needs a staging sign-in
+db use prod          → point this browser at prod (local dev; warns); needs a prod sign-in
 ```
 
 ## klog (the proprietary logger)
@@ -100,16 +101,18 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
 | `alias` / `unalias` | Persisted command aliases (`kickstaff.consoleUi` in localStorage). See **Command aliases** below. |
 | `kam:reload-kickagent` | Phase 2: refetch `PUBLIC_KICKAGENT_MANIFEST_URL`, verify `sha256`, reload plugin (`kickagent:*` commands). No-op message if env unset. |
-| `db` | `db status` — active target, host/db name, and `connected: ok` / `failed`. `db tables` — relations in `public` and `drizzle` on the **runtime** target (local dev only). `db migrations` — Drizzle journal vs `drizzle.__drizzle_migrations` (read-only; run **`pnpm db:migrate`** or Kickdesk to apply). `db use dev` \| `db use prod` — **super user only** (`ADMIN_EMAIL`), non-production, when `DATABASE_URL_DEV` is set. |
+| `db` | `db status` — active target, host/db name, and `connected: ok` / `failed`. `db tables` — relations in `public` and `drizzle` on the **runtime** target (local dev only). `db migrations` — Drizzle journal vs `drizzle.__drizzle_migrations` (read-only; run **`pnpm db:migrate`** or Kickdesk to apply). `db use dev` \| `staging` \| `prod` — any signed-in user, non-production, when `DATABASE_URL_DEV` is set; reloads if you already have a session on that DB, otherwise opens that DB's login. `db tables` / `db migrations` require the admin role. |
 
 ### Database routing (local dev)
 
-- **Default:** `KICKSTAFF_DB_DEFAULT` (`dev` \| `prod`) if set; else `DATABASE_URL_DEV` when set → `dev`; else `prod`. Never `DATABASE_URL || DATABASE_URL_DEV` — [database-targeting.md](database-targeting.md).
-- **Console header:** shows `dev` or `prod` badge with full label on hover.
-- **Super switch:** `db use prod` connects the running dev server to `DATABASE_URL` (Railway). Requires sign-in as the user matching `ADMIN_EMAIL` (same **SUPER** rule as `/admin/users`). Choice is stored in an httpOnly cookie (`kickstaff_db_target`).
-- **Production:** switching disabled; only `DATABASE_URL` is used.
-- **CLI:** `pnpm db:status` (env default target, not cookie), `pnpm db:migrate:status` (Kickdesk one-liner file), `pnpm db:migrate` (dev). Prod: `pnpm db:<cmd> --db prod` (dangerous for migrate).
-- **KAM inspection** uses the same runtime target as the app (including after `db use prod`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
+- **Default (local):** `dev` when `DATABASE_URL_DEV` is set, else `prod`. No `KICKSTAFF_DB_DEFAULT`. Never `DATABASE_URL || DATABASE_URL_DEV` — [database-targeting.md](database-targeting.md).
+- **Pre-auth pick:** `/login?db=dev|staging|prod` sets the cookie before credentials are checked.
+- **Console header:** shows `dev` / `staging` / `prod` badge with full label on hover.
+- **Connection:** `dev` → `DATABASE_URL_DEV`; `staging` → `DATABASE_URL_STAGING` (or deploy `DATABASE_URL` on Railway staging); `prod` → `DATABASE_URL`.
+- **Switching:** `db use staging` / `db use prod` set the httpOnly preference cookie (`kickstaff_db_target`) for this browser only — not a global server switch. Each DB has its own session cookie (`ka_session_<target>`), so the switch grants nothing by itself: you must hold (or log in to get) a session in that DB. See *Sessions and switching* in [database-targeting.md](database-targeting.md).
+- **Deployed runtime:** switching disabled. Badge from Railway env name (`RAILWAY_ENVIRONMENT_NAME`); both use that env’s `DATABASE_URL`.
+- **CLI:** `pnpm db:status` (inferred default, not cookie), `pnpm db:migrate:status`, `pnpm db:migrate` (dev). Staging/prod: `pnpm db:<cmd> --db staging` \| `--db prod`.
+- **KAM inspection** uses the same runtime target as the app (including after `db use …`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
 
 ### Resource tables (kickagent data UI)
 
@@ -180,7 +183,7 @@ From **inside** [KA]: use **:** to reach kickstaff commands (`:shell default`, `
 
 ## Refresh targets (the bridge between pages and commands)
 
-A layout or page registers a named refresh callback. Today the host registers **`app.db`** in [`src/routes/+layout.svelte`](../../src/routes/+layout.svelte) so `db use dev|prod` can refresh the nav DB badge.
+A layout or page registers a named refresh callback. Today the host registers **`app.db`** in [`src/routes/+layout.svelte`](../../src/routes/+layout.svelte) so `db use dev|staging|prod` can refresh the console DB badge.
 
 ```svelte
 <script lang="ts">

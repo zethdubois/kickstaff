@@ -97,10 +97,10 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 
 ## Database
 
-- **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env` (e.g. `localhost:5043/kickstaff_dev`); default target: `KICKSTAFF_DB_DEFAULT=dev` or infer dev when `DATABASE_URL_DEV` is set — [database-targeting.md](docs/guides/database-targeting.md). **Prod:** `DATABASE_URL` on Railway only. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
-- Apply migrations after pulling: `pnpm db:migrate` (dev). Production: `pnpm db:migrate --db prod` — use with care.
-- First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`, `ADMIN_PASSWORD`). Resync hash after changing `.env`: `pnpm reset:admin-password`. Active target: `pnpm db:status` or KAM `db status`.
-- Super-only runtime switch (local dev): KAM `db use prod` / `db use dev` — see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
+- **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env`; default target is **dev** when that URL is set (no `KICKSTAFF_DB_DEFAULT`). Explicit: `/login?db=…`, `--db`, KAM `db use` — [database-targeting.md](docs/guides/database-targeting.md). **Staging / prod:** separate Railway Postgres; deploy badge from `RAILWAY_ENVIRONMENT_NAME`. Laptop: `DATABASE_URL_STAGING`. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
+- Apply migrations after pulling: `pnpm db:migrate` (dev). Staging / production: `pnpm db:migrate --db staging` \| `--db prod` — use with care.
+- First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`; random temp password printed once). Target with `--db staging` \| `prod`. Rotate: `pnpm reset:admin-password --db …`. Forgot password: `/forgot-password`. Active target: `pnpm db:status` or KAM `db status`.
+- **Per-DB sessions:** each database has its own sessions and its own cookie (`ka_session_<target>`); the target is resolved per request (`?db=` on login/reset pages > `kickstaff_db_target` preference cookie > default), never a process-global. Tiered timeouts (dev 7d; staging 7d/8h idle; prod 12h/30m idle, browser-session cookie). KAM `db use …` only sets the preference and sends you to that DB's login if you have no session — policy in `[docs/guides/database-targeting.md](docs/guides/database-targeting.md)`.
 
 ## Documentation pipeline
 

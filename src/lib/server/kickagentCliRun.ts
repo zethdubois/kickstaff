@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { CommandOutcome } from "$lib/kickagent/contracts";
 import type { DbTarget } from "$lib/server/dbTarget";
-import { getActiveDbTarget } from "$lib/server/dbTarget";
+import { getActiveDbTarget, toKickagentDbTarget } from "$lib/server/dbTarget";
 import { buildKickagentSpawnEnv } from "$lib/server/kickagentEnv";
 import {
   resolveKickagentApiBaseUrl,
@@ -65,7 +65,7 @@ export function runKickagentCatalogCommand(
     options.command,
     ...options.args,
     "--db",
-    db,
+    toKickagentDbTarget(db),
     "--json",
     "--userId",
     options.userId,

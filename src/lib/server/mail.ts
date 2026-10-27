@@ -143,6 +143,38 @@ export async function sendPasswordResetEmail(
 	});
 }
 
+/** Self-serve forgot-password: link expires in ~1 hour. */
+export async function sendPasswordResetLinkEmail(
+	email: string,
+	rawToken: string,
+	/** Local dev only: pins the link to the database that issued the token. */
+	dbTarget?: string
+): Promise<boolean> {
+	const rawBase = env.PUBLIC_BASE_URL as string | undefined;
+	const base = rawBase && typeof rawBase === 'string' ? rawBase.replace(/\/+$/, '') : '';
+	const dbQuery = dbTarget ? `&db=${encodeURIComponent(dbTarget)}` : '';
+	const path = `/reset-password?token=${encodeURIComponent(rawToken)}${dbQuery}`;
+	const resetUrl = base ? `${base}${path}` : path;
+
+	const subject = 'Reset your KAM password';
+	const text = [
+		'Hello,',
+		'',
+		'We received a request to reset the password for your KAM account.',
+		'',
+		`Open this link to choose a new password (expires in 1 hour):`,
+		resetUrl,
+		'',
+		'If you did not request this, you can ignore this email.'
+	].join('\n');
+
+	return sendMail({
+		to: email,
+		subject,
+		text
+	});
+}
+
 /** Public rental “Contact us” form; delivers to CONTACT_INBOX or ADMIN_EMAIL. */
 export async function sendRentalContactInquiry(opts: {
 	inboxTo: string;

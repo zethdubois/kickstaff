@@ -6,9 +6,13 @@ import { listDatabaseTables, testDatabaseConnection } from '$lib/server/database
 import { getMigrationStatus } from '$lib/server/migrationStatus';
 import { getDbDisplayInfo, resolveConnectionString } from '$lib/server/dbTarget';
 
-export function assertDevDatabaseInspection() {
+export function assertDevDatabaseInspection(user: { role: string } | null) {
 	if (!isDevDatabaseInspectionEnabled()) {
 		return { ok: false as const, status: 403, message: devDatabaseInspectionDisabledMessage() };
+	}
+	// Table lists and migration state are operator info: admins only.
+	if (!user || user.role !== 'admin') {
+		return { ok: false as const, status: 403, message: 'Admin only' };
 	}
 	return { ok: true as const };
 }

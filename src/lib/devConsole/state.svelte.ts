@@ -44,7 +44,7 @@ let _nextId = 1;
 let _hydrated = false;
 
 export type DbStatus = {
-  target: "dev" | "prod";
+  target: "dev" | "staging" | "prod";
   label: string;
   host: string;
   database: string;

@@ -2,6 +2,7 @@ import { env } from "$env/dynamic/private";
 import { env as publicEnv } from "$env/dynamic/public";
 import type { CommandOutcome } from "$lib/kickagent/contracts";
 import type { DbTarget } from "$lib/server/dbTarget";
+import { toKickagentDbTarget } from "$lib/server/dbTarget";
 import type { RunKickagentCatalogOptions } from "$lib/server/kickagentCliRun";
 
 /** Origin for kickagent HTTP API (manifest host or KICKAGENT_API_URL). */
@@ -51,7 +52,7 @@ export async function runKickagentCatalogCommandViaApi(
       args: options.args,
       userId: options.userId,
       userEmail: options.userEmail,
-      db: options.db,
+      db: toKickagentDbTarget(options.db),
     }),
   });
 

@@ -1,25 +1,34 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { buildDatabaseStatusPayload } from '$lib/server/devDbHandlers';
-import { DB_TARGET_COOKIE, isDbSwitchingEnabled, setActiveDbTarget, type DbTarget } from '$lib/server/dbTarget';
-import { isSuperUser } from '$lib/server/superUser';
+import { hasValidSessionForTarget } from '$lib/server/auth';
+import {
+	isDbSwitchingEnabled,
+	isDbTargetAvailable,
+	parseDbTarget,
+	runWithDbTarget,
+	setDbTargetCookie
+} from '$lib/server/dbTarget';
 
 export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
-	const canSwitch = isDbSwitchingEnabled() && isSuperUser(locals.user);
-	return json(await buildDatabaseStatusPayload(canSwitch));
+	return json(await buildDatabaseStatusPayload(isDbSwitchingEnabled()));
 };
 
+/**
+ * Point this browser at another database (local dev only).
+ *
+ * This is not a privilege escalation: it only changes the preference cookie. Every database
+ * has its own sessions, so you can only *use* the target if you hold (or obtain by logging in)
+ * a valid session in THAT database. The response says which.
+ */
 export const POST: RequestHandler = async ({ request, locals, cookies, url }) => {
 	if (!locals.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
 	if (!isDbSwitchingEnabled()) {
 		return json({ message: 'Database switching is disabled' }, { status: 403 });
-	}
-	if (!isSuperUser(locals.user)) {
-		return json({ message: 'Super user only' }, { status: 403 });
 	}
 
 	let body: { target?: string };
@@ -29,25 +38,25 @@ export const POST: RequestHandler = async ({ request, locals, cookies, url }) =>
 		return json({ message: 'Invalid JSON body' }, { status: 400 });
 	}
 
-	const target = body.target;
-	if (target !== 'dev' && target !== 'prod') {
-		return json({ message: 'target must be "dev" or "prod"' }, { status: 400 });
+	const target = parseDbTarget(body.target?.trim().toLowerCase());
+	if (!target) {
+		return json({ message: 'target must be "dev", "staging", or "prod"' }, { status: 400 });
+	}
+	if (!isDbTargetAvailable(target)) {
+		return json(
+			{ message: `${target} is not configured on this server (its DATABASE_URL_* is not set)` },
+			{ status: 400 }
+		);
 	}
 
-	try {
-		await setActiveDbTarget(target as DbTarget);
-	} catch (e) {
-		const message = e instanceof Error ? e.message : 'Failed to switch database';
-		return json({ message }, { status: 400 });
-	}
+	setDbTargetCookie(cookies, url, target);
 
-	cookies.set(DB_TARGET_COOKIE, target, {
-		path: '/',
-		httpOnly: true,
-		sameSite: 'lax',
-		secure: url.protocol === 'https:',
-		maxAge: 60 * 60 * 24 * 365
+	const hasSession = await hasValidSessionForTarget(target, cookies);
+	const status = await runWithDbTarget(target, () => buildDatabaseStatusPayload(true));
+
+	return json({
+		...status,
+		hasSession,
+		loginUrl: `/login?db=${target}`
 	});
-
-	return json(await buildDatabaseStatusPayload(true));
 };

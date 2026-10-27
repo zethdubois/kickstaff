@@ -10,6 +10,8 @@ declare global {
 				role: string;
 				mustChangePassword: boolean;
 			} | null;
+			/** `?db=` was present on a pre-auth page but could not be honored. */
+			dbParamRejected?: boolean;
 		}
 		// interface PageData {}
 		// interface PageState {}

@@ -5,7 +5,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.user) {
 		return json({ message: 'Unauthorized' }, { status: 401 });
 	}
-	const guard = assertDevDatabaseInspection();
+	const guard = assertDevDatabaseInspection(locals.user);
 	if (!guard.ok) {
 		return json({ message: guard.message }, { status: guard.status });
 	}

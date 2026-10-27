@@ -1,27 +1,23 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
-import { getActiveDbTarget, resolveConnectionString } from './dbTarget';
+import { getActiveDbTarget, resolveConnectionString, type DbTarget } from './dbTarget';
 import * as schema from './schema';
 
-let pool: pg.Pool | undefined;
-let dbInstance: ReturnType<typeof drizzle<typeof schema>> | undefined;
+type DbHandle = {
+	pool: pg.Pool;
+	db: ReturnType<typeof drizzle<typeof schema>>;
+};
 
-export async function resetDbPool(): Promise<void> {
-	if (pool) {
-		await pool.end();
-	}
-	pool = undefined;
-	dbInstance = undefined;
-}
+/** One pool per database target; requests pick theirs via the request-scoped target. */
+const handles = new Map<DbTarget, DbHandle>();
 
 export function getDb() {
-	const connectionString = resolveConnectionString(getActiveDbTarget());
-	if (!pool) {
-		pool = new pg.Pool({ connectionString });
-		dbInstance = drizzle(pool, { schema });
+	const target = getActiveDbTarget();
+	let handle = handles.get(target);
+	if (!handle) {
+		const pool = new pg.Pool({ connectionString: resolveConnectionString(target) });
+		handle = { pool, db: drizzle(pool, { schema }) };
+		handles.set(target, handle);
 	}
-	if (!dbInstance) {
-		throw new Error('Database failed to initialize');
-	}
-	return dbInstance;
+	return handle.db;
 }

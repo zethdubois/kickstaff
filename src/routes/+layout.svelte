@@ -328,6 +328,17 @@
                     Sign out
                   </button>
                 </form>
+                <form method="POST" action="/logout" class="userMenu__signOut">
+                  <input type="hidden" name="all" value="1" />
+                  <button
+                    class="userMenu__signOutBtn userMenu__signOutBtn--all"
+                    type="submit"
+                    role="menuitem"
+                    title="Sign out of every database on this browser"
+                  >
+                    Sign out everywhere
+                  </button>
+                </form>
               </div>
             {/if}
           </div>
@@ -509,6 +520,16 @@
 
   .userMenu__signOutBtn:hover {
     background: color-mix(in srgb, currentColor 7%, transparent);
+  }
+
+  .userMenu__signOutBtn--all {
+    font-size: 0.8rem;
+    font-weight: 550;
+    opacity: 0.8;
+  }
+
+  .userMenu__signOut + .userMenu__signOut {
+    margin-top: 0.3rem;
   }
 
   .nav__home {

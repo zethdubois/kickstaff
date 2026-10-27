@@ -19,9 +19,9 @@ function parseArgs(raw: unknown): string[] | null {
   return out;
 }
 
-function parseDb(raw: unknown): "dev" | "prod" | undefined {
+function parseDb(raw: unknown): "dev" | "staging" | "prod" | undefined {
   if (raw === undefined || raw === null || raw === "") return undefined;
-  if (raw === "dev" || raw === "prod") return raw;
+  if (raw === "dev" || raw === "staging" || raw === "prod") return raw;
   return undefined;
 }
 
@@ -52,7 +52,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
   const dbOverride = parseDb(body.db);
   if (body.db !== undefined && body.db !== null && body.db !== "" && !dbOverride) {
-    return json({ message: "db must be dev or prod" }, { status: 400 });
+    return json({ message: "db must be dev, staging, or prod" }, { status: 400 });
   }
   const db = dbOverride ?? getActiveDbTarget();
 

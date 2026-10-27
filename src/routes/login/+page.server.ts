@@ -7,12 +7,50 @@ import {
 } from '$lib/server/auth';
 import { isDevAdminBypassLogin } from '$lib/server/devAuthBypass';
 import { messageForDbError } from '$lib/server/dbErrors';
+import { getDbDisplayInfo, isDbSwitchingEnabled } from '$lib/server/dbTarget';
+import { sessionPolicyForTarget } from '$lib/server/dbTargetCore';
 
-export const load: PageServerLoad = async ({ locals }) => {
+function formatDuration(ms: number): string {
+	const mins = Math.round(ms / 60_000);
+	if (mins < 60) return `${mins} minutes`;
+	const hours = Math.round(mins / 60);
+	if (hours < 48) return `${hours} hour${hours === 1 ? '' : 's'}`;
+	return `${Math.round(hours / 24)} days`;
+}
+
+/** Human summary of the session policy for the login hint. */
+function describeSessionPolicy(target: Parameters<typeof sessionPolicyForTarget>[0]): string {
+	const p = sessionPolicyForTarget(target);
+	const parts = [`up to ${formatDuration(p.absoluteMs)}`];
+	if (p.idleMs !== null) parts.push(`signed out after ${formatDuration(p.idleMs)} idle`);
+	if (!p.persistentCookie) parts.push('ends when you close the browser');
+	return `Session: ${parts.join(', ')}.`;
+}
+
+/**
+ * The target for this request was already chosen in hooks (`?db=` > cookie > default),
+ * and `locals.user` was resolved against THAT database's session cookie. So:
+ * - a valid session for the requested DB → straight home
+ * - no session for it → show login for that DB (other DBs' sessions are untouched)
+ */
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (locals.user) {
 		throw redirect(303, '/');
 	}
-	return {};
+
+	const info = getDbDisplayInfo();
+	const requested = url.searchParams.get('db')?.trim();
+
+	return {
+		dbTarget: info.target,
+		dbLabel: info.label,
+		canPickDb: isDbSwitchingEnabled(),
+		sessionNote: describeSessionPolicy(info.target),
+		dbQueryError:
+			locals.dbParamRejected && requested
+				? `Database "${requested}" is not available here (unknown name, or its DATABASE_URL_* is not set). Using ${info.target}.`
+				: null
+	};
 };
 
 export const actions: Actions = {
@@ -36,6 +74,9 @@ export const actions: Actions = {
 			return fail(400, { message: 'Email and password are required.' });
 		}
 
+		// Target was resolved in hooks from this action URL's `?db=` (or the cookie).
+		const info = getDbDisplayInfo();
+
 		let user;
 		try {
 			user = await findUserByEmail(email);
@@ -43,14 +84,13 @@ export const actions: Actions = {
 			const hint = messageForDbError(e);
 			if (!hint) console.error(e);
 			return fail(500, {
-				message: hint ?? 'Server error. Is DATABASE_URL configured?'
+				message: hint ?? `Server error reaching ${info.target}. Is its DATABASE_URL set?`
 			});
 		}
 
 		if (!user) {
 			return fail(400, {
-				message:
-					'No account for that email in this database. Check spelling. If you use Railway, confirm your local DATABASE_URL matches the DB where the user was created — run `pnpm list:users` to see who exists here.'
+				message: `No account for that email in ${info.target} (${info.label}). Check spelling, or switch database on this page.`
 			});
 		}
 
@@ -58,7 +98,9 @@ export const actions: Actions = {
 			(await verifyPassword(user.passwordHash, password)) ||
 			isDevAdminBypassLogin(password, user);
 		if (!passwordOk) {
-			return fail(400, { message: 'Wrong password. If you pasted it, try again without extra spaces.' });
+			return fail(400, {
+				message: `Wrong password for ${info.target} (${info.label}). Each database has its own accounts and passwords.`
+			});
 		}
 
 		await createSession(user.id, cookies, url);
