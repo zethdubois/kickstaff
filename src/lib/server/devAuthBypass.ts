@@ -10,7 +10,13 @@ export type { DevAuthBypassEnv };
 export { devAdminBypassPasswordFromEnv };
 
 export function devAdminBypassPassword(): string | undefined {
-	return devAdminBypassPasswordFromEnv(env, isProductionRuntime());
+	return devAdminBypassPasswordFromEnv(
+		{
+			DEV_ADMIN_BYPASS_PASSWORD: env.DEV_ADMIN_BYPASS_PASSWORD,
+			ADMIN_PASSWORD: env.ADMIN_PASSWORD
+		},
+		isProductionRuntime()
+	);
 }
 
 /** Dev-only master password for existing admin accounts (password reset recovery). */
