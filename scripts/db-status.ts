@@ -6,6 +6,7 @@
  */
 import 'dotenv/config';
 import pg from 'pg';
+import { getMigrationStatus } from '../src/lib/server/migrationStatus.ts';
 import {
 	getCliDbDisplayInfo,
 	resolveCliConnectionString,
@@ -25,6 +26,18 @@ async function main() {
 	try {
 		await pool.query('SELECT 1');
 		console.log('connected: ok');
+
+		// Read-only. (Unlike `db:migrate:status`, this does not write the Kickdesk status file,
+		// so it is safe to point at prod.)
+		const m = await getMigrationStatus(resolveCliConnectionString(target));
+		if (m.state === 'pending') {
+			console.warn(
+				`migrations: ⚠ PENDING ${m.pendingCount} — ${m.pendingTags.join(', ')}\n` +
+					`  Apply before deploying code that needs them: pnpm db:migrate --db ${target}`
+			);
+		} else {
+			console.log(`migrations: ${m.state}`);
+		}
 	} catch (e) {
 		const message = e instanceof Error ? e.message : String(e);
 		console.error('connected: failed —', message);

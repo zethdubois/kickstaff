@@ -17,6 +17,13 @@ This week’s work queue. Phase outcomes live in [plan.md](plan.md) — link out
 
 Keep ≤7 active bullets.
 
+## Before next prod deploy (do NOT forget)
+
+- [ ] **Migrate prod before deploying** the per-DB sessions change: `pnpm db:migrate --db prod` applies `0022_sessions_last_seen` (idempotent; it also carries 0021's `password_reset_tokens`, because prod's migration ledger has newer rows so Drizzle would skip 0021 on its own). Prod currently has **neither** the table nor `sessions.last_seen_at` (verified read-only 2026-10-26). Without 0022, sign-in 500s (code writes `sessions.last_seen_at`). Needs human approval + backup + dry run + a [data-ops-log](data-ops-log.md) entry ([SOP](../.agent/SOP.md)). Check state first: `pnpm db:status --db prod` (prints `migrations: ⚠ PENDING …`; also shown as an amber banner on `/login?db=prod` locally).
+- [x] **Staging** already has both (verified 2026-10-26). Dev too.
+- [ ] Heads-up for users after deploy: everyone signs in once (cookie renamed `ka_session` → `ka_session_<target>`).
+- [ ] Rotate `KICKAGENT_SERVICE_TOKEN` and other secrets from the breach if not done.
+
 ## Blocked
 
 - *(none)* — properties chrome waits on kickagent publishing that resource (not blocked on kickstaff code)

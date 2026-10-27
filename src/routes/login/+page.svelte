@@ -45,6 +45,10 @@
 			</p>
 		{/if}
 
+		{#if data.migrationWarning}
+			<p class="dlg__warn" role="alert">⚠ {data.migrationWarning}</p>
+		{/if}
+
 		{#if data.dbQueryError}
 			<p class="dlg__err" role="alert">{data.dbQueryError}</p>
 		{/if}
@@ -198,6 +202,15 @@
 	.dlg__dbLinks a.active {
 		opacity: 1;
 		background: color-mix(in srgb, currentColor 10%, transparent);
+	}
+
+	.dlg__warn {
+		margin: 0 0 0.65rem;
+		padding: 0.5rem 0.65rem;
+		border-radius: 10px;
+		background: color-mix(in srgb, #d98e04 16%, transparent);
+		color: color-mix(in srgb, #6b4300 90%, Canvas);
+		font-size: 0.85rem;
 	}
 
 	.dlg__err {

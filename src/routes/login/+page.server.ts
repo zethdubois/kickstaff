@@ -7,7 +7,12 @@ import {
 } from '$lib/server/auth';
 import { isDevAdminBypassLogin } from '$lib/server/devAuthBypass';
 import { messageForDbError } from '$lib/server/dbErrors';
-import { getDbDisplayInfo, isDbSwitchingEnabled } from '$lib/server/dbTarget';
+import {
+	getDbDisplayInfo,
+	isDbSwitchingEnabled,
+	resolveConnectionString
+} from '$lib/server/dbTarget';
+import { getMigrationStatus } from '$lib/server/migrationStatus';
 import { sessionPolicyForTarget } from '$lib/server/dbTargetCore';
 
 function formatDuration(ms: number): string {
@@ -41,7 +46,21 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const info = getDbDisplayInfo();
 	const requested = url.searchParams.get('db')?.trim();
 
+	// Local only (where you can point at any DB): warn when this code is ahead of that DB's
+	// schema — e.g. before deploying to prod. Sign-in itself breaks first, so login is where
+	// you'd otherwise find out the hard way. Never exposed on deploys.
+	let migrationWarning: string | null = null;
+	if (isDbSwitchingEnabled()) {
+		const m = await getMigrationStatus(resolveConnectionString(info.target));
+		if (m.state === 'pending') {
+			migrationWarning =
+				`${info.target} has ${m.pendingCount} pending migration${m.pendingCount === 1 ? '' : 's'} ` +
+				`(${m.pendingTags.join(', ')}). Sign-in may fail until you run: pnpm db:migrate --db ${info.target}`;
+		}
+	}
+
 	return {
+		migrationWarning,
 		dbTarget: info.target,
 		dbLabel: info.label,
 		canPickDb: isDbSwitchingEnabled(),
