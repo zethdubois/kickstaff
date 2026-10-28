@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KAM Suite — architecture pitch</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css"
+    />
+    <style>
+      :root {
+        --ka-accent: #1a5276;
+      }
+      .reveal h1,
+      .reveal h2 {
+        color: var(--ka-accent);
+        text-transform: none;
+      }
+      .reveal .subtitle {
+        font-size: 0.55em;
+        color: #444;
+        margin-top: 0.5em;
+      }
+      .reveal ul {
+        font-size: 0.92em;
+        line-height: 1.45;
+      }
+      .reveal .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        text-align: left;
+        font-size: 0.75em;
+      }
+      .reveal .split .box {
+        border: 2px solid var(--ka-accent);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+      }
+      .reveal .split h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.1em;
+        color: var(--ka-accent);
+      }
+      .reveal .flow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin-top: 1.25rem;
+        font-size: 0.72em;
+      }
+      .reveal .flow .step {
+        background: #f4f6f7;
+        border-radius: 6px;
+        padding: 0.6rem 1rem;
+      }
+      .reveal .flow .arrow {
+        color: var(--ka-accent);
+        font-weight: bold;
+      }
+      .reveal .footnote {
+        font-size: 0.5em;
+        color: #666;
+        margin-top: 2rem;
+      }
+      .reveal a {
+        color: var(--ka-accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h1>Kickagent + kickstaff</h1>
+          <p class="subtitle">KAM Suite — one product, two roles</p>
+          <p class="footnote">
+            Arrow keys / space to advance · Esc for overview
+          </p>
+        </section>
+
+        <section>
+          <h2>The usual integration tax</h2>
+          <ul>
+            <li>Publish a REST API, maintain docs, ship SDK versions</li>
+            <li>Consumers redeploy when something new ships</li>
+            <li>Documentation drifts from reality</li>
+            <li>Versioning pressure on both sides</li>
+            <li>Everyone waits on everyone else</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>A different shape</h2>
+          <p>
+            Operations live inside the product — without asking users to notice
+            two applications.
+          </p>
+          <div class="split">
+            <div class="box">
+              <h3>kickstaff</h3>
+              <p>Host · shell · trust boundary</p>
+            </div>
+            <div class="box">
+              <h3>kickagent</h3>
+              <p>Provider · capabilities · ops depth</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>kickstaff — the host</h2>
+          <ul>
+            <li>What people log into: marketing, admin, ops hub</li>
+            <li><strong>KAM</strong> console: palette, logs, session</li>
+            <li>Authentication, layouts, product chrome</li>
+            <li>Owns <em>how it looks</em> and <em>who is allowed in</em></li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>kickagent — the provider</h2>
+          <ul>
+            <li>KAM commands, business logic, data pipelines</li>
+            <li>Bills, units, ETL, long-running jobs (over time)</li>
+            <li>No browser UI — publishes <strong>capabilities</strong></li>
+            <li>Owns <em>what the product can do</em> operationally</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>How updates flow</h2>
+          <div class="flow">
+            <span class="step">One command catalog</span>
+            <span class="arrow">→</span>
+            <span class="step">Publish <strong>manifest</strong><br />(catalog + integrity)</span>
+            <span class="arrow">→</span>
+            <span class="step">Host <strong>reload</strong></span>
+            <span class="arrow">→</span>
+            <span class="step">Palette &amp; hub update</span>
+          </div>
+          <p style="margin-top: 1.5em; font-size: 0.75em">
+            Handler fixes can land without rebuilding the entire web app for
+            every kickagent release.
+          </p>
+        </section>
+
+        <section>
+          <h2>Why teams care</h2>
+          <ul>
+            <li><strong>Faster iteration</strong> on operational features</li>
+            <li>
+              <strong>Single source of truth</strong> for which commands exist
+            </li>
+            <li>No parallel wiki per new command</li>
+            <li>
+              Clear ownership: <code>kickagent:*</code> in KAM → kickagent;
+              pages &amp; auth → kickstaff
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>What we do not claim</h2>
+          <ul>
+            <li>Not magic “zero deploy” for everything</li>
+            <li>Host still owns sign-in, routes, and product chrome</li>
+            <li>Some features still need host UI (e.g. new resource views)</li>
+            <li>
+              <strong>Routine loop</strong> stays on the provider: ship → publish
+              → reload
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>What is next</h2>
+          <ul>
+            <li>
+              <strong>Today:</strong> published manifest + dynamic plugin load
+            </li>
+            <li>
+              <strong>Roadmap:</strong> long-running job API and streaming (not
+              shipped yet)
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Go deeper</h2>
+          <ul>
+            <li>
+              <a href="kam-suite-vision.md">kam-suite-vision.md</a> — product
+              story (Alpha → Beta)
+            </li>
+            <li>
+              <a href="kam-ecosystem-marketing.md">kam-ecosystem-marketing.md</a>
+              — <em>The details</em> (contracts, phases, comparison)
+            </li>
+            <li>
+              <a href="../kickagent/README.md">Kickagent</a> — architecture,
+              commands, operations
+            </li>
+          </ul>
+          <p class="footnote">
+            Wiki:
+            <a href="http://127.0.0.1:7097/wiki/">127.0.0.1:7097/wiki/</a>
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+        hash: true,
+        slideNumber: "c/t",
+        width: 1100,
+        height: 700,
+        margin: 0.08,
+      });
+    </script>
+  </body>
+</html>

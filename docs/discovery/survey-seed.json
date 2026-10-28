@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "title": "KAM Agent Discovery Survey",
+  "sections": [
+    {
+      "id": "listings",
+      "letter": "A",
+      "title": "Listings & Long-Term Rental Management",
+      "functions": [
+        { "id": "listings.creating-a-new-listing", "label": "Creating a new listing" },
+        {
+          "id": "listings.updating-listing-details",
+          "label": "Updating listing details / availability"
+        },
+        {
+          "id": "listings.setting-rent-amounts",
+          "label": "Setting rent amounts and terms"
+        },
+        {
+          "id": "listings.marketing-a-listing",
+          "label": "Marketing / advertising a listing"
+        },
+        {
+          "id": "listings.tracking-vacancy",
+          "label": "Tracking vacancy vs. occupied status"
+        }
+      ]
+    },
+    {
+      "id": "tenant",
+      "letter": "B",
+      "title": "Tenant Management & Applications",
+      "functions": [
+        {
+          "id": "tenant.receiving-applications",
+          "label": "Receiving and reviewing applications"
+        },
+        {
+          "id": "tenant.screening",
+          "label": "Tenant screening (credit, background, references)"
+        },
+        {
+          "id": "tenant.approving-denying",
+          "label": "Approving / denying applicants"
+        },
+        {
+          "id": "tenant.lease-creation-esign",
+          "label": "Lease creation and e-signature"
+        },
+        { "id": "tenant.lease-renewals", "label": "Lease renewals" },
+        {
+          "id": "tenant.move-in-out",
+          "label": "Move-in / move-out records"
+        },
+        {
+          "id": "tenant.communication",
+          "label": "Handling tenant communication or complaints"
+        }
+      ]
+    },
+    {
+      "id": "costs",
+      "letter": "C",
+      "title": "Property-Level Cost Tracking",
+      "functions": [
+        {
+          "id": "costs.recording-property-costs",
+          "label": "Recording costs against a specific property"
+        },
+        {
+          "id": "costs.categorizing-cost-types",
+          "label": "Categorizing cost types (repairs, capital improvements, utilities, etc.)"
+        },
+        {
+          "id": "costs.cost-history-reports",
+          "label": "Reviewing cost history / running cost reports per property"
+        },
+        {
+          "id": "costs.budget-vs-actual",
+          "label": "Budget vs. actual tracking"
+        }
+      ]
+    },
+    {
+      "id": "contractor-1099",
+      "letter": "D",
+      "title": "1099 Contractor Payments",
+      "functions": [
+        {
+          "id": "contractor-1099.onboarding",
+          "label": "Onboarding a new contractor / vendor"
+        },
+        {
+          "id": "contractor-1099.recording-work",
+          "label": "Recording work performed"
+        },
+        {
+          "id": "contractor-1099.issuing-payments",
+          "label": "Issuing 1099 payments"
+        },
+        {
+          "id": "contractor-1099.year-end-forms",
+          "label": "Year-end 1099 tax form generation"
+        }
+      ]
+    },
+    {
+      "id": "materials",
+      "letter": "E",
+      "title": "Material Costs",
+      "functions": [
+        {
+          "id": "materials.recording-purchases",
+          "label": "Recording material purchases"
+        },
+        {
+          "id": "materials.tying-to-job",
+          "label": "Tying material costs to a specific job or property"
+        },
+        {
+          "id": "materials.vendor-records",
+          "label": "Vendor/supplier records for materials"
+        }
+      ]
+    },
+    {
+      "id": "reporting",
+      "letter": "F",
+      "title": "Reporting",
+      "functions": [
+        {
+          "id": "reporting.reports-run-regularly",
+          "label": "Reports run regularly (name them)"
+        },
+        {
+          "id": "reporting.who-receives-reports",
+          "label": "Who receives / reviews these reports"
+        },
+        {
+          "id": "reporting.reports-not-possible",
+          "label": "Any reports attempted but not currently possible in Appfolio"
+        }
+      ]
+    },
+    {
+      "id": "other",
+      "letter": "G",
+      "title": "Other / Uncategorized",
+      "functions": [
+        {
+          "id": "other.appfolio-features",
+          "label": "Any other Appfolio feature in active use"
+        },
+        {
+          "id": "other.quickbooks-non-payroll",
+          "label": "Any QuickBooks function used outside of W2 payroll"
+        },
+        {
+          "id": "other.manual-workarounds",
+          "label": "Anything done manually (spreadsheets, paper, email) because no tool covers it well"
+        }
+      ]
+    }
+  ],
+  "closing": [
+    {
+      "id": "oneChange",
+      "prompt": "If you could change one thing about how this work is done today, what would it be?"
+    },
+    {
+      "id": "dayOneMusts",
+      "prompt": "Is there anything you currently rely on that would be a serious problem if it weren't available on day one of a new system?"
+    },
+    {
+      "id": "whoElse",
+      "prompt": "Who else should we talk to about this area of the business?"
+    }
+  ]
+}

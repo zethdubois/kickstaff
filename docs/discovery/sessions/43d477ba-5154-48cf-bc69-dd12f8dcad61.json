@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "interview": {
+    "id": "43d477ba-5154-48cf-bc69-dd12f8dcad61",
+    "intervieweeName": "Otto",
+    "role": "Administrator",
+    "date": "2026-08-21",
+    "interviewer": "Zeth",
+    "primaryTools": [
+      "AF",
+      "QB",
+      "Google Drive",
+      "OneDrive",
+      "Windows",
+      "Claude"
+    ]
+  },
+  "sections": {
+    "listings": [
+      {
+        "functionId": "listings.creating-a-new-listing",
+        "functionLabel": "Creating a new listing",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.updating-listing-details",
+        "functionLabel": "Updating listing details / availability",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.setting-rent-amounts",
+        "functionLabel": "Setting rent amounts and terms",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.marketing-a-listing",
+        "functionLabel": "Marketing / advertising a listing",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.tracking-vacancy",
+        "functionLabel": "Tracking vacancy vs. occupied status",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "tenant": [
+      {
+        "functionId": "tenant.receiving-applications",
+        "functionLabel": "Receiving and reviewing applications",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.screening",
+        "functionLabel": "Tenant screening (credit, background, references)",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.approving-denying",
+        "functionLabel": "Approving / denying applicants",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.lease-creation-esign",
+        "functionLabel": "Lease creation and e-signature",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.lease-renewals",
+        "functionLabel": "Lease renewals",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.move-in-out",
+        "functionLabel": "Move-in / move-out records",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.communication",
+        "functionLabel": "Handling tenant communication or complaints",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "costs": [
+      {
+        "functionId": "costs.recording-property-costs",
+        "functionLabel": "Recording costs against a specific property",
+        "howDone": "Accounting > Payable:\n\nRecurring bills show up for approval on schedule;\n\nRepeats : monthly, weekly, annually\n\nPending my approval \n\nSelect checkboxes, approve selected.\n\n\nmortgage payments and utility payments do not req approval.  This is an option \n\n[Manage Bill Approval Flow]\nIt's a visual flow chart with logic. Otto likes this.\n\nOnly 'flows' appear to use this graphical decision tree. Could be exposed for all features??\n\n----\nOther ways:\n\nmost of this is done via invoice ingest (Bent pipe)\n\n",
+        "frequency": "regularly",
+        "priority": "must",
+        "painPoints": "Lots of clicking. ",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.categorizing-cost-types",
+        "functionLabel": "Categorizing cost types (repairs, capital improvements, utilities, etc.)",
+        "howDone": "GL accounts (general ledger)\n\"Chart of Accounts\"\n\nThis is a big one. How to setup accounting categories. \n\nTalk to Matt about this; there may be some innovation here?",
+        "frequency": "periodic",
+        "priority": "must",
+        "painPoints": "The list of catergories can easily inflate; and this causes trouble because you have to pick from an endless list; and you might not be consistent. \n\n",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.cost-history-reports",
+        "functionLabel": "Reviewing cost history / running cost reports per property",
+        "howDone": "Reporting > Reports\n\nMight be customizing data filters \n\nWho asks for reports?\nOwners, Matt, Accountants, Manager, Max\n\nBill Details > \n",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "Want to see discreet bills by vendor, not line-item per property over time frame.\n",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.budget-vs-actual",
+        "functionLabel": "Budget vs. actual tracking",
+        "howDone": "Don't know if AF has budget feature.\n\nOk, there it is, in the help, Otto has never used it.",
+        "frequency": "monthly",
+        "priority": "nice",
+        "painPoints": "Nice to have, summary dashboard that shows budget vs actual; bar graph.",
+        "isCustom": false
+      },
+      {
+        "functionId": "custom:9b0ba123-77b4-4b53-8b1e-bc6bb46ef9c6",
+        "functionLabel": "Management Income (differs from mngt fees, and is not a owner revenue)",
+        "howDone": "AF: extra charges that show up as managment income goes into the property account. ",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "Owner property reports will pick up these fees, unless they are suppressed. Timeconsuming and error prone issues.",
+        "isCustom": true
+      }
+    ],
+    "contractor-1099": [
+      {
+        "functionId": "contractor-1099.onboarding",
+        "functionLabel": "Onboarding a new contractor / vendor",
+        "howDone": "AF: \nPeople > Vendors > new vendor (task)\n\nEnter vendor detail, tax info etc\n\n\nQB: will do this for company projects. ",
+        "frequency": "sporatic",
+        "priority": "must",
+        "painPoints": "Create vendors in two systems\n",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.recording-work",
+        "functionLabel": "Recording work performed",
+        "howDone": "Timesheets (clock in/out)\nWorkers comp class code must be set in QB",
+        "frequency": "daily",
+        "priority": "na",
+        "painPoints": "stays in QB",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.issuing-payments",
+        "functionLabel": "Issuing 1099 payments",
+        "howDone": "AF has a checksend feature that we like. It uses 2FA with (text message). \n\n* We could possibly use rotating authenticator to avoid the SMS function.\n\n\n",
+        "frequency": "once per week, ideally",
+        "priority": "must",
+        "painPoints": "Edge case: AF does not allow for owner payments without attaching to a property.",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.year-end-forms",
+        "functionLabel": "Year-end 1099 tax form generation",
+        "howDone": "AF and QB\nAccountants do this. \nAF has this feature, but its an upsell, we have never used it. \n\nCould use it for 2026; ",
+        "frequency": "annual",
+        "priority": "nice",
+        "painPoints": "Lets do this in KA",
+        "isCustom": false
+      }
+    ],
+    "materials": [
+      {
+        "functionId": "materials.recording-purchases",
+        "functionLabel": "Recording material purchases",
+        "howDone": "QB for Matt\nAF for partners\n\nPayment to vendors, invoice triggered (bills)",
+        "frequency": "regularl",
+        "priority": "must",
+        "painPoints": "Assume that automation is function in the Bent Pipe",
+        "isCustom": false
+      },
+      {
+        "functionId": "materials.tying-to-job",
+        "functionLabel": "Tying material costs to a specific job or property",
+        "howDone": "This is listed in the bill; this is parsed from the document",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "materials.vendor-records",
+        "functionLabel": "Vendor/supplier records for materials",
+        "howDone": "Bent Pipe ",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "reporting": [
+      {
+        "functionId": "reporting.reports-run-regularly",
+        "functionLabel": "Reports run regularly (name them)",
+        "howDone": "Cashflow: quarterly\nOwner statements: monthly\nPNL (AF: 'income'):\nAged Payable: actionable\n\nAF Reporting > Cash Flow (Property comparison)\n\nSelect a property group\n'Exclude suppressed fees' (see management fee line item)",
+        "frequency": "regularly",
+        "priority": "must",
+        "painPoints": "Owners should have their own portal for owner statements\n\nThere's some complication due to interest costs wrapped in the tax reporting...",
+        "isCustom": false
+      },
+      {
+        "functionId": "reporting.who-receives-reports",
+        "functionLabel": "Who receives / reviews these reports",
+        "howDone": "Otto, Owners",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "reporting.reports-not-possible",
+        "functionLabel": "Any reports attempted but not currently possible in Appfolio",
+        "howDone": "Cost of construction!! \n\nCost segregation...",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "For example, cost of utilities should be associated with construction cost before occupation occurs. \nMaybe...",
+        "isCustom": false
+      }
+    ],
+    "other": [
+      {
+        "functionId": "other.appfolio-features",
+        "functionLabel": "Any other Appfolio feature in active use",
+        "howDone": "Aged Payables",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "other.quickbooks-non-payroll",
+        "functionLabel": "Any QuickBooks function used outside of W2 payroll",
+        "howDone": "Aged Payables:\nBills that are due, by due date. \nIt will order by days past dues \n\nCan get a table summary.\nCan get details, ie, table by bill by date (we like this better)\n\nWe do not use QB for making payments. Writes a check!",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "QB does not track per property expenses (well)\n\nFeature observations:\nThe QB detail highlights every column entry as a hotlink to the bill. Why? A vendor value should go to the vendor, not to the bill. This is how AF works, btw.\n\n",
+        "isCustom": false
+      },
+      {
+        "functionId": "other.manual-workarounds",
+        "functionLabel": "Anything done manually (spreadsheets, paper, email) because no tool covers it well",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ]
+  },
+  "closing": {
+    "oneChange": "UI in AF is \"terrible\"; Buildium was better. \n\n\nOther notes:\nProjects are property management centric: essentially maintenance.\n\nMissing is the 'Construction company' centric view. Quickbooks gets involved because Kick pays its own employees for much of the costs, ie salaries, materials. ",
+    "dayOneMusts": "We will not be taking on Quickbooks Payroll for this Phase B project of Kickagent. See caveat above for this contradiction...",
+    "whoElse": "Matt for Accounting"
+  },
+  "meta": {
+    "createdAt": "2026-08-21T21:09:08.566Z",
+    "updatedAt": "2026-08-26T17:00:54.219Z"
+  }
+}

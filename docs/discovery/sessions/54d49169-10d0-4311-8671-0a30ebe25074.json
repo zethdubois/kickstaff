@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "interview": {
+    "id": "54d49169-10d0-4311-8671-0a30ebe25074",
+    "intervieweeName": "Max",
+    "role": "Property Manager",
+    "date": "2026-08-10",
+    "interviewer": "Z",
+    "primaryTools": [
+      "AF",
+      "Claude",
+      "Google Drive",
+      "3rd party marketing"
+    ]
+  },
+  "sections": {
+    "listings": [
+      {
+        "functionId": "listings.creating-a-new-listing",
+        "functionLabel": "Creating a new listing",
+        "howDone": "AF\nDashboard:Properties\nTasks: new property\nType (single, multi, commercial)\nProp Name (cold be address)\nAddress\n\nProp Info:\nDescription --> should be \"notes\"\n\n\nMarketing description is where we write up the description, the property description is skipped...\n\nTags also marketing related...\nProperties can have multiple listings ('units')\n\nRental Info: vital \n(remove legal rent, preferential rent)\n\n\n===\nResident Service Management. \nAF required, we dont use this, dont know what it is.\n\n=== \nAmenities is big, lets list them as checks, can see them all.  \n=======\n\nReady for showing, move to marketing info...\n\n====\nLease Settings is big deal; we have templates that draw to make the lease \n===========\n\n\nWe could use a filter settings to limit which fields are shown\n\nA way to add custom fields\n\nA way to rearrange things; add this field to this group kind of thing...\n\n",
+        "frequency": "10/year",
+        "priority": "must",
+        "painPoints": "Marketing could be separate process, not part of the creation process\n\n(ready for showing field is the only marketing?)\n\n\n\n",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.updating-listing-details",
+        "functionLabel": "Updating listing details / availability",
+        "howDone": "Go to properties as before.\nSame data with edit button per group.\n\n",
+        "frequency": "very often",
+        "priority": "must",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.setting-rent-amounts",
+        "functionLabel": "Setting rent amounts and terms",
+        "howDone": "The owners set rent and terms. \n12 months standard",
+        "frequency": "",
+        "priority": "must",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.marketing-a-listing",
+        "functionLabel": "Marketing / advertising a listing",
+        "howDone": "Properties > Unit \n\nThe marketing info group.\n\n\nTasks:\nmarketing-- \n- post to website > to property groups, I know these\n- post to internet: ",
+        "frequency": "January and February",
+        "priority": "must",
+        "painPoints": "Post to internet > \"stupid\" it goes to move out flow. Can cause problems, filling out info we dont have. ",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.tracking-vacancy",
+        "functionLabel": "Tracking vacancy vs. occupied status",
+        "howDone": "Leasing > vacancies\n",
+        "frequency": "not often, ",
+        "priority": "must",
+        "painPoints": "Pulls up a chunky table. Max doesnt have a problem with it, but i think it is not elegant. \n\n",
+        "isCustom": false
+      }
+    ],
+    "tenant": [
+      {
+        "functionId": "tenant.receiving-applications",
+        "functionLabel": "Receiving and reviewing applications",
+        "howDone": "Leasing > Rental Applications\n\nMakes them a guestcard, for a tour also. \n\nName, email, number, property of interest. \n\nWe like cards.\n\nGoogle Voice also \n\n\nStatus: many status, all are ok. \n\napplications functions should be available even if the unit is not marketed. \n\n===\nFolio Screen >> Experian   we need this plugin, renter screening, approval, credit check, bg check, tenant history, proof of $\n\nBatch sends request info by email. \n\nCollect Fee (AF takes a cut)\n\nEmployment Details\n\nFinancial Info: NOT NEEDED (the global report pulls this already)\n\nDownstream functions we like:\nApprove and Notify,\nConvert to Tenant",
+        "frequency": "Starting Jan, until June",
+        "priority": "must",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.screening",
+        "functionLabel": "Tenant screening (credit, background, references)",
+        "howDone": "covered in Receiving and reviewing applications",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.approving-denying",
+        "functionLabel": "Approving / denying applicants",
+        "howDone": "covered in Receiving and reviewing applications",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.lease-creation-esign",
+        "functionLabel": "Lease creation and e-signature",
+        "howDone": "[merge fields]\nDynamic fields and templates, makes the lease; manual check for each lease. \n\n=== process\n\nStart with a unit\nTask: \"move in tenant\"\n\nthere are 7 steps in the left dashboard for the lease\n\nResidential Utility Billing System: can be added to the lease\n\nLease details\nstart, move in, end,\n\nRecurring charges, itemized expense that go into the lease\n\n(AF form is good)\nThese are pulled from GL Accounts [general ledger]\n\n\nRentable Item addendum\n\nMove in charges; security depo, last month--see pain point\n\n* Generate lease with lease templates\n\nCan bypass generating by uploading a 'fully executed lease' [acquire a unit with leases already, for example]\n\nCan make addenda for changes after move-in\n\n\nAlso attachments, like lead warning, move-in checklist, etc\n\n\n\n",
+        "frequency": "Start Jan thru July",
+        "priority": "must",
+        "painPoints": "\"Feel like the number of steps could be cut down\"\n\nWe dont like resident-obligated utilites in the 'resident onboarding' phase\n\nThe reocurring charges section which pulls from GL, should be auto-populated form the unit info. This doesnt happen in the AF.\n\nSimilary, why do we have move in charges on the lease, it could all be pulled from the unit.",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.lease-renewals",
+        "functionLabel": "Lease renewals",
+        "howDone": "Leasing > Renewals\n\n\"Prepare renewal offer\"\n\n",
+        "frequency": "Janurary",
+        "priority": "must",
+        "painPoints": "painless",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.move-in-out",
+        "functionLabel": "Move-in / move-out records",
+        "howDone": "Properties > Past tenants\n\nLease is sent > they became Current Tenant. \n\nCurrent tenants become past tenants with lease expires\n\nReturning security deposit?\n",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "Not a pain, but lets make signed leases trigger current tenant.",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.communication",
+        "functionLabel": "Handling tenant communication or complaints",
+        "howDone": "Communication via Tenant portal is effectively a text message format.\n\nAF: Communication > Inbox\nAI response is ok, \n\nSome tenants will go straight to GMail (max@kam..)\n\nTenants can have AF app\n\n\n",
+        "frequency": "every day",
+        "priority": "must",
+        "painPoints": "AI autorespond is too verbose; \n\nIt would be ok if everything came through one inbox",
+        "isCustom": false
+      }
+    ],
+    "costs": [
+      {
+        "functionId": "costs.recording-property-costs",
+        "functionLabel": "Recording costs against a specific property",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.categorizing-cost-types",
+        "functionLabel": "Categorizing cost types (repairs, capital improvements, utilities, etc.)",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.cost-history-reports",
+        "functionLabel": "Reviewing cost history / running cost reports per property",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.budget-vs-actual",
+        "functionLabel": "Budget vs. actual tracking",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "contractor-1099": [
+      {
+        "functionId": "contractor-1099.onboarding",
+        "functionLabel": "Onboarding a new contractor / vendor",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.recording-work",
+        "functionLabel": "Recording work performed",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.issuing-payments",
+        "functionLabel": "Issuing 1099 payments",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.year-end-forms",
+        "functionLabel": "Year-end 1099 tax form generation",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "materials": [
+      {
+        "functionId": "materials.recording-purchases",
+        "functionLabel": "Recording material purchases",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "materials.tying-to-job",
+        "functionLabel": "Tying material costs to a specific job or property",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "materials.vendor-records",
+        "functionLabel": "Vendor/supplier records for materials",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "reporting": [
+      {
+        "functionId": "reporting.reports-run-regularly",
+        "functionLabel": "Reports run regularly (name them)",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "reporting.who-receives-reports",
+        "functionLabel": "Who receives / reviews these reports",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "reporting.reports-not-possible",
+        "functionLabel": "Any reports attempted but not currently possible in Appfolio",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "other": [
+      {
+        "functionId": "other.appfolio-features",
+        "functionLabel": "Any other Appfolio feature in active use",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "other.quickbooks-non-payroll",
+        "functionLabel": "Any QuickBooks function used outside of W2 payroll",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "other.manual-workarounds",
+        "functionLabel": "Anything done manually (spreadsheets, paper, email) because no tool covers it well",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ]
+  },
+  "closing": {
+    "oneChange": "",
+    "dayOneMusts": "",
+    "whoElse": ""
+  },
+  "meta": {
+    "createdAt": "2026-08-10T22:18:57.114Z",
+    "updatedAt": "2026-08-10T23:48:02.890Z"
+  }
+}

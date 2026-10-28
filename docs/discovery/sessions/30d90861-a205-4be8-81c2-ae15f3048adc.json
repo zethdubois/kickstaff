@@ -1,0 +1,297 @@
+{
+  "schemaVersion": 1,
+  "interview": {
+    "id": "30d90861-a205-4be8-81c2-ae15f3048adc",
+    "intervieweeName": "test4",
+    "role": "",
+    "date": "2026-08-21",
+    "interviewer": "",
+    "primaryTools": []
+  },
+  "sections": {
+    "listings": [
+      {
+        "functionId": "listings.creating-a-new-listing",
+        "functionLabel": "Creating a new listing",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.updating-listing-details",
+        "functionLabel": "Updating listing details / availability",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.setting-rent-amounts",
+        "functionLabel": "Setting rent amounts and terms",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.marketing-a-listing",
+        "functionLabel": "Marketing / advertising a listing",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "listings.tracking-vacancy",
+        "functionLabel": "Tracking vacancy vs. occupied status",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "tenant": [
+      {
+        "functionId": "tenant.receiving-applications",
+        "functionLabel": "Receiving and reviewing applications",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.screening",
+        "functionLabel": "Tenant screening (credit, background, references)",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.approving-denying",
+        "functionLabel": "Approving / denying applicants",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.lease-creation-esign",
+        "functionLabel": "Lease creation and e-signature",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.lease-renewals",
+        "functionLabel": "Lease renewals",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.move-in-out",
+        "functionLabel": "Move-in / move-out records",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "tenant.communication",
+        "functionLabel": "Handling tenant communication or complaints",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "costs": [
+      {
+        "functionId": "costs.recording-property-costs",
+        "functionLabel": "Recording costs against a specific property",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.categorizing-cost-types",
+        "functionLabel": "Categorizing cost types (repairs, capital improvements, utilities, etc.)",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.cost-history-reports",
+        "functionLabel": "Reviewing cost history / running cost reports per property",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "costs.budget-vs-actual",
+        "functionLabel": "Budget vs. actual tracking",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "contractor-1099": [
+      {
+        "functionId": "contractor-1099.onboarding",
+        "functionLabel": "Onboarding a new contractor / vendor",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.recording-work",
+        "functionLabel": "Recording work performed",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.issuing-payments",
+        "functionLabel": "Issuing 1099 payments",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "contractor-1099.year-end-forms",
+        "functionLabel": "Year-end 1099 tax form generation",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "materials": [
+      {
+        "functionId": "materials.recording-purchases",
+        "functionLabel": "Recording material purchases",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "materials.tying-to-job",
+        "functionLabel": "Tying material costs to a specific job or property",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "materials.vendor-records",
+        "functionLabel": "Vendor/supplier records for materials",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "reporting": [
+      {
+        "functionId": "reporting.reports-run-regularly",
+        "functionLabel": "Reports run regularly (name them)",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "reporting.who-receives-reports",
+        "functionLabel": "Who receives / reviews these reports",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "reporting.reports-not-possible",
+        "functionLabel": "Any reports attempted but not currently possible in Appfolio",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ],
+    "other": [
+      {
+        "functionId": "other.appfolio-features",
+        "functionLabel": "Any other Appfolio feature in active use",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "other.quickbooks-non-payroll",
+        "functionLabel": "Any QuickBooks function used outside of W2 payroll",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      },
+      {
+        "functionId": "other.manual-workarounds",
+        "functionLabel": "Anything done manually (spreadsheets, paper, email) because no tool covers it well",
+        "howDone": "",
+        "frequency": "",
+        "priority": "",
+        "painPoints": "",
+        "isCustom": false
+      }
+    ]
+  },
+  "closing": {
+    "oneChange": "",
+    "dayOneMusts": "",
+    "whoElse": ""
+  },
+  "meta": {
+    "createdAt": "2026-08-21T23:03:09.831Z",
+    "updatedAt": "2026-08-21T23:03:12.518Z"
+  }
+}

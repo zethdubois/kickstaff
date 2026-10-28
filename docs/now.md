@@ -3,7 +3,7 @@
 **Updated:** 2026-10-23  
 **Focus:** [Phase H1](plan.md) — generic list-detail host (respond to kickagent `resources.gl` / 0.6.0)
 
-Much of the active queue is a **host response to kickagent publisher updates** (manifest `resources.*`, CHANGELOG, wiki). Prefer reload + generic builders over one-off screens. Standing aim: [host-mission.md](guides/host-mission.md). Publisher contract (wiki when up): [manifest-resources](http://127.0.0.1:7097/kickagent/architecture/manifest-resources.md) · [CHANGELOG](http://127.0.0.1:7097/kickagent/CHANGELOG.md).
+Much of the active queue is a **host response to kickagent publisher updates** (manifest `resources.`*, CHANGELOG, wiki). Prefer reload + generic builders over one-off screens. Standing aim: [host-mission.md](guides/host-mission.md). Publisher contract (wiki when up): [manifest-resources](http://127.0.0.1:7097/kickagent/architecture/manifest-resources.md) · [CHANGELOG](http://127.0.0.1:7097/kickagent/CHANGELOG.md).
 
 This week’s work queue. Phase outcomes live in [plan.md](plan.md) — link out, do not copy that list here.
 
@@ -14,6 +14,8 @@ This week’s work queue. Phase outcomes live in [plan.md](plan.md) — link out
 - [ ] Smoke `/ops/accounts` against live manifest **0.6.0** (after Kickdesk `p` + `kam:reload-kickagent`): list, include-hidden/retired (columns appear + list reloads), column quick filters, sort, ↑/↓ keys, Clear, show, save; tick **Retired** → confirm → saved → box locks and **Retired on** fills
 - [ ] When kickagent publishes `resources.properties` (list-detail): reload only — confirm generic builder; add `/ops/…` chrome only if needed ([kickagent now](../../kickagent/docs/now.md) phase 1b)
 - [ ] Keep `/ops/units` working on the thin v1 path until kickagent lifts units to list-detail
+- [ ] Implement [subscriber load, wiki proxy, progress proxy](guides/contracts/kickstaff-subscriber-load.md) (kickagent manifest 0.7.0). `load kickagent` replaces `kam:reload-kickagent`. Do not start until the token in the section below is rotated.
+- [ ] Dataset form per [host-ops-database](../../kickagent/docs/kickagent/architecture/host-ops-database.md). Kickstaff stores every env URL, including dev. Pass the active row into kickagent. Do not read kickagent `.env` for a database.
 
 Keep ≤7 active bullets.
 
@@ -22,7 +24,7 @@ Keep ≤7 active bullets.
 - [ ] **Migrate prod before deploying** the per-DB sessions change: `pnpm db:migrate --db prod` applies `0022_sessions_last_seen` (idempotent; it also carries 0021's `password_reset_tokens`, because prod's migration ledger has newer rows so Drizzle would skip 0021 on its own). Prod currently has **neither** the table nor `sessions.last_seen_at` (verified read-only 2026-10-26). Without 0022, sign-in 500s (code writes `sessions.last_seen_at`). Needs human approval + backup + dry run + a [data-ops-log](data-ops-log.md) entry ([SOP](../.agent/SOP.md)). Check state first: `pnpm db:status --db prod` (prints `migrations: ⚠ PENDING …`; also shown as an amber banner on `/login?db=prod` locally).
 - [x] **Staging** already has both (verified 2026-10-26). Dev too.
 - [ ] Heads-up for users after deploy: everyone signs in once (cookie renamed `ka_session` → `ka_session_<target>`).
-- [ ] Rotate `KICKAGENT_SERVICE_TOKEN` and other secrets from the breach if not done.
+- [ ] Rotate `KICKAGENT_SERVICE_TOKEN` and other secrets from the breach if not done. Also rotate the production database password that was in kickagent `.env`. Kickagent production will not boot without `KICKAGENT_SERVICE_TOKEN` once 0.7.0 is deployed. Staging kickagent needs `KICKAGENT_SERVICES=publish,wiki,progress` and a volume for progress; production stays `publish` only. See [subscriber load](guides/contracts/kickstaff-subscriber-load.md).
 
 ## Blocked
 
