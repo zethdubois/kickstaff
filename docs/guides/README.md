@@ -8,7 +8,7 @@
 | Doc                                                                | Purpose                                                                    |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | [host-mission.md](host-mission.md)                                   | **Standing mission** — generic kickagent consumer; read before `resources.*` / KAM UI work |
-| [platform-overview.md](platform-overview.md)                         | **Architecture** — kickstaff vs kickagent, one DB / two schemas, KAM / KAM-UI |
+| [platform-overview.md](platform-overview.md)                         | **Architecture** — kickstaff vs kickagent, one instance / two databases, KAM / KAM-UI |
 | [database-targeting.md](database-targeting.md)                       | **Dev / staging / prod DB** — `/login?db=`, CLI `--db`, Railway env name (no `KICKSTAFF_DB_DEFAULT`) |
 | [README.md](../../README.md#development)                           | **Local dev setup** — install, DB, seed, `pnpm dev`, troubleshooting       |
 | [AGENTS.md](../../AGENTS.md)                                       | Stack, tooling, env summary, route-doc pipeline, naming                    |

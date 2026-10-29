@@ -15,7 +15,7 @@ Filename prefix = **audience** (who should read it), not which repo wrote the fi
 
 1. [../host-mission.md](../host-mission.md) — **why this host stays generic** (builders by UI class; kickagent publisher ask).
 2. [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md) — **host/subscriber** guide (phases, security, what kickstaff owns).
-3. [../platform-overview.md](../platform-overview.md) — **data, storage, and product boundaries** (one DB, two schemas).
+3. [../platform-overview.md](../platform-overview.md) — **data, storage, and product boundaries** (one Postgres instance, two databases). Host contract: Kickagent `docs/kickagent/architecture/frontend-guide.md`.
 4. [kickstaff-hello-world.md](kickstaff-hello-world.md) — Phase 1 hello wiring in this codebase.
 5. [../kam-console.md](../kam-console.md) — KAM console, kickagent mode, `[KA] >`.
 6. [kickstaff-subscriber-load.md](kickstaff-subscriber-load.md) — `load`, registry, wiki and progress proxies.
@@ -39,12 +39,12 @@ Manifest, ESM plugin, API jobs, and CI live in the **kickagent** repo (sibling c
 ## Architecture (evolving)
 
 ```text
-Phase 1   npm import + manual registerKickagentCommand when no manifest URL; shell kickagent (optional alias) to enter [KA]
-Phase 2   PUBLIC_KICKAGENT_MANIFEST_URL + browser load + kam:reload-kickagent; bump artifact on kickagent side + reload
+Phase 1   npm import + manual registerKickagentCommand when no manifest URL; enter palette with kickagent (optional alias)
+Phase 2   PUBLIC_KICKAGENT_MANIFEST_URL + browser load + `load kickagent`; bump artifact on kickagent side + load
 Phase 3 (planned)   kickagent API for jobs; kickstaff proxies SSE → klog
 ```
 
-- **Host (kickstaff):** KAM shell; enter with **`shell kickagent`** (or shortcut after **`alias kickagent ka`**); `:` escape for host commands inside [KA]; `kickagent:` prefix for subscriber commands only.
+- **Host (kickstaff):** KAM console; enter palette with **`kickagent`** (or shortcut after **`alias kickagent ka`**); `:` escape for host commands inside [KA]; `kickagent:` prefix for subscriber commands only. Reload with **`load kickagent`**.
 - **Publisher (kickagent):** functions today; versioned plugin + API tomorrow.
 
-Details: [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md) and kickagent [platform spec](../../../kickagent/docs/kickagent/architecture/platform-spec.md). The `shell` verb and `kam:reload-kickagent` in the diagram above are replaced by [kickstaff-subscriber-load.md](kickstaff-subscriber-load.md).
+Details: [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md), [kickstaff-subscriber-load.md](kickstaff-subscriber-load.md), and kickagent [platform spec](../../../kickagent/docs/kickagent/architecture/platform-spec.md).

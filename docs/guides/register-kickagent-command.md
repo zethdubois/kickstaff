@@ -80,7 +80,7 @@ flowchart TD
 **Do not:**
 
 - Hand-edit `manifest.json` `commands[]` or duplicate registration in `plugin.ts` (derived from catalog).
-- Use reserved short names: `exit`, `help`, `reload-kickagent`, etc. (see `defineCommand` validation in kickagent).
+- Use reserved short names: `exit`, `help`, `load`, etc. (see `defineCommand` validation in kickagent).
 
 ---
 
@@ -101,7 +101,7 @@ When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is **unset** (typical local dev):
 When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is set (see [`.env.example`](../../.env.example)):
 
 1. Build kickagent and publish manifest + ESM bundle ([plugin-manifest-and-reload.md](../../kickagent/docs/guides/plugin-manifest-and-reload.md)).
-2. Restart kickstaff or run **`kam:reload-kickagent`** in KAM after republishing.
+2. Restart kickstaff or run **`load kickagent`** in KAM after republishing.
 3. Plugin `register()` uses the same catalog; manifest `commands[]` includes **`category`** for hub materialize defaults.
 
 ---
@@ -112,8 +112,8 @@ As admin:
 
 | Input | When |
 | ----- | ---- |
-| `kickagent:<name>` | Works in any shell mode |
-| `shell kickagent` then `<name>` | Kickagent shell only |
+| `kickagent:<name>` | Works in any mode |
+| `kickagent` then `<name>` | Inside subscriber palette only |
 | `Ctrl+/` palette | Same as console |
 
 **Success:** klog lines in the KAM Console pane (`` ` `` to focus).
@@ -121,10 +121,10 @@ As admin:
 **Failure:** `unknown command: …`
 
 - Phase 1: kickagent not rebuilt, or kickstaff dev server not restarted after build.
-- Phase 2: stale manifest — republish and `kam:reload-kickagent`.
+- Phase 2: stale manifest — republish and `load kickagent`.
 - Command missing from `COMMAND_CATALOG` or invalid `name` pattern.
 
-See [kam-console.md](kam-console.md) for shell mode, aliases, and `:help`.
+See [kam-console.md](kam-console.md) for palette mode, aliases, and `:help`.
 
 ---
 

@@ -24,7 +24,10 @@
   } from "$lib/devConsole/refresh";
   import { browser } from "$app/environment";
   import { registerKickagentCatalogCommands } from "$lib/kickagent/registerCatalogCommands";
-  import { reloadKickagentPluginFromManifest } from "$lib/kickagent/loadPluginFromManifest";
+  import {
+    formatLoadStatusLine,
+    loadSubscriber,
+  } from "$lib/kickagent/loadPluginFromManifest";
   import { setKickagentPluginSessionUser } from "$lib/kickagent/pluginSession";
   import MainContentSurface from "$lib/MainContentSurface.svelte";
   import { focusStack, Z_SITE_HEADER } from "$lib/client/focusStack.svelte";
@@ -110,18 +113,16 @@
     lastKickagentBootUserId = user.id;
 
     if (manifestUrl) {
-      void reloadKickagentPluginFromManifest({ force: !!shouldForceReload }).then(
+      void loadSubscriber("kickagent", { force: !!shouldForceReload }).then(
         (r) => {
           if (r.ok) {
-            if (r.resourcesCached) {
-              klogInfo(
-                `kickagent ${r.version} loaded (resources ready${getGlListSchema() ? "; list-detail gl" : ""}${getUnitsListSchema() ? "; units" : ""})`,
-              );
+            const line = formatLoadStatusLine(r);
+            if (r.skipped || r.resourcesCached) {
+              klogInfo(line);
             } else {
-              klogWarn(
-                `kickagent ${r.version} loaded but manifest has no parseable resources`,
-              );
+              klogWarn(line);
             }
+            if (r.aliasNote) klogInfo(r.aliasNote);
           } else {
             klogError(`kickagent manifest load: ${r.error}`);
           }

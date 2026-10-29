@@ -8,6 +8,9 @@
  *   2. klog lines (written last; final post-action)
  *
  * Commands that don't need a post-action return `void`.
+ *
+ * Bare words are host verbs. `<namespace>:<name>` belongs to a subscriber.
+ * Enter a palette with the namespace (or its alias); leave with `:exit`.
  */
 
 import {
@@ -30,7 +33,6 @@ import type { CommandOutcome } from "$lib/kickagent/contracts";
 
 export type { CommandOutcome };
 import { materializeDashboardCommand } from "../client/dashboardCommandMaterialize";
-import { getGlListSchema, getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
 import { listRowLines } from "./listRowLine";
 import {
   executeHistoryCommand,
@@ -46,10 +48,44 @@ export type CommandHandler = (
 
 export type CommandResult = { ok: true } | { ok: false; error: string };
 
-const KICKAGENT_NS = "kickagent:";
 const MAX_ALIAS_CHAIN = 8;
+/** Default subscriber namespace until a manifest load sets another. */
+const DEFAULT_SUBSCRIBER_NS = "kickagent";
+
+type LoadedSubscriberMeta = {
+  id: string;
+  namespace: string;
+  alias?: string;
+};
+
+let loadedSubscriber: LoadedSubscriberMeta | null = null;
 
 const commands = new Map<string, CommandHandler>();
+
+function subscriberNs(): string {
+  return loadedSubscriber?.namespace ?? DEFAULT_SUBSCRIBER_NS;
+}
+
+function subscriberPrefix(): string {
+  return `${subscriberNs()}:`;
+}
+
+export function setLoadedSubscriberMeta(meta: LoadedSubscriberMeta): void {
+  loadedSubscriber = meta;
+}
+
+export function clearLoadedSubscriberMeta(): void {
+  loadedSubscriber = null;
+}
+
+export function getLoadedSubscriberMeta(): LoadedSubscriberMeta | null {
+  return loadedSubscriber;
+}
+
+/** Host registry keys only (no `namespace:` subscriber commands). */
+export function listHostCommandNames(): string[] {
+  return [...commands.keys()].filter((name) => !name.includes(":")).sort();
+}
 
 function assertAliasShortcutNotShadowingBuiltin(shortcutRaw: string): void {
   const key = normalizeAliasShortcut(shortcutRaw);
@@ -60,7 +96,7 @@ function assertAliasShortcutNotShadowingBuiltin(shortcutRaw: string): void {
   }
   if (commands.has(key)) {
     throw new Error(
-      `alias: "${key}" is already a command name — pick a different shortcut (stuck? try unalias --all)`,
+      `alias: "${key}" is already a command name — pick a different shortcut (stuck? try alias --clear)`,
     );
   }
 }
@@ -73,14 +109,18 @@ export function registerKickagentCommand(
   shortName: string,
   handler: CommandHandler,
 ): void {
-  registerCommand(`${KICKAGENT_NS}${shortName}`, handler);
+  registerCommand(`${subscriberPrefix()}${shortName}`, handler);
 }
 
-/** Remove all `kickagent:*` handlers (before Phase 2 reload). */
+/** Remove all `<namespace>:*` handlers (before Phase 2 reload). */
 export function clearKickagentCommands(): void {
+  const prefixes = new Set([subscriberPrefix(), `${DEFAULT_SUBSCRIBER_NS}:`]);
   for (const key of [...commands.keys()]) {
-    if (key.startsWith(KICKAGENT_NS)) {
-      commands.delete(key);
+    for (const p of prefixes) {
+      if (key.startsWith(p)) {
+        commands.delete(key);
+        break;
+      }
     }
   }
   void import("$lib/kickagent/manifestCommandCache").then((m) =>
@@ -89,6 +129,14 @@ export function clearKickagentCommands(): void {
   void import("$lib/kickagent/manifestResourceCache").then((m) =>
     m.clearManifestResourceCache(),
   );
+  if (
+    devConsole.activeNamespace &&
+    (devConsole.activeNamespace === loadedSubscriber?.namespace ||
+      devConsole.activeNamespace === DEFAULT_SUBSCRIBER_NS)
+  ) {
+    devConsole.activeNamespace = "";
+  }
+  clearLoadedSubscriberMeta();
   devConsole.clearTableOutcome();
 }
 
@@ -97,14 +145,15 @@ export function listCommands(): string[] {
 }
 
 export function listKickagentShortNames(): string[] {
+  const prefix = subscriberPrefix();
   return listCommands()
-    .filter((name) => name.startsWith(KICKAGENT_NS))
-    .map((name) => name.slice(KICKAGENT_NS.length));
+    .filter((name) => name.startsWith(prefix))
+    .map((name) => name.slice(prefix.length));
 }
 
 /**
  * Resolve user-defined alias chain on a single command token; inject leading
- * args from the expansion (e.g. ka → shell kickagent).
+ * args from the expansion (e.g. ka → kickagent).
  */
 function expandAliasLeading(
   firstToken: string,
@@ -146,10 +195,10 @@ function expandQualifiedCommandToken(qualifiedLower: string): string {
 
 function resolveCommandName(rawName: string): string | null {
   const lower = rawName.toLowerCase();
+  const ns = devConsole.activeNamespace;
+  const prefix = ns ? `${ns}:` : subscriberPrefix();
 
-  // Host / kickstaff namespace escape: `:name` resolves only to registry keys (never kickagent:name).
-  // In kickagent mode, bare names resolve only under kickagent:.
-  // Qualified names like `kickagent:hello` work in any mode.
+  // Host escape: `:name` resolves only to registry keys (never namespace:name).
   if (lower.startsWith(":")) {
     const hostName = lower.slice(1);
     if (!hostName) return null;
@@ -160,8 +209,8 @@ function resolveCommandName(rawName: string): string | null {
     return commands.has(lower) ? lower : null;
   }
 
-  if (devConsole.kamMode === "kickagent") {
-    const prefixed = `${KICKAGENT_NS}${lower}`;
+  if (ns) {
+    const prefixed = `${prefix}${lower}`;
     if (commands.has(prefixed)) return prefixed;
     return null;
   }
@@ -179,13 +228,40 @@ function logLines(outcome: CommandOutcome | void, source: string): void {
   }
 }
 
-function kamPromptPrefix(): string {
-  return devConsole.kickagentModeActive ? "[KA] >" : "›";
+function promptPrefix(): string {
+  const ns = devConsole.activeNamespace;
+  if (!ns) return "›";
+  return ns === "kickagent" ? "[KA] >" : `[${ns}] >`;
 }
 
 /** Echo the submitted command line in the console scrollback (terminal-style). */
 function echoCommandInput(line: string): void {
-  klogWithSource("log", "kam:prompt", `${kamPromptPrefix()} ${line}`);
+  klogWithSource("log", "host:prompt", `${promptPrefix()} ${line}`);
+}
+
+function isLoadedNamespace(token: string): boolean {
+  const ns = loadedSubscriber?.namespace ?? DEFAULT_SUBSCRIBER_NS;
+  return token === ns;
+}
+
+function enterSubscriberPalette(namespace: string): CommandOutcome {
+  const ns = namespace.trim().toLowerCase();
+  if (!ns) {
+    return { log: "load a subscriber first (load kickagent)", level: "warn" };
+  }
+  const prefix = `${ns}:`;
+  const hasCmds = [...commands.keys()].some((k) => k.startsWith(prefix));
+  if (!hasCmds && !isLoadedNamespace(ns)) {
+    return {
+      log: `no commands for namespace "${ns}" — run load kickagent first`,
+      level: "warn",
+    };
+  }
+  devConsole.activeNamespace = ns;
+  return {
+    log: `palette: ${ns}${ns === "kickagent" ? " ([KA])" : ""}`,
+    level: "info",
+  };
 }
 
 export async function runCommand(input: string): Promise<CommandResult> {
@@ -235,23 +311,25 @@ export async function runCommand(input: string): Promise<CommandResult> {
   }
 
   let resolved = resolveCommandName(cmdToken);
+
+  // Bare namespace (or alias → namespace) with no args enters that palette.
   if (
     !resolved &&
-    devConsole.kamMode !== "kickagent" &&
+    !devConsole.activeNamespace &&
     !lw.startsWith(":") &&
     !lw.includes(":") &&
-    cmdToken.toLowerCase() === "kickagent" &&
-    mergedArgs.length === 0
+    mergedArgs.length === 0 &&
+    isLoadedNamespace(cmdToken.toLowerCase())
   ) {
-    const outcome = enterKickagentShell();
-    logLines(outcome, "command:shell");
+    const outcome = enterSubscriberPalette(cmdToken.toLowerCase());
+    logLines(outcome, "command:load");
     return { ok: true };
   }
+
   if (!resolved) {
-    const hint =
-      devConsole.kamMode === "kickagent"
-        ? " — try :help for kickstaff commands"
-        : "";
+    const hint = devConsole.activeNamespace
+      ? " — try :help for host commands"
+      : "";
     const msg = `unknown command: ${rawToken}${hint}`;
     klogError(msg);
     return { ok: false, error: msg };
@@ -287,7 +365,7 @@ export async function runCommand(input: string): Promise<CommandResult> {
   }
 
   logCommandOutput(outcome, source);
-  if (resolved.startsWith(KICKAGENT_NS)) {
+  if (resolved.includes(":")) {
     void materializeDashboardCommand(resolved);
   }
   return { ok: true };
@@ -326,30 +404,32 @@ registerCommand("clear", () => {
 
 registerCommand("help", (): CommandOutcome => {
   const blocks: string[] = [];
-  if (devConsole.kamMode === "kickagent") {
+  const ns = devConsole.activeNamespace;
+  const prefix = subscriberPrefix();
+  if (ns) {
     blocks.push(
-      "kickagent shell: on — bare names are kickagent: only; use :help, :exit, :shell default, :clear for kickstaff",
+      `${ns} palette: on — bare names are ${ns}: only; use :help, :exit, :clear for host`,
     );
-    const globals = listCommands().filter((c) => !c.startsWith(KICKAGENT_NS));
+    const globals = listCommands().filter((c) => !c.startsWith(prefix));
     blocks.push(
-      `kickstaff commands (use : prefix): ${globals.map((c) => `:${c}`).join(", ")}`,
+      `host commands (use : prefix): ${globals.map((c) => `:${c}`).join(", ")}`,
     );
     const shorts = listKickagentShortNames();
     if (shorts.length > 0) {
       blocks.push(
-        `kickagent commands: ${shorts.map((s) => `${s} (→ ${KICKAGENT_NS}${s})`).join(", ")}`,
+        `${ns} commands: ${shorts.map((s) => `${s} (→ ${prefix}${s})`).join(", ")}`,
       );
     }
   } else {
-    const host = listCommands().filter((c) => !c.startsWith(KICKAGENT_NS));
-    const subs = listCommands().filter((c) => c.startsWith(KICKAGENT_NS));
+    const host = listCommands().filter((c) => !c.includes(":"));
+    const subs = listCommands().filter((c) => c.includes(":"));
 
     blocks.push(`Host: ${host.join(", ")}`);
     if (subs.length > 0) {
       blocks.push(`Subscriber: ${subs.join(", ")}`);
     }
     blocks.push(
-      "[KA] shell: off — enter: shell kickagent, shell <shortcut>, or a bare shortcut that expands to kickagent (alias / details: docs/guides/kam-console.md).",
+      "Palette: off — enter with kickagent (or alias), leave with :exit. Load: load | load kickagent | load --list.",
     );
 
     const als = listCommandAliases();
@@ -359,7 +439,7 @@ registerCommand("help", (): CommandOutcome => {
       );
     }
     blocks.push(
-      "Aliases: run alias (no args) to list; alias kickagent <s>; unalias / unalias --all; alias --clear.",
+      "Aliases: alias (list) · alias kickagent <s> · alias <s> <expansion…> · alias --remove <s> · alias --clear",
     );
   }
   blocks.push(
@@ -411,7 +491,7 @@ registerCommand("alias", (args): CommandOutcome => {
     const list = listCommandAliases();
     if (list.length === 0) {
       return {
-        log: "no aliases (usage: alias <shortcut> <expansion…> | alias kickagent <shortcut> | alias --clear)",
+        log: "no aliases (usage: alias <shortcut> <expansion…> | alias kickagent <shortcut> | alias --remove <shortcut> | alias --clear)",
         level: "info",
       };
     }
@@ -431,17 +511,28 @@ registerCommand("alias", (args): CommandOutcome => {
       level: "info",
     };
   }
+  if (
+    args.length >= 2 &&
+    (args[0] === "--remove" || args[0] === "-r" || args[0] === "--delete")
+  ) {
+    const shortcut = args[1]!;
+    if (args.length > 2) {
+      throw new Error("usage: alias --remove <shortcut>");
+    }
+    removeCommandAlias(shortcut);
+    return { log: `alias: removed ${shortcut}`, level: "info" };
+  }
   if (args.length === 2 && args[0]!.toLowerCase() === "kickagent") {
     assertAliasShortcutNotShadowingBuiltin(args[1]!);
-    setCommandAlias(args[1]!, "shell kickagent");
+    setCommandAlias(args[1]!, "kickagent");
     return {
-      log: `alias: ${args[1]} → shell kickagent`,
+      log: `alias: ${args[1]} → kickagent`,
       level: "info",
     };
   }
   if (args.length < 2) {
     throw new Error(
-      "usage: alias <shortcut> <expansion…> | alias kickagent <shortcut>",
+      "usage: alias <shortcut> <expansion…> | alias kickagent <shortcut> | alias --remove <shortcut> | alias --clear",
     );
   }
   const shortcut = args[0]!;
@@ -451,85 +542,99 @@ registerCommand("alias", (args): CommandOutcome => {
   return { log: `alias: ${shortcut} → ${expansion}`, level: "info" };
 });
 
-registerCommand("unalias", (args): CommandOutcome => {
-  const raw = args[0]?.trim();
-  if (!raw) {
-    throw new Error("usage: unalias <shortcut> | unalias --all");
-  }
-  if (raw.toLowerCase() === "--all" || raw === "*") {
-    const n = listCommandAliases().length;
-    clearCommandAliases();
-    return {
-      log:
-        n > 0
-          ? `unalias: cleared ${n} alias(es)`
-          : "unalias: no aliases to clear",
-      level: "info",
-    };
-  }
-  removeCommandAlias(args[0]!);
-  return { log: `unalias: removed ${args[0]}`, level: "info" };
-});
-
-/** Leave active namespace shell (:exit in KA shell). */
+/** Leave active subscriber palette (:exit). */
 registerCommand("exit", (): CommandOutcome => {
-  if (devConsole.kamMode !== "kickagent") {
+  if (!devConsole.activeNamespace) {
     return {
-      log: "not in kickagent shell — use shell kickagent (or alias kickagent <shortcut>)",
+      log: "not in a subscriber palette — enter with kickagent (or alias)",
       level: "info",
     };
   }
-  devConsole.kamMode = "default";
-  return { log: "shell: default (left KA mode)", level: "info" };
+  const left = devConsole.activeNamespace;
+  devConsole.activeNamespace = "";
+  return { log: `palette: host (left ${left})`, level: "info" };
 });
 
-function enterKickagentShell(): CommandOutcome {
-  devConsole.kamMode = "kickagent";
-  return { log: "shell: kickagent ([KA] mode on)", level: "info" };
-}
+registerCommand("load", async (args): Promise<CommandOutcome> => {
+  const {
+    loadSubscriber,
+    loadAllSubscribers,
+    listConfiguredSubscribers,
+    getAppliedSubscriber,
+    formatLoadStatusLine,
+  } = await import("$lib/kickagent/loadPluginFromManifest");
 
-/**
- * First arg to `shell …`, after alias expansion. Supports e.g. `shell ka` when
- * `ka` → `kickagent`, or when `ka` → `shell kickagent` (same stored form as
- * `alias kickagent ka`).
- */
-function resolveShellSubcommand(firstArg: string): "kickagent" | "default" | "off" | null {
-  const trimmed = firstArg.trim().toLowerCase();
-  if (!trimmed) return null;
-  const [headRaw, injected] = expandAliasLeading(trimmed, []);
-  const head = headRaw.toLowerCase();
-  const inj = injected.map((t) => t.toLowerCase());
+  const tokens = args.map((a) => a.toLowerCase());
+  const force = tokens.includes("--force");
+  const listOnly = tokens.includes("--list");
+  const idToken = tokens.find((t) => !t.startsWith("--"));
 
-  if (inj.length === 0) {
-    if (head === "kickagent" || head === "default" || head === "off") return head;
-    return null;
+  if (listOnly) {
+    const configured = listConfiguredSubscribers();
+    if (configured.length === 0) {
+      return {
+        log: "load --list: no subscribers configured (set PUBLIC_KICKAGENT_MANIFEST_URL)",
+        level: "warn",
+      };
+    }
+    const lines = configured.map((s) => {
+      const applied = getAppliedSubscriber(s.id);
+      if (!applied) {
+        return `${s.id}  (not loaded)  ${s.manifestUrl}`;
+      }
+      const res =
+        applied.resourceKeys.length > 0
+          ? applied.resourceKeys.join(",")
+          : "-";
+      return `${s.id}  v${applied.version}  sha ${applied.shaPrefix}…  cmds ${applied.commandCount}  resources ${res}`;
+    });
+    return { log: lines.join("\n"), level: "info" };
   }
-  if (inj.length === 1 && head === "shell") {
-    const sub = inj[0]!;
-    if (sub === "kickagent" || sub === "default" || sub === "off") return sub;
-  }
-  return null;
-}
 
-/** Host shell / namespace; `kickagent:` remains the subscriber command prefix only. */
-registerCommand("shell", (args): CommandOutcome => {
-  const raw = args[0]?.trim();
-  if (!raw) {
-    throw new Error(
-      "usage: shell kickagent | shell default | shell off (or a shortcut that expands to one of these)",
-    );
+  if (idToken) {
+    const r = await loadSubscriber(idToken, { force });
+    if (!r.ok) throw new Error(r.error);
+    const lines = [formatLoadStatusLine(r)];
+    if (r.aliasNote) lines.push(r.aliasNote);
+    return {
+      log: lines,
+      level: r.resourcesCached || r.skipped ? "info" : "warn",
+    };
   }
-  const sub = resolveShellSubcommand(raw);
-  if (!sub) {
-    throw new Error(
-      "usage: shell kickagent | shell default | shell off (or a shortcut that expands to one of these)",
-    );
+
+  const results = await loadAllSubscribers({ force });
+  const lines: string[] = [];
+  let level: KlogLevel = "info";
+  for (const r of results) {
+    if (!r.ok) {
+      lines.push(r.error);
+      level = "error";
+      continue;
+    }
+    lines.push(formatLoadStatusLine(r));
+    if (r.aliasNote) lines.push(r.aliasNote);
+    if (!r.resourcesCached && !r.skipped) level = "warn";
   }
-  if (sub === "kickagent") {
-    return enterKickagentShell();
+  if (lines.length === 0) {
+    throw new Error("load: nothing configured");
   }
-  devConsole.kamMode = "default";
-  return { log: "shell: default (left KA mode)", level: "info" };
+  if (level === "error" && results.every((r) => !r.ok)) {
+    throw new Error(lines.join("\n"));
+  }
+  return { log: lines, level };
+});
+
+registerCommand("unload", async (args): Promise<CommandOutcome> => {
+  const id = args[0]?.trim().toLowerCase();
+  if (!id || args.length !== 1) {
+    throw new Error("usage: unload <id>");
+  }
+  const { unloadSubscriber } = await import(
+    "$lib/kickagent/loadPluginFromManifest"
+  );
+  const r = unloadSubscriber(id);
+  if (!r.ok) throw new Error(r.error);
+  return { log: `unloaded ${id}`, level: "info" };
 });
 
 type DbApiStatus = {
@@ -715,8 +820,6 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
       loginUrl?: string;
     };
 
-    // Every database has its own sessions. Already signed in there → reload into it;
-    // otherwise go to that database's login (other sessions stay untouched).
     const destination = status.hasSession
       ? window.location.pathname + window.location.search
       : (status.loginUrl ?? `/login?db=${target}`);
@@ -734,26 +837,4 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
   throw new Error(
     "usage: db status | db tables | db migrations | db use dev | db use staging | db use prod",
   );
-});
-
-registerCommand("kam:reload-kickagent", async (): Promise<CommandOutcome> => {
-  const { reloadKickagentPluginFromManifest } = await import(
-    "$lib/kickagent/loadPluginFromManifest"
-  );
-  const r = await reloadKickagentPluginFromManifest({ force: true });
-  if (!r.ok) {
-    throw new Error(r.error);
-  }
-  const resourceNote = [
-    getUnitsListSchema()
-      ? "resources.units.list cached"
-      : "no resources.units.list",
-    getGlListSchema()
-      ? "resources.gl list-detail cached"
-      : "no resources.gl list-detail",
-  ].join("; ");
-  return {
-    log: `kickagent plugin reloaded (manifest v${r.version}; ${resourceNote})`,
-    level: r.resourcesCached ? "info" : "warn",
-  };
 });

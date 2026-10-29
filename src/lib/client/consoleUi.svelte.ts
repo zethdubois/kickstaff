@@ -55,7 +55,7 @@ function isValidPrefs(value: unknown): value is ConsoleUiPrefs {
 }
 
 /** Reserved alias keys (prevent hijacking meta commands). */
-const RESERVED_KEYS = new Set(["alias", "unalias"]);
+const RESERVED_KEYS = new Set(["alias", "load", "unload"]);
 
 export function normalizeAliasShortcut(key: string): string | null {
   const t = key.trim().toLowerCase();
@@ -100,10 +100,14 @@ export function getConsoleUiPrefs(): ConsoleUiPrefs {
       cache = cloneDefaults();
       return cache;
     }
+    const migrated = migrateAliasExpansions({ ...parsed.commandAliases });
     cache = {
       ...parsed,
-      commandAliases: { ...parsed.commandAliases },
+      commandAliases: migrated,
     };
+    if (JSON.stringify(migrated) !== JSON.stringify(parsed.commandAliases)) {
+      persist(cache);
+    }
     return cache;
   } catch {
     cache = cloneDefaults();
@@ -129,7 +133,7 @@ export function setCommandAlias(shortcutRaw: string, expansionRaw: string): Cons
     );
   }
   if (ReservedTargets.has(expansion.split(" ")[0]!.toLowerCase())) {
-    throw new Error("alias: expansion may not begin with alias or unalias");
+    throw new Error("alias: expansion may not begin with alias, load, or unload");
   }
 
   const base = getConsoleUiPrefs();
@@ -148,7 +152,26 @@ export function setCommandAlias(shortcutRaw: string, expansionRaw: string): Cons
   return next;
 }
 
-const ReservedTargets = new Set(["alias", "unalias"]);
+const ReservedTargets = new Set(["alias", "load", "unload"]);
+
+/** Rewrite legacy `shell kickagent` expansions to the namespace token. */
+function migrateAliasExpansions(
+  aliases: Record<string, string>,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(aliases)) {
+    const trimmed = v.trim().replace(/\s+/g, " ");
+    const lower = trimmed.toLowerCase();
+    if (lower === "shell kickagent") {
+      out[k] = "kickagent";
+    } else if (lower === "shell default" || lower === "shell off") {
+      continue;
+    } else {
+      out[k] = trimmed;
+    }
+  }
+  return out;
+}
 
 /** Drop every saved alias; keeps version and future non-alias prefs. */
 export function clearCommandAliases(): ConsoleUiPrefs {
@@ -166,12 +189,12 @@ export function clearCommandAliases(): ConsoleUiPrefs {
 export function removeCommandAlias(shortcutRaw: string): ConsoleUiPrefs {
   const key = normalizeAliasShortcut(shortcutRaw);
   if (!key) {
-    throw new Error("unalias: invalid shortcut");
+    throw new Error("alias --remove: invalid shortcut");
   }
   const base = getConsoleUiPrefs();
   const nextAliases = { ...base.commandAliases };
   if (!(key in nextAliases)) {
-    throw new Error(`unalias: no alias named ${shortcutRaw}`);
+    throw new Error(`alias --remove: no alias named ${shortcutRaw}`);
   }
   delete nextAliases[key];
   const next: ConsoleUiPrefs = {

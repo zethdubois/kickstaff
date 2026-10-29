@@ -1,12 +1,12 @@
 # Host brief: subscriber `load`, wiki, and progress
 
-**Contract:** [`../../../../kickagent/docs/kickagent/architecture/frontend-guide.md`](../../../../kickagent/docs/kickagent/architecture/frontend-guide.md). Roles, datasets, and command classes live there. This file is the Kickstaff implementation checklist only.
+**Contract:** [`../../../../kickagent/docs/kickagent/architecture/frontend-guide.md`](../../../../kickagent/docs/kickagent/architecture/frontend-guide.md). Roles, datasets, command classes, and the one-instance / two-database URL shape live there. This file is the Kickstaff `load` / wiki / progress checklist only.
 
 **Audience:** kickstaff. **Publisher:** kickagent (manifest **0.7.0**).
 
 Kickagent is a host-agnostic publisher. It does not know Kick Asset Management, and it does not own a host's database. This host is the company's frontend. Company naming stays here. Do not push it back into kickagent.
 
-Kickagent docs now say the host command is `load kickagent`. Until this brief is implemented, the old console command still exists in this repo and the new docs will not match the running console. Implement this brief before treating those docs as the operator loop.
+Kickagent docs say the host command is `load kickagent`. **Console commands** (`load` / `unload`, palette via namespace, no `shell` / `kam:reload-kickagent` / `unalias`) are implemented. Remaining checklist items: multi-subscriber env registry, wiki/progress proxies, and Phase 1 static path cleanup.
 
 ## Human, before the next kickagent deploy
 
@@ -116,7 +116,7 @@ After `load` is generic:
 
 - Delete the Phase 1 static path once nothing calls it: `BROWSER_PLUGIN_CATALOG`, `registerHelloCommand`, `registerKickagentCatalogCommands`. Confirm with a search first.
 - Units and GL pages go through the list/detail builder. Drop `getUnitsListSchema` / `getGlListSchema` checks in the reload message. The thin units v1 path stays only until kickagent lifts `resources.units`; do not add a new name-specific parser.
-- `src/lib/kickagent/outcomeToTableModel.ts` tells the user to run `kam:reload-kickagent`. Say `load kickagent`.
+- ~~`src/lib/kickagent/outcomeToTableModel.ts` tells the user to run `kam:reload-kickagent`. Say `load kickagent`.~~ Done.
 
 ## 6. Files that moved here
 
@@ -138,13 +138,13 @@ Fix stale links in [README.md](README.md): the kickagent paths are `docs/kickage
 
 ## 7. Acceptance
 
-- [ ] `load` with no args loads the configured subscriber and prints the generic status line.
-- [ ] `load kickagent` a second time, with no publish in between, prints already current and does not download the module again.
-- [ ] After a kickagent republish (new sha, same version string), `load kickagent` swaps the module.
-- [ ] `load --list` shows id, version, command count, and resource keys.
-- [ ] `ka` (or the manifest alias) enters the palette; `:help` still runs the host command.
-- [ ] `shell` and `kam:reload-kickagent` are unknown.
-- [ ] A namespace that collides with `help` or `load` is refused.
+- [x] `load` with no args loads the configured subscriber and prints the generic status line.
+- [x] `load kickagent` a second time, with no publish in between, prints already current and does not download the module again.
+- [x] After a kickagent republish (new sha, same version string), `load kickagent` swaps the module.
+- [x] `load --list` shows id, version, command count, and resource keys.
+- [x] `ka` (or the manifest alias) enters the palette; `:help` still runs the host command.
+- [x] `shell` and `kam:reload-kickagent` are unknown.
+- [x] A namespace that collides with `help` or `load` is refused.
 - [ ] Signed-out `GET /wiki` redirects to login. Signed-in non-admin `GET /wiki` returns the wiki HTML. `GET /progress` can create an entry and the stored `source` is that user's email when the form leaves source blank.
 - [ ] `GET https://<kickagent>/wiki/` without a bearer token is 401.
 - [ ] Tests cover registry parse, sha skip, collision refusal, and the proxy's auth gate.

@@ -23,7 +23,7 @@ kickstaff does **not** design kickagent’s LLM pipelines or batch workers here;
 
 Canonical architecture: [platform-overview.md](../platform-overview.md).
 
-- **Postgres:** kickstaff owns only core product tables in [`src/lib/server/schema.ts`](../../../src/lib/server/schema.ts) (`users`, `sessions`, `rental_landing_links`, `dashboard_links`, `user_dashboard_link_preferences`, `klogs`). Legacy ops tables were **dropped** from the kickstaff database; kickagent will recreate under **`operations`** schema.
+- **Postgres:** kickstaff owns the **product** database ([`src/lib/server/schema.ts`](../../../src/lib/server/schema.ts): `users`, `sessions`, `rental_landing_links`, `dashboard_links`, `user_dashboard_link_preferences`, `klogs`). Ops tables live in a **second database** on the same instance (`kickagent_ops_dev` locally, `kickagent_ops` on staging and production). See the Kickagent frontend guide.
 - **kickstaff does not** run bill/units ETL or expose `/api/admin/bills/*`; Phase 3 will proxy kickagent jobs only.
 - **S3** and future **Redis** are kickagent deploy concerns — see [docs/upgrade/README.md](../../upgrade/README.md).
 
@@ -48,8 +48,8 @@ When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is set, layout bootstraps **Phase 2** i
 
 - Set **`PUBLIC_KICKAGENT_MANIFEST_URL`** (e.g. `http://127.0.0.1:7099/manifest.json` when kickagent runs `serve-publish` on 7099). Documented in [`.env.example`](../../../.env.example).
 - On **admin** login, kickstaff runs [`loadPluginFromManifest.ts`](../../../src/lib/kickagent/loadPluginFromManifest.ts): fetch manifest → fetch module bytes → verify **`sha256`** → dynamic `import()` via blob URL → **`register(registry, ctx)`** from the bundle → wraps handlers with current session (`pluginSession`).
-- Host command **`kam:reload-kickagent`** — `clearKickagentCommands()`, then the same load flow (**forced**, reapplies same version).
-- **Deploy:** new kickagent artifacts without bumping kickstaff’s `kickagent` npm dependency (reload picks up new manifest/module URLs).
+- Host command **`load kickagent`** — same load flow; skips the module download when `url@sha256` matches unless **`load kickagent --force`**.
+- **Deploy:** new kickagent artifacts without bumping kickstaff’s `kickagent` npm dependency (`load` picks up new manifest/module URLs).
 
 Production hardening (server-side execution, auto-poll) remains optional follow-up.
 
@@ -73,19 +73,18 @@ These are **host** concerns — not registered by the kickagent plugin:
 |---------|-------------------|
 | Command palette + KAM pane | [Palette.svelte](../../../src/lib/devConsole/Palette.svelte), [KamConsole.svelte](../../../src/lib/devConsole/KamConsole.svelte) |
 | Command registry | [commands.ts](../../../src/lib/devConsole/commands.ts) |
-| Kickagent mode (`[KA] >`, prefix resolution) | [commands.ts](../../../src/lib/devConsole/commands.ts), [kam-console.md](../kam-console.md) |
-| Meta: `shell`, `exit` (`:shell default`, `:exit` from inside KA shell) | Built-in host commands |
-| Meta: `help`, `console`, `clear`, `echo`, `reset` | Built-in host commands |
-| Meta: `alias` / `unalias` (`ka` ↔ `shell kickagent` via `alias kickagent ka`) | Persisted in [`consoleUi.svelte.ts`](../../../src/lib/client/consoleUi.svelte.ts); see [kam-console.md](../kam-console.md) |
-| Meta: `kam:reload-kickagent` | Phase 2 reload ([commands.ts](../../../src/lib/devConsole/commands.ts)); requires manifest URL |
+| Subscriber palette (`[KA] >`, prefix resolution) | [commands.ts](../../../src/lib/devConsole/commands.ts), [kam-console.md](../kam-console.md) |
+| Meta: `load`, `unload`, `exit` (`:exit` from inside palette) | Built-in host commands |
+| Meta: `help`, `console`, `clear`, `echo` | Built-in host commands |
+| Meta: `alias` / `alias --remove` (`ka` → `kickagent` via `alias kickagent ka`) | Persisted in [`consoleUi.svelte.ts`](../../../src/lib/client/consoleUi.svelte.ts); see [kam-console.md](../kam-console.md) |
 | Phase 2 manifest bootstrap | [loadPluginFromManifest.ts](../../../src/lib/kickagent/loadPluginFromManifest.ts), [pluginSession.ts](../../../src/lib/kickagent/pluginSession.ts); [+layout.svelte](../../../src/routes/+layout.svelte) (`$effect` when admin + `PUBLIC_KICKAGENT_MANIFEST_URL`) |
 | Admin-only registration | [+layout.svelte](../../../src/routes/+layout.svelte): hydrate + kickagent bootstrap when `isAdmin` |
 | klog persistence | `/api/klogs`, [state.svelte.ts](../../../src/lib/devConsole/state.svelte.ts) |
-| `kamMode` persistence | [uiSettings.svelte.ts](../../../src/lib/client/uiSettings.svelte.ts) |
+| `activeNamespace` persistence | [uiSettings.svelte.ts](../../../src/lib/client/uiSettings.svelte.ts) |
 
-- Unqualified names in KA shell resolve **only** to `kickagent:<name>`. Use `:command` for kickstaff (e.g. `:help`, `:exit`, `:shell default`, `:clear`).
+- Unqualified names in the palette resolve **only** to `kickagent:<name>`. Use `:command` for host verbs (e.g. `:help`, `:exit`, `:clear`).
 - Full name `kickagent:hello` works in any mode. `:kickagent:hello` runs the same (leading `:` strips to host-qualified resolution).
-- Enter KA shell: **`shell kickagent`**, or a user alias such as **`ka`** after **`alias kickagent ka`**. Leave: **`shell default`** / **`shell off`** (from default shell) or **`:exit`** / **`:shell default`** from inside KA shell.
+- Enter palette: **`kickagent`**, or a user alias such as **`ka`** after **`alias kickagent ka`**. Leave: **`:exit`**. Reload: **`load kickagent`**.
 - Visual: `[KA] >` prompt + green accent bar — see [kam-console.md](../kam-console.md).
 
 ### Registering commands (Phase 1)
@@ -147,7 +146,7 @@ Implementation: [dashboardCommandMaterialize.ts](../../../src/lib/server/dashboa
 <summary>Implemented (was “planned”)</summary>
 
 - `clearKickagentCommands()` — [commands.ts](../../../src/lib/devConsole/commands.ts)
-- `kam:reload-kickagent` — same file
+- `load` / `unload` — same file
 - Env: `PUBLIC_KICKAGENT_MANIFEST_URL` — [.env.example](../../../.env.example)
 - Loader module — [loadPluginFromManifest.ts](../../../src/lib/kickagent/loadPluginFromManifest.ts)
 
@@ -173,19 +172,19 @@ Track Phase 3 and production hardening in this repo; publisher-side truth stays 
 
 1. Clone `../kickagent`, `pnpm build` in kickagent.
 2. `pnpm install` in kickstaff.
-3. Sign in as admin, **`shell kickagent`** (or define **`alias kickagent ka`** once, then **`ka`**), run **`hello`** or **`kickagent:hello`**.
+3. Sign in as admin, type **`kickagent`** (or define **`alias kickagent ka`** once, then **`ka`**), run **`hello`** or **`kickagent:hello`**.
 
 ### After Phase 2 (local)
 
 1. In kickagent: `pnpm build`, `publish` + `serve-publish` (see kickagent [plugin-manifest-and-reload.md](../../../kickagent/docs/guides/plugin-manifest-and-reload.md)).
 2. In kickstaff `.env`: `PUBLIC_KICKAGENT_MANIFEST_URL=http://127.0.0.1:7099/manifest.json` (restart dev server).
-3. Sign in as admin — plugin loads from manifest; use **`kam:reload-kickagent`** after republishing.
+3. Sign in as admin — plugin loads from manifest; use **`load kickagent`** after republishing.
 
 ### After Phase 2 (production)
 
 1. kickagent CI publishes manifest + bundle to your CDN/origin.
 2. Set `PUBLIC_KICKAGENT_MANIFEST_URL` in kickstaff `.env`.
-3. In KAM: **`kam:reload-kickagent`** when you want to pin a new artifact (or after login if you add auto-poll later).
+3. In KAM: **`load kickagent`** when you want to pin a new artifact (or after login if you add auto-poll later).
 
 ---
 

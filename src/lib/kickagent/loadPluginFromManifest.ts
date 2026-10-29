@@ -9,6 +9,9 @@ import { createKlogBroadcaster } from "$lib/devConsole/state.svelte";
 import {
   clearKickagentCommands,
   registerKickagentCommand,
+  setLoadedSubscriberMeta,
+  clearLoadedSubscriberMeta,
+  listHostCommandNames,
 } from "$lib/devConsole/commands";
 import {
   MANIFEST_COMMAND_ROLES,
@@ -16,6 +19,7 @@ import {
   type ManifestCommandRole,
 } from "./manifestCommandCache";
 import {
+  listCachedResourceKeys,
   parseManifestResources,
   setManifestResourceCache,
   type ManifestResources,
@@ -37,10 +41,47 @@ type KickagentManifestJson = {
   version: string;
   moduleUrl: string;
   sha256: string;
+  namespace: string;
+  alias?: string;
   commands?: KickagentManifestCommandJson[];
   resources?: ManifestResources;
   api?: { baseUrl?: string };
 };
+
+export type LoadSubscriberResult =
+  | {
+      ok: true;
+      id: string;
+      version: string;
+      namespace: string;
+      alias?: string;
+      commandCount: number;
+      resourceKeys: string[];
+      shaPrefix: string;
+      /** True when url@sha matched and the module was not re-downloaded. */
+      skipped: boolean;
+      resourcesCached: boolean;
+      aliasNote?: string;
+    }
+  | { ok: false; error: string };
+
+/** @deprecated Prefer {@link loadSubscriber}; kept for call-site compatibility. */
+export type ReloadKickagentResult =
+  | { ok: true; version: string; resourcesCached: boolean }
+  | { ok: false; error: string };
+
+type AppliedRecord = {
+  key: string;
+  version: string;
+  namespace: string;
+  alias?: string;
+  commandCount: number;
+  resourceKeys: string[];
+  shaPrefix: string;
+};
+
+/** Per subscriber id: `url@sha256` last successfully applied. */
+const lastApplied = new Map<string, AppliedRecord>();
 
 function assertFetchableUrl(urlStr: string, field: string): URL {
   let u: URL;
@@ -71,6 +112,24 @@ async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
   return hex;
 }
 
+function parseNamespace(raw: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) return "kickagent";
+  const t = raw.trim().toLowerCase();
+  if (!/^[a-z][a-z0-9-]*$/.test(t)) {
+    throw new Error(`manifest: invalid namespace "${raw}"`);
+  }
+  return t;
+}
+
+function parseAlias(raw: unknown): string | undefined {
+  if (typeof raw !== "string" || !raw.trim()) return undefined;
+  const t = raw.trim().toLowerCase();
+  if (!/^[a-z][a-z0-9_-]*$/.test(t)) {
+    throw new Error(`manifest: invalid alias "${raw}"`);
+  }
+  return t;
+}
+
 function parseManifest(raw: unknown): KickagentManifestJson {
   if (!raw || typeof raw !== "object") {
     throw new Error("manifest: expected JSON object");
@@ -95,6 +154,8 @@ function parseManifest(raw: unknown): KickagentManifestJson {
     version: version.trim(),
     moduleUrl: moduleUrl.trim(),
     sha256: sha256.trim().toLowerCase(),
+    namespace: parseNamespace(o.namespace),
+    alias: parseAlias(o.alias) ?? "ka",
     commands,
     resources: resources ?? undefined,
     api:
@@ -141,27 +202,74 @@ function parseManifestCommands(raw: unknown): KickagentManifestCommandJson[] {
   return out;
 }
 
-export type ReloadKickagentResult =
-  | { ok: true; version: string; resourcesCached: boolean }
-  | { ok: false; error: string };
+function resourceKeysFrom(resources: ManifestResources | null | undefined): string[] {
+  if (!resources) return [];
+  const keys = new Set<string>(Object.keys(resources.listDetail));
+  if (resources.units) keys.add("units");
+  return [...keys].sort();
+}
+
+function formatStatusLine(r: Extract<LoadSubscriberResult, { ok: true }>): string {
+  const res =
+    r.resourceKeys.length > 0
+      ? `resources: ${r.resourceKeys.join(", ")}`
+      : "resources: (none)";
+  return `${r.namespace} v${r.version} · ${r.commandCount} commands · ${res}`;
+}
+
+export function formatLoadStatusLine(
+  r: Extract<LoadSubscriberResult, { ok: true }>,
+): string {
+  if (r.skipped) {
+    return `already current (v${r.version})`;
+  }
+  return formatStatusLine(r);
+}
+
+/** Resolve configured subscriber ids → manifest URLs (kickagent from public env today). */
+export function listConfiguredSubscribers(): Array<{ id: string; manifestUrl: string }> {
+  const url = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim() ?? "";
+  if (!url) return [];
+  return [{ id: "kickagent", manifestUrl: url }];
+}
+
+export function getSubscriberManifestUrl(id: string): string | null {
+  const found = listConfiguredSubscribers().find((s) => s.id === id);
+  return found?.manifestUrl ?? null;
+}
+
+export function getAppliedSubscriber(id: string): AppliedRecord | null {
+  return lastApplied.get(id) ?? null;
+}
+
+export function unloadSubscriber(id: string): { ok: true } | { ok: false; error: string } {
+  if (!lastApplied.has(id) && id !== "kickagent") {
+    return { ok: false, error: `unload: unknown subscriber "${id}"` };
+  }
+  clearKickagentCommands();
+  clearLoadedSubscriberMeta();
+  lastApplied.delete(id);
+  return { ok: true };
+}
 
 /**
- * Fetch kickagent manifest + module, verify sha256, dynamic import, register commands.
- * When `force` is false and the same manifest URL + version was already applied this session, skips work.
+ * Fetch subscriber manifest + module, verify sha256, dynamic import, register commands.
+ * Skip key is `manifestUrl@sha256` (content hash), not version string.
  */
-let lastAppliedKey: string | null = null;
-
-export async function reloadKickagentPluginFromManifest(options?: {
-  force?: boolean;
-}): Promise<ReloadKickagentResult> {
+export async function loadSubscriber(
+  id: string,
+  options?: { force?: boolean },
+): Promise<LoadSubscriberResult> {
   const force = options?.force === true;
-  const manifestUrlRaw = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim() ?? "";
+  const manifestUrlRaw = getSubscriberManifestUrl(id);
 
   if (!manifestUrlRaw) {
     return {
       ok: false,
       error:
-        "PUBLIC_KICKAGENT_MANIFEST_URL is not set — Phase 1 hello wiring still applies",
+        id === "kickagent"
+          ? "PUBLIC_KICKAGENT_MANIFEST_URL is not set — Phase 1 hello wiring still applies"
+          : `no configured subscriber "${id}"`,
     };
   }
 
@@ -182,18 +290,41 @@ export async function reloadKickagentPluginFromManifest(options?: {
     );
 
     const moduleUrlResolved = moduleUrlObj.toString();
+    const applyKey = `${manifestUrlRaw}@${manifest.sha256}`;
+    const resourceKeysPreview = resourceKeysFrom(manifest.resources ?? null);
+    const commandCount = (manifest.commands ?? []).length;
+    const shaPrefix = manifest.sha256.slice(0, 8);
 
-    const applyKey = `${manifestUrlRaw}@${manifest.version}`;
-    if (!force && lastAppliedKey === applyKey) {
+    const hostVerbs = new Set(listHostCommandNames());
+    if (hostVerbs.has(manifest.namespace)) {
+      return {
+        ok: false,
+        error: `load ${id}: namespace "${manifest.namespace}" collides with a host verb`,
+      };
+    }
+
+    const prev = lastApplied.get(id);
+    if (!force && prev?.key === applyKey) {
       setManifestCommandCache(manifest.commands ?? []);
       setManifestResourceCache(manifest.resources ?? null);
+      setLoadedSubscriberMeta({
+        id,
+        namespace: manifest.namespace,
+        alias: manifest.alias,
+      });
       return {
         ok: true,
+        id,
         version: manifest.version,
-        resourcesCached: Boolean(
-          manifest.resources?.units?.list ||
-            Object.keys(manifest.resources?.listDetail ?? {}).length > 0,
-        ),
+        namespace: manifest.namespace,
+        alias: manifest.alias,
+        commandCount,
+        resourceKeys: resourceKeysPreview.length
+          ? resourceKeysPreview
+          : listCachedResourceKeys(),
+        shaPrefix,
+        skipped: true,
+        resourcesCached: resourceKeysPreview.length > 0,
       };
     }
 
@@ -242,10 +373,11 @@ export async function reloadKickagentPluginFromManifest(options?: {
       return { ok: false, error: "not signed in — cannot load kickagent plugin" };
     }
 
+    const ns = manifest.namespace;
     const initCtx: KickagentHostContext = {
       userId: u.id,
       userEmail: u.email,
-      logger: createKlogBroadcaster("kickagent:plugin"),
+      logger: createKlogBroadcaster(`${ns}:plugin`),
       apiBaseUrl: manifest.api?.baseUrl,
     };
 
@@ -263,6 +395,11 @@ export async function reloadKickagentPluginFromManifest(options?: {
     clearKickagentCommands();
     setManifestCommandCache(manifest.commands ?? []);
     setManifestResourceCache(manifest.resources ?? null);
+    setLoadedSubscriberMeta({
+      id,
+      namespace: ns,
+      alias: manifest.alias,
+    });
 
     const pluginNames = new Set<string>();
 
@@ -276,7 +413,7 @@ export async function reloadKickagentPluginFromManifest(options?: {
         const handlerCtx: KickagentHostContext = {
           userId: u0.id,
           userEmail: u0.email,
-          logger: createKlogBroadcaster(`kickagent:${name}`),
+          logger: createKlogBroadcaster(`${ns}:${name}`),
           apiBaseUrl: manifest.api?.baseUrl,
         };
         return handler(args, handlerCtx);
@@ -285,17 +422,86 @@ export async function reloadKickagentPluginFromManifest(options?: {
 
     registerManifestServerCommands(manifest.commands ?? [], pluginNames);
 
-    lastAppliedKey = applyKey;
+    const resourceKeys = listCachedResourceKeys();
+    lastApplied.set(id, {
+      key: applyKey,
+      version: manifest.version,
+      namespace: ns,
+      alias: manifest.alias,
+      commandCount,
+      resourceKeys,
+      shaPrefix,
+    });
+
+    let aliasNote: string | undefined;
+    if (manifest.alias) {
+      const { getCommandAliases, setCommandAlias } = await import(
+        "$lib/client/consoleUi.svelte"
+      );
+      const existing = getCommandAliases()[manifest.alias];
+      if (existing && existing !== ns) {
+        aliasNote = `alias ${manifest.alias} already → ${existing} (kept host alias)`;
+      } else if (!existing) {
+        try {
+          setCommandAlias(manifest.alias, ns);
+          aliasNote = `alias ${manifest.alias} → ${ns}`;
+        } catch {
+          /* shortcut may collide with a host verb — ignore suggested alias */
+        }
+      }
+    }
+
     return {
       ok: true,
+      id,
       version: manifest.version,
-      resourcesCached: Boolean(
-        manifest.resources?.units?.list ||
-          Object.keys(manifest.resources?.listDetail ?? {}).length > 0,
-      ),
+      namespace: ns,
+      alias: manifest.alias,
+      commandCount,
+      resourceKeys,
+      shaPrefix,
+      skipped: false,
+      resourcesCached: resourceKeys.length > 0,
+      aliasNote,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return { ok: false, error: `kickagent load failed: ${msg}` };
   }
+}
+
+export async function loadAllSubscribers(options?: {
+  force?: boolean;
+}): Promise<LoadSubscriberResult[]> {
+  const ids = listConfiguredSubscribers().map((s) => s.id);
+  if (ids.length === 0) {
+    return [
+      {
+        ok: false,
+        error:
+          "PUBLIC_KICKAGENT_MANIFEST_URL is not set — Phase 1 hello wiring still applies",
+      },
+    ];
+  }
+  const out: LoadSubscriberResult[] = [];
+  for (const id of ids) {
+    out.push(await loadSubscriber(id, options));
+  }
+  return out;
+}
+
+/**
+ * Fetch kickagent manifest + module, verify sha256, dynamic import, register commands.
+ * @deprecated Prefer {@link loadSubscriber}(`"kickagent"`, …).
+ */
+export async function reloadKickagentPluginFromManifest(options?: {
+  force?: boolean;
+}): Promise<ReloadKickagentResult> {
+  const r = await loadSubscriber("kickagent", options);
+  if (!r.ok) return r;
+  return {
+    ok: true,
+    version: r.version,
+    resourcesCached: r.resourcesCached,
+  };
 }

@@ -42,7 +42,7 @@ Host phase ids use **H** so they are not confused with kickagent’s 1a/1b/… n
 
 **Outcomes:**
 
-- [ ] After publisher ships the resource: `kam:reload-kickagent` (or re-login) caches it with no new flag maps.
+- [ ] After publisher ships the resource: `load kickagent` (or re-login) caches it with no new flag maps.
 - [ ] List (and detail if published) works in KAM and/or a thin `/ops/…` chrome page.
 
 **Acceptance:** Properties appear from the manifest the same way accounts do. No properties-only form constants.

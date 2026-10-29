@@ -23,11 +23,15 @@ history -d 3         → delete line 3 (same numbers as `history` list)
 !-n                  → n commands ago (!-1 = last)
 !prefix              → re-run latest command starting with prefix
 ↑ / ↓                → recall prior commands (console + palette)
-shell kickagent      → enter kickagent shell ([KA] mode)
-ka                   → shortcut only if defined: `alias kickagent ka` (stored in preferences)
-shell default        → leave kickagent shell (same when already default)
-:exit                → leave kickagent shell from inside [KA] mode (host escape)
-unalias --all        → remove every saved alias (or: alias --clear)
+load                 → load configured subscribers (manifest + plugin)
+load kickagent       → load/refresh kickagent (skip download when sha unchanged)
+load --list          → list subscribers (id, version, sha, commands, resources)
+load kickagent --force → reload even when sha matches
+unload kickagent     → unregister kickagent commands and drop caches
+kickagent            → enter kickagent palette ([KA] mode)
+ka                   → same if defined: `alias kickagent ka` (or suggested by manifest)
+:exit                → leave subscriber palette (host escape)
+alias --remove ka    → remove one alias (or: alias --clear for all)
 db status            → active DB target, host, connectivity (SELECT 1)
 db tables            → list public/drizzle tables (~row counts, local dev only, admin role)
 db migrations        → journal vs ledger (ok / pending:N); apply via pnpm db:migrate (admin role)
@@ -82,7 +86,7 @@ export type CommandOutcome = {
 
 Runner semantics on a successful handler:
 
-0. The submitted line is echoed to the scrollback first (`› …` or `[KA] > …`, source `kam:prompt`) — from the console prompt or palette.
+0. The submitted line is echoed to the scrollback first (`› …` or `[KA] > …`, source `host:prompt`) — from the console prompt or palette.
 1. For each key in `refresh`, call the registered refresh target. If a target is missing or throws, the command is treated as failed (subsequent refreshes and log lines are skipped).
 2. For each line in `log`, write a klog tagged with `command:<name>`.
 
@@ -97,10 +101,10 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 | `help`      | Print available commands, refresh targets, and hotkey hint.                                              |
 | `history`   | Numbered command history (`history`, `history 20`, `history -n 20`, `history -c` clear all, `history -d <n>` delete line). Event designators: `!n`, `!!`, `!-n`, `!prefix` (see below). Stored in `localStorage` (`kickstaff.kamCommandHistory`). |
 | `echo`      | klog the remaining args.                                                                                 |
-| `exit`      | Leave kickagent shell when active (normally via `:exit`; see Kickagent shell).                             |
-| `shell`     | `shell kickagent` enters [KA]; `shell default` / `shell off` leaves. The first word may be a **user alias** that expands to `kickagent`, `default`, or `off` (e.g. `shell ka` when `ka` → `kickagent`, or when `ka` → `shell kickagent`). |
-| `alias` / `unalias` | Persisted command aliases (`kickstaff.consoleUi` in localStorage). See **Command aliases** below. |
-| `kam:reload-kickagent` | Phase 2: refetch `PUBLIC_KICKAGENT_MANIFEST_URL`, verify `sha256`, reload plugin (`kickagent:*` commands). No-op message if env unset. |
+| `exit`      | Leave the active subscriber palette (normally via `:exit`). |
+| `load`      | Load/refresh subscribers from the configured manifest URL(s). `load`, `load <id>`, `load --list`, `load <id> --force`. Dedupe on content hash (`url@sha256`). |
+| `unload`    | `unload <id>` — unregister that subscriber’s commands and drop its caches. |
+| `alias`     | Persisted command aliases (`kickstaff.consoleUi` in localStorage). See **Command aliases** below. Use **`alias --remove <shortcut>`** (not a separate `unalias`). |
 | `db` | `db status` — active target, host/db name, and `connected: ok` / `failed`. `db tables` — relations in `public` and `drizzle` on the **runtime** target (local dev only). `db migrations` — Drizzle journal vs `drizzle.__drizzle_migrations` (read-only; run **`pnpm db:migrate`** or Kickdesk to apply). `db use dev` \| `staging` \| `prod` — any signed-in user, non-production, when `DATABASE_URL_DEV` is set; reloads if you already have a session on that DB, otherwise opens that DB's login. `db tables` / `db migrations` require the admin role. |
 
 ### Database routing (local dev)
@@ -137,49 +141,45 @@ Implementation: [`src/lib/devConsole/commandHistory.ts`](../../src/lib/devConsol
 
 ### Command aliases
 
-Aliases rewrite the **first token** before resolution (chains up to 8 hops; cycles abort). For **`namespace:command`** tokens, only the **namespace** segment is alias-expanded when the chain yields a **single** head token (no injected words), e.g. **`ka:hello`** → **`kickagent:hello`** if **`ka` → `kickagent`**. A bare token that expands only to **`kickagent`** (same one-word expansion) **enters [KA]** like **`shell kickagent`**. The sugar **`alias kickagent ka`** stores **`shell kickagent`**, so bare **`ka`** also enters [KA] without typing **`shell`**.
+Aliases rewrite the **first token** before resolution (chains up to 8 hops; cycles abort). For **`namespace:command`** tokens, only the **namespace** segment is alias-expanded when the chain yields a **single** head token (no injected words), e.g. **`ka:hello`** → **`kickagent:hello`** if **`ka` → `kickagent`**. A bare token that expands only to **`kickagent`** **enters the kickagent palette**. The sugar **`alias kickagent ka`** stores **`kickagent`**.
 
 | Input | Effect |
 | ----- | ------ |
 | `alias` | List all aliases |
-| `alias kickagent <shortcut>` | `<shortcut>` expands to **`shell kickagent`** (e.g. `alias kickagent ka`) |
+| `alias kickagent <shortcut>` | `<shortcut>` expands to **`kickagent`** (e.g. `alias kickagent ka`) |
 | `alias <shortcut> <tokens…>` | `<shortcut>` expands to the remaining words (e.g. `alias h kickagent:hello`) |
-| `alias --clear` | Remove **all** saved aliases (same as `unalias --all`) |
-| `unalias <shortcut>` | Remove that alias |
-| `unalias --all` or `unalias *` | Remove **all** saved aliases |
+| `alias --remove <shortcut>` | Remove that alias |
+| `alias --clear` | Remove **all** saved aliases |
 
 Shortcuts cannot match an existing host command name (e.g. you cannot **`alias clear …`** — use **`alias c clear`** if you want a letter that runs clear).
 
-Inside **[KA]** shell, use **`:alias`** / **`:unalias`** to reach the host commands.
+Inside a subscriber palette, use **`:alias`** to reach the host command.
 
-`alias` and `unalias` cannot be registered as shortcut names. Expansions may not start with **`alias`** or **`unalias`**.
+`alias`, `load`, and `unload` cannot be registered as shortcut names. Expansions may not start with those tokens. There is no separate **`unalias`** command.
 
-### Kickagent shell (KA mode)
+### Subscriber palette (KA mode)
 
-**Naming:** **`kickagent:hello`** is the **subscriber** namespace (`kickagent:` + command). **`shell kickagent`** (or a **user alias** that expands to it) enters the **[KA]** prompt where bare names resolve only under `kickagent:`. Using a meta command literally named `kickagent` would overload that word — the host uses **`shell`** instead.
+**Naming:** Bare host verbs (`help`, `load`, `history`, …). Subscriber commands are **`<namespace>:<name>`** (manifest `namespace`, default `kickagent`). Enter the palette with the **namespace** itself (or its alias); leave with **`:exit`**.
 
-When **[KA]** is on, **bare** names resolve **only** under the `kickagent:` namespace (no silent fallback to kickstaff). For example, `hello` runs `kickagent:hello`. `clear` does **not** run kickstaff `clear` unless kickagent registers `kickagent:clear`.
+When the palette is on, **bare** names resolve **only** under that namespace (no silent fallback to host). For example, `hello` runs `kickagent:hello`. `clear` does **not** run host `clear` unless the subscriber registers `kickagent:clear`.
 
-From **outside** [KA]: **`shell kickagent`**, or a shortcut you defined (e.g. **`ka`** after **`alias kickagent ka`**).
-
-From **inside** [KA]: use **:** to reach kickstaff commands (`:shell default`, `:exit`, `:help`, …).
+From **outside** the palette: type **`kickagent`**, or a shortcut you defined (e.g. **`ka`** after **`alias kickagent ka`** / manifest suggested alias). From **inside**: use **:** for host commands (`:exit`, `:help`, `:load`, …).
 
 | Input | Effect |
 | ----- | ------ |
 | `hello` | Runs `kickagent:hello` if registered |
 | `clear` | Unknown unless `kickagent:clear` exists |
-| `:clear` | Runs kickstaff `clear` |
-| `:help` | Runs kickstaff `help` |
-| `:exit` | Leaves kickagent shell (host `exit`) |
-| `:shell default` | Same as `:exit` (host `shell` with args) |
-| `kickagent:hello` | Always works (any mode; explicit qualified subscriber name) |
+| `:clear` | Runs host `clear` |
+| `:help` | Runs host `help` |
+| `:exit` | Leaves the palette (host `exit`) |
+| `kickagent:hello` | Always works (any mode; explicit qualified name) |
 | `:kickagent:hello` | Same as `kickagent:hello` (host escape with full key) |
 
-`:exit` (and `:shell …`) are the general **escape to kickstaff host commands** from inside `[KA]` mode.
+`activeNamespace` is persisted in localStorage (UI settings v6). When set to `kickagent`, the command line shows **`[KA] >`** and a green accent bar on the prompt row (and palette modal).
 
-`kamMode` is persisted in localStorage (`kamMode` in UI settings). When active, the command line shows **`[KA] >`** and a green accent bar on the prompt row (and palette modal).
+**Reload after publish:** **`load kickagent`** (or **`load kickagent --force`**). Login uses the same load path with `force: false` (skips the module download when `url@sha256` matches).
 
-**New kickagent commands:** add a row to kickagent `COMMAND_CATALOG` (see [register-kickagent-command.md](register-kickagent-command.md)). On admin login, kickstaff registers the full catalog via `registerKickagentCatalogCommands` — you normally do **not** call `registerKickagentCommand` per command in kickstaff. KAM names are always `kickagent:<shortName>`.
+**New kickagent commands:** add a row to kickagent `COMMAND_CATALOG` (see [register-kickagent-command.md](register-kickagent-command.md)). On admin login with no manifest URL, kickstaff registers the Phase 1 catalog via `registerKickagentCatalogCommands`. With a manifest URL, names are always `<namespace>:<shortName>`.
 
 ## Refresh targets (the bridge between pages and commands)
 

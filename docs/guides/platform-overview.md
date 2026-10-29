@@ -35,9 +35,9 @@ flowchart TB
   end
 
   subgraph storage [Storage]
-    PG[(Postgres one DB)]
-    PWSchema[schema kickstaff]
-    OpSchema[schema operations]
+    PG[(Postgres one instance)]
+    PWSchema[product database]
+    OpSchema[ops database]
     S3[S3 PDFs CSV]
     RedisFuture[Redis optional future]
   end
@@ -58,17 +58,18 @@ flowchart TB
 
 ---
 
-## Postgres: one database, two schemas
+## Postgres: one instance, two databases
 
-Use **one Postgres instance** (one `DATABASE_URL`) with **two schemas** for clear ownership. Cross-schema SQL joins are possible but **application code should treat schemas as boundaries**—kickstaff does not own `operations` tables; kickagent does not own `kickstaff` tables.
+One Postgres **process** per environment (laptop container on port 5043, or that Railway Postgres). Two **databases**, two URLs. The path is the database name. This is not two schemas inside one database, and not two containers.
 
-| Schema | Owner repo | Tables in [`src/lib/server/schema.ts`](../../src/lib/server/schema.ts) | Notes |
-|--------|------------|---------------------------------------------------------------------------|--------|
-| **`kickstaff`** | kickstaff | `users`, `sessions`, `rental_landing_links`, `dashboard_links`, `user_dashboard_link_preferences`, `klogs` | **Production-critical:** `rental_landing_links` must not be broken by migrations |
-| **`operations`** | kickagent | *(not in kickstaff)* — rebuild in KA (`operations` schema target) | Legacy ops tables were dropped from kickstaff DB via migration `0019`; see [upgrade primers](../upgrade/README.md) |
-| **Cross-boundary** | convention | `user_id` on `klogs` (and future ops audit in KA) | Reference by id only; **no cross-schema FKs** in target design |
+| Database | Laptop URL path | Staging / prod path | Owner |
+| --- | --- | --- | --- |
+| Product | `/kickstaff_dev` via `DATABASE_URL_DEV` | `/…` via that service's `DATABASE_URL` | kickstaff: users, sessions, dataset rows ([schema.ts](../../src/lib/server/schema.ts)) |
+| Ops | `/kickagent_ops_dev` | `/kickagent_ops` | kickagent commands (`sites`, `gl`, units) |
 
-Future **KAM-UI** layout and widget preferences will live in **`kickstaff`** (tables TBD).
+Host contract: sibling `../kickagent/docs/kickagent/architecture/frontend-guide.md`. Dataset rows live in the product database and hold the ops URL. Until that form ships, Kickstaff rewrites the product URL's path before spawning a command (`opsConnectionString`).
+
+`rental_landing_links` stays in the product database and must not be broken by migrations. Legacy ops tables were dropped from the product database (migration `0019`). Reference users from ops by id only; no foreign key across databases.
 
 ---
 
@@ -76,12 +77,12 @@ Future **KAM-UI** layout and widget preferences will live in **`kickstaff`** (ta
 
 | Layer | Technology | Role |
 |-------|------------|------|
-| **Kickagent** | Postgres (`operations` schema) | System of record for units, bills, runs, audit |
+| **Kickagent** | Postgres database `kickagent_ops` / `kickagent_ops_dev` | System of record for units, bills, runs, audit |
 | **Kickagent** | S3-compatible object store | PDF intake, parse snapshots, Appfolio CSV outputs — see [upgrade/utility-bill-etl-scope.md](../upgrade/utility-bill-etl-scope.md) |
 | **Kickagent** | Redis (optional, future) | Queue, coordination, or integration with an existing third-party Redis data ecosystem — **not in scope for initial schema work**; document only |
-| **Kickstaff** | Postgres (`kickstaff` schema) | Users, rental config, dashboard links, klogs, future KAM-UI prefs — modest volume |
+| **Kickstaff** | Postgres product database | Users, rental config, dashboard links, klogs, future KAM-UI prefs — modest volume |
 
-Env: `DATABASE_URL` (and `DATABASE_URL_DEV` locally) is the kickstaff app database. Kickagent will use the same server with an **`operations`** schema when implemented.
+Env: `DATABASE_URL_DEV` (laptop) and `DATABASE_URL` (this deploy) are the **product** database only. Kickagent commands use the other database on that instance.
 
 S3 and bill pipeline env live in **kickagent** deploy config, not kickstaff [`.env.example`](../../.env.example).
 
@@ -91,7 +92,7 @@ S3 and bill pipeline env live in **kickagent** deploy config, not kickstaff [`.e
 
 | Surface | What it is | Status |
 |---------|------------|--------|
-| **KAM** | CLI: command palette (`Ctrl+/`), KAM Console pane, `kickagent:*` commands, manifest reload (`kam:reload-kickagent`), klog | Implemented — [kam-console.md](kam-console.md) |
+| **KAM** | CLI: command palette (`Ctrl+/`), KAM Console pane, `kickagent:*` commands, manifest reload (`load kickagent`), klog | Implemented — [kam-console.md](kam-console.md) |
 | **KAM-UI** | Configurable dashboards for the same kickagent capabilities (control + feedback) | **v0 on hub** — URL link cards + lazy materialized `kickagent:*` command cards ([kickagent consumer guide](contracts/kickstaff-kickagent-consumer.md)); richer widgets planned |
 | **`/tools/*`** | *(removed)* | Replaced by kickagent + KAM-UI; behavior captured in [upgrade primers](../upgrade/README.md) |
 

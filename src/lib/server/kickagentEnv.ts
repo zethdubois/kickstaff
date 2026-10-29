@@ -7,15 +7,18 @@ import {
   type DbTargetEnv,
 } from "$lib/server/dbTargetCore";
 import { parseDotEnvFile } from "$lib/server/kickagentEnvParse";
+import { opsConnectionString } from "$lib/server/opsConnectionString";
 
 export { parseDotEnvFile } from "$lib/server/kickagentEnvParse";
+export { opsConnectionString } from "$lib/server/opsConnectionString";
 
 /**
  * Env for a kickagent CLI child process: SvelteKit private env + kickagent `.env`,
  * with explicit DB target aligned to kickstaff's active target.
  *
- * Kickagent only knows `dev` | `prod`. Staging maps to `--db prod` with
- * `DATABASE_URL` set to the staging connection string for that child.
+ * Kickagent only knows `dev` | `prod`. Staging maps to `--db prod`.
+ * Database URLs given to the child are the **ops** database on that instance
+ * (path suffix), never the product database.
  */
 export function buildKickagentSpawnEnv(
   repo: string,
@@ -28,17 +31,16 @@ export function buildKickagentSpawnEnv(
     env.DATABASE_URL_STAGING?.trim() ?? process.env.DATABASE_URL_STAGING?.trim();
   const databaseUrl = env.DATABASE_URL?.trim();
 
-  if (databaseUrlDev && out.DATABASE_URL_DEV === undefined) {
-    out.DATABASE_URL_DEV = databaseUrlDev;
-  }
-  if (databaseUrlStaging && out.DATABASE_URL_STAGING === undefined) {
-    out.DATABASE_URL_STAGING = databaseUrlStaging;
-  }
-  if (databaseUrl && out.DATABASE_URL === undefined) {
-    out.DATABASE_URL = databaseUrl;
-  }
+  // Product URLs stay on this process. The child only receives the ops database
+  // on the same instance (different path). A kickagent `.env` must not put the
+  // product URL back.
+  if (databaseUrlDev) out.DATABASE_URL_DEV = opsConnectionString(databaseUrlDev);
+  if (databaseUrl) out.DATABASE_URL = opsConnectionString(databaseUrl);
 
   for (const [key, value] of Object.entries(parseDotEnvFile(join(repo, ".env")))) {
+    if (key === "DATABASE_URL" || key === "DATABASE_URL_DEV" || key === "DATABASE_URL_STAGING") {
+      continue;
+    }
     if (out[key] === undefined) out[key] = value;
   }
 
@@ -56,7 +58,7 @@ export function buildKickagentSpawnEnv(
       databaseUrlStaging,
       databaseUrl,
     };
-    out.DATABASE_URL = resolveConnectionStringFromEnv(dbEnv, "staging");
+    out.DATABASE_URL = opsConnectionString(resolveConnectionStringFromEnv(dbEnv, "staging"));
   }
 
   return out;

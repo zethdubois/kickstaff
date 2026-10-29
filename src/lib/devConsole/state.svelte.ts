@@ -24,11 +24,8 @@ import type { ResourceTableModel } from "../kickagent/outcomeToTableModel";
 import {
   getUiSettings,
   setConsoleOpen,
-  setKamMode,
-  type KamMode,
+  setActiveNamespace,
 } from "../client/uiSettings.svelte";
-
-export type { KamMode };
 
 export type KamTableOutcome = ResourceTableModel;
 
@@ -38,7 +35,7 @@ const FLUSH_BATCH_CAP = 20;
 
 let _paletteOpen = $state(false);
 let _consoleOpen = $state(getUiSettings().consoleOpen);
-let _kamMode = $state<KamMode>(getUiSettings().kamMode);
+let _activeNamespace = $state(getUiSettings().activeNamespace);
 let _entries = $state<KlogEntry[]>([]);
 let _nextId = 1;
 let _hydrated = false;
@@ -160,15 +157,16 @@ export const devConsole = {
     _consoleOpen = value;
     setConsoleOpen(value);
   },
-  get kamMode(): KamMode {
-    return _kamMode;
+  get activeNamespace(): string {
+    return _activeNamespace;
   },
-  set kamMode(value: KamMode) {
-    _kamMode = value;
-    setKamMode(value);
+  set activeNamespace(value: string) {
+    const next = setActiveNamespace(value).activeNamespace;
+    _activeNamespace = next;
   },
+  /** True when a subscriber palette is active (bare names resolve under that namespace). */
   get kickagentModeActive(): boolean {
-    return _kamMode === "kickagent";
+    return _activeNamespace !== "";
   },
   get entries(): readonly KlogEntry[] {
     return _entries;

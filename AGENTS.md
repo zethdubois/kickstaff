@@ -43,8 +43,8 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 - Current persisted shape includes:
   - `consoleOpen` (KAM console visibility)
   - `listPrefs` (per list-detail resource: include-flags, column quick filters, sort — see `docs/guides/ops-accounts-ui-map.md`)
-  - `kamMode` (`default | kickagent` — **[KA]** shell; enter with `shell kickagent`, or shortcut like `ka` via `alias kickagent ka`)
-- KAM **command aliases** (`alias` / `unalias`; `kickstaff.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
+  - `activeNamespace` (empty = host; e.g. `kickagent` for **[KA]** palette — enter with `kickagent` / alias `ka`, leave with `:exit`; load with `load kickagent`)
+- KAM **command aliases** (`alias` / `alias --remove`; `kickstaff.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
   - When adding/removing/changing fields, bump `UI_SETTINGS_VERSION`.
   - Keep `DEFAULT_UI_SETTINGS` and validation (`isValidShape`) in sync with the new version.
 
@@ -52,7 +52,7 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 
 **Source of truth:** `[.env.example](.env.example)`.
 
-- **Required for local app + DB:** `DATABASE_URL`.
+- **Required for local app + product DB:** `DATABASE_URL_DEV` (`…:5043/kickstaff_dev`). `DATABASE_URL` is this deploy's product database (Railway), not the laptop default.
 - **Admin seed / dev recovery:** `ADMIN_EMAIL`, `ADMIN_PASSWORD` (`pnpm seed:admin`). In non-production, the same password (or `DEV_ADMIN_BYPASS_PASSWORD`) is a master login for **admin** accounts when the stored hash does not match.
 - **Mail:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`; optional `SMTP_SECURE`; `ADMIN_EMAIL` as From; optional `MAIL_DEV_ONLY=true` to skip SMTP and log only; optional `PUBLIC_BASE_URL` for absolute links in emails.
 - **Vanity hosts:** `PUBLIC_VANITY_HOST_CDA`, `PUBLIC_VANITY_HOST_MOS`, `PUBLIC_VANITY_HOST_SPT` as documented there.
@@ -90,7 +90,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 
 ## Database
 
-- **Local dev:** `pnpm db:up` (Docker Postgres on host port **5043**), `DATABASE_URL_DEV` in `.env`; default target is **dev** when that URL is set (no `KICKSTAFF_DB_DEFAULT`). Explicit: `/login?db=…`, `--db`, KAM `db use` — [database-targeting.md](docs/guides/database-targeting.md). **Staging / prod:** separate Railway Postgres; deploy badge from `RAILWAY_ENVIRONMENT_NAME`. Laptop: `DATABASE_URL_STAGING`. Port map: kickdesk [DEV_PORTS](https://github.com/Kick-Asset-Management/kickdesk/blob/main/docs/DEV_PORTS.md) (50xx family).
+- **Local dev:** `pnpm db:up` — **one** Docker Postgres on host port **5043**, **two databases**. Product: `DATABASE_URL_DEV` → `…/kickstaff_dev` (users, sessions, dataset rows). Ops: `…/kickagent_ops_dev` (sites, gl, units). The path is the database name, not a schema. Contract: [`../kickagent/docs/kickagent/architecture/frontend-guide.md`](../kickagent/docs/kickagent/architecture/frontend-guide.md). Default target is **dev** when `DATABASE_URL_DEV` is set. Explicit: `/login?db=…`, `--db`, KAM `db use` — [database-targeting.md](docs/guides/database-targeting.md). **Staging / prod:** one Postgres instance each, same split (`DATABASE_URL` = product, path `/kickagent_ops` = ops). Laptop: `DATABASE_URL_STAGING` is an optional product URL only. A fresh volume runs `scripts/postgres/init-ops-db.sh`. An existing volume does not; create the ops database once: `docker exec -i "$(docker ps -qf name=postgres)" psql -U postgres -c "CREATE DATABASE kickagent_ops_dev"` (ignore if it already exists). Then `pnpm db:migrate` in kickagent against that URL.
 - Apply migrations after pulling: `pnpm db:migrate` (dev). Staging / production: `pnpm db:migrate --db staging` \| `--db prod` — use with care.
 - First admin user: `pnpm seed:admin` (requires `ADMIN_EMAIL`; random temp password printed once). Target with `--db staging` \| `prod`. Rotate: `pnpm reset:admin-password --db …`. Forgot password: `/forgot-password`. Active target: `pnpm db:status` or KAM `db status`.
 - **Per-DB sessions:** each database has its own sessions and its own cookie (`ka_session_<target>`); the target is resolved per request (`?db=` on login/reset pages > `kickstaff_db_target` preference cookie > default), never a process-global. Tiered timeouts (dev 7d; staging 7d/8h idle; prod 12h/30m idle, browser-session cookie). KAM `db use …` only sets the preference and sends you to that DB's login if you have no session — policy in `[docs/guides/database-targeting.md](docs/guides/database-targeting.md)`.
@@ -98,7 +98,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 ## Documentation pipeline
 
 - **Repo Architecture Onboarding (Cursor skill):** [`.cursor/skills/repo-architecture-onboarding/SKILL.md`](.cursor/skills/repo-architecture-onboarding/SKILL.md) — doc ladder and architecture summary when cold-starting or before cross-cutting work.
-- **Platform overview** (kickstaff vs kickagent, one DB / two schemas, storage, KAM vs KAM-UI): `[docs/guides/platform-overview.md](docs/guides/platform-overview.md)`.
+- **Platform overview** (kickstaff vs kickagent, one Postgres instance / two databases, storage, KAM vs KAM-UI): `[docs/guides/platform-overview.md](docs/guides/platform-overview.md)`. Host contract stays the Kickagent frontend guide above. Do not add a second copy here. The subscriber-load brief is `load` / wiki / progress only.
 - **Repository standards** for Svelte structure and file headers: `[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)`.
 - **Developer / agent guides** live under `[docs/guides/](docs/guides/)` — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Operations handoff (kickagent):** `[docs/upgrade/README.md](docs/upgrade/README.md)` — primers + ETL reference (no bill code in this repo).

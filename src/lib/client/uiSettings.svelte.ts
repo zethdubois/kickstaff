@@ -5,15 +5,17 @@ import {
 } from "$lib/kickagent/listPrefs";
 
 export const UI_SETTINGS_STORAGE_KEY = "kickstaff.uiSettings";
-export const UI_SETTINGS_VERSION = 5;
-
-export const KAM_MODES = ["default", "kickagent"] as const;
-export type KamMode = (typeof KAM_MODES)[number];
+/** v6: `activeNamespace` replaces `kamMode` (`default` | `kickagent`). */
+export const UI_SETTINGS_VERSION = 6;
 
 export type UISettings = {
   version: number;
   consoleOpen: boolean;
-  kamMode: KamMode;
+  /**
+   * Active subscriber palette namespace, or `""` for host verbs.
+   * Bare names resolve under `<namespace>:` when set.
+   */
+  activeNamespace: string;
   /** List sort / quick filters / include-flags, keyed by manifest resource name (e.g. `gl`). */
   listPrefs: Record<string, ListPrefs>;
 };
@@ -21,7 +23,7 @@ export type UISettings = {
 export const DEFAULT_UI_SETTINGS: UISettings = {
   version: UI_SETTINGS_VERSION,
   consoleOpen: false,
-  kamMode: "default",
+  activeNamespace: "",
   listPrefs: {},
 };
 
@@ -35,13 +37,12 @@ function cloneDefaults(): UISettings {
   return { ...DEFAULT_UI_SETTINGS, listPrefs: {} };
 }
 
-function hasBaseShape(o: Record<string, unknown>): boolean {
-  return (
-    typeof o.version === "number" &&
-    typeof o.consoleOpen === "boolean" &&
-    typeof o.kamMode === "string" &&
-    (KAM_MODES as readonly string[]).includes(o.kamMode)
-  );
+function normalizeNamespace(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const t = raw.trim().toLowerCase();
+  if (!t || t === "default") return "";
+  if (!/^[a-z][a-z0-9-]*$/.test(t)) return "";
+  return t;
 }
 
 function normalizeAllListPrefs(raw: unknown): Record<string, ListPrefs> {
@@ -54,16 +55,28 @@ function normalizeAllListPrefs(raw: unknown): Record<string, ListPrefs> {
   return out;
 }
 
-/** Current version as-is; v4 (no `listPrefs`) is upgraded in place; anything else → null. */
+/** Current version as-is; v4/v5 upgraded in place; anything else → null. */
 function readStored(value: unknown): UISettings | null {
   if (!value || typeof value !== "object") return null;
   const o = value as Record<string, unknown>;
-  if (!hasBaseShape(o)) return null;
-  if (o.version !== UI_SETTINGS_VERSION && o.version !== 4) return null;
+  if (typeof o.version !== "number" || typeof o.consoleOpen !== "boolean") {
+    return null;
+  }
+  if (o.version !== UI_SETTINGS_VERSION && o.version !== 5 && o.version !== 4) {
+    return null;
+  }
+
+  let activeNamespace = "";
+  if ("activeNamespace" in o) {
+    activeNamespace = normalizeNamespace(o.activeNamespace);
+  } else if (typeof o.kamMode === "string" && o.kamMode === "kickagent") {
+    activeNamespace = "kickagent";
+  }
+
   return {
     version: UI_SETTINGS_VERSION,
     consoleOpen: o.consoleOpen as boolean,
-    kamMode: o.kamMode as KamMode,
+    activeNamespace,
     listPrefs: normalizeAllListPrefs(o.listPrefs),
   };
 }
@@ -121,11 +134,11 @@ export function setConsoleOpen(consoleOpen: boolean): UISettings {
   return next;
 }
 
-export function setKamMode(kamMode: KamMode): UISettings {
+export function setActiveNamespace(activeNamespace: string): UISettings {
   const next: UISettings = {
     ...getUiSettings(),
     version: UI_SETTINGS_VERSION,
-    kamMode,
+    activeNamespace: normalizeNamespace(activeNamespace),
   };
   cache = next;
   persist(next);

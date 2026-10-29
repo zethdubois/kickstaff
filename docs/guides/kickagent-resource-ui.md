@@ -22,7 +22,7 @@ Standing mission: [host-mission.md](host-mission.md) — one builder per UI clas
 
 ## Manifest (kickagent ≥ 0.0.3)
 
-See kickagent `docs/manifest-resources.md`. After publish, admin runs **`kam:reload-kickagent`** (or re-login).
+See kickagent `docs/manifest-resources.md`. After publish, admin runs **`load kickagent`** (or re-login).
 
 Kickstaff parses `resources.units.list` even when `detail` / `update` are not yet published (defaults applied).
 
@@ -43,7 +43,7 @@ Client: [`runManifestCommand`](../../src/lib/kickagent/runManifestCommand.ts) �
 ## Activation checklist
 
 1. `PUBLIC_KICKAGENT_MANIFEST_URL` set; manifest includes `resources.units.list` with columns.
-2. `kam:reload-kickagent` — filters appear in KAM `[KA]` mode.
+2. `load kickagent` — filters appear in KAM `[KA]` mode.
 3. Hub **Open units** or visit `/ops/units` — table headers match manifest, not pipes.
 4. Network: `POST /api/kickagent/run` body includes `data.rows` and `presentationRef`.
 

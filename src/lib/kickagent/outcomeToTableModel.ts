@@ -44,7 +44,7 @@ export function tableOutcomeMissingHint(
 	if (!outcome.data || !outcome.presentationRef) return null;
 	if (outcomeToTableModel(outcome, listSchema)) return null;
 	if (!listSchema && !resolvePresentationRef(outcome.presentationRef)) {
-		return `table UI: manifest has no cached list for ${outcome.presentationRef} — run kam:reload-kickagent`;
+		return `table UI: manifest has no cached list for ${outcome.presentationRef} — run load kickagent`;
 	}
 	return 'table UI: response missing data.rows — list outcomes must include presentationRef and data.rows';
 }

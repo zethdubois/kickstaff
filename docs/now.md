@@ -9,12 +9,12 @@
 
 ## This week
 
-- [ ] **Product database:** `DATABASE_URL` / `DATABASE_URL_DEV` **are** the product DB URLs (users, sessions, dataset rows, grants). No new env name. Ops URLs are table rows, not env and not a config file.
+- [ ] **Product database:** `DATABASE_URL` / `DATABASE_URL_DEV` **are** the product DB URLs (`…/kickstaff_dev` locally). Ops is the other database on that instance (`…/kickagent_ops_dev`, staging/prod `…/kickagent_ops`). Path = database name. Rows hold the ops URL; until the form ships, spawn rewrites the path.
 - [ ] **Dataset table + admin form** per [host-ops-database](../../kickagent/docs/kickagent/architecture/host-ops-database.md): `name`, `label`, `connectionString` (write-only after save), `enabled`. Seed once from env; then rows win.
 - [ ] **Subscriptions:** admin sees all enabled datasets on this deploy; other users need a grant row (`user` → dataset `name`). SQL inserts are enough for v1 — no subscription dashboard required.
 - [ ] **Active dataset:** `db use` / cookie keeps the **name** only. Check grant, resolve the row server-side, inject `opsDatabase: { name, connectionString }`. Browser never sees the URL.
 - [ ] **Do not read kickagent `.env` for a database.** Prefer in-process handlers so the URL stays in this process.
-- [ ] **Subscriber `load`:** implement [kickstaff-subscriber-load.md](guides/contracts/kickstaff-subscriber-load.md) (`load kickagent`, wiki/progress proxies). Token rotation is done.
+- [ ] **Subscriber `load`:** console `load` / palette done — finish [kickstaff-subscriber-load.md](guides/contracts/kickstaff-subscriber-load.md) wiki/progress proxies + `KICKSTAFF_SUBSCRIBERS` registry. Token rotation is done.
 
 Keep ≤7 active bullets.
 

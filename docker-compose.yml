@@ -12,6 +12,8 @@ services:
     # directory; mounting .../data is the PG 16 layout and will not persist.
     volumes:
       - kickstaff_pg_data:/var/lib/postgresql
+      # Creates kickagent_ops_dev only on a fresh volume. Existing volumes: see AGENTS.md.
+      - ./scripts/postgres/init-ops-db.sh:/docker-entrypoint-initdb.d/02-ops-db.sh:ro
 
 volumes:
   kickstaff_pg_data:

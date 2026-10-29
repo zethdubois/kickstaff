@@ -152,6 +152,14 @@ export function getManifestResources(): ManifestResources | null {
 	return cached;
 }
 
+/** Resource keys present in the cache (units + list-detail names), sorted. */
+export function listCachedResourceKeys(): string[] {
+	if (!cached) return [];
+	const keys = new Set<string>(Object.keys(cached.listDetail));
+	if (cached.units) keys.add('units');
+	return [...keys].sort();
+}
+
 export function getUnitsListSchema(): ManifestUnitsListResource | null {
 	return cached?.units?.list ?? null;
 }
