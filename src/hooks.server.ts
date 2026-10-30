@@ -1,5 +1,6 @@
 import type { Handle } from "@sveltejs/kit";
 import { redirect } from "@sveltejs/kit";
+import { isCitySlug, rentalPagePath } from "$lib/cities";
 import { vanityPathForRootHost } from "$lib/vanityHosts";
 import {
   activeSessionCookieName,
@@ -24,6 +25,11 @@ import {
  * database never authenticates you against another.
  */
 export const handle: Handle = async ({ event, resolve }) => {
+  const legacyCity = /^\/(cda|mos|spt)\/?$/.exec(event.url.pathname);
+  if (legacyCity?.[1] && isCitySlug(legacyCity[1])) {
+    redirect(301, `${rentalPagePath(legacyCity[1])}${event.url.search}`);
+  }
+
   const picked = resolveTargetForRequest({
     pathname: event.url.pathname,
     dbParam: event.url.searchParams.get("db"),

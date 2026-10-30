@@ -104,7 +104,7 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 
 | Area | Production? | Rule |
 |------|-------------|------|
-| Rental pages (`/cda`, `/mos`, `/spt`, vanity hosts) | **Yes** | Do not remove or break routes or `rental_landing_links` data |
+| Rental pages (`/rent/cda`, `/rent/mos`, `/rent/spt`, vanity hosts; old `/cda` `/mos` `/spt` redirect) | **Yes** | Do not remove or break routes or `rental_landing_links` data |
 | Admin rental configuration (`/admin/rental-links`, etc.) | **Yes** | May reorganize in nav; must remain functional |
 | Auth (`users`, `sessions`) | **Yes** | Required for admin access |
 | Hub dashboard (links + command cards) | Incubating / internal | `dashboard_links` + lazy materialize on first command run |

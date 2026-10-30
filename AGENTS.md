@@ -15,7 +15,7 @@ Entry point for **Cursor agents** and developers working in this repository.
 
 **Host contract (Kickagent):** [`../kickagent/docs/kickagent/architecture/frontend-guide.md`](../kickagent/docs/kickagent/architecture/frontend-guide.md). Kickstaff is the default frontend. Read that guide before changing how this repo loads Kickagent, passes a database, or runs a command. Do not add a second copy of that contract in this repo.
 
-Authenticated **product shell**: production rental marketing (`/cda`, `/mos`, `/spt`), team hub, admin for rental config, **KAM** host (command palette + console), and planned **KAM-UI** dashboards. **kickagent** (sibling repo) publishes the commands. This app holds users and passes the ops database. Built with **SvelteKit** (Node adapter), **PostgreSQL** via **Drizzle ORM**, cookie sessions, and role-based access.
+Authenticated **product shell**: production rental marketing (`/rent/cda`, `/rent/mos`, `/rent/spt`; old `/cda`, `/mos`, `/spt` redirect), team hub, admin for rental config, **KAM** host (command palette + console), and planned **KAM-UI** dashboards. **kickagent** (sibling repo) publishes the commands. This app holds users and passes the ops database. Built with **SvelteKit** (Node adapter), **PostgreSQL** via **Drizzle ORM**, cookie sessions, and role-based access.
 
 **Platform split:** [docs/guides/platform-overview.md](docs/guides/platform-overview.md).
 

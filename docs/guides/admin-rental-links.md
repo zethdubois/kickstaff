@@ -26,5 +26,5 @@ Edit **per-city** AppFolio and marketing URLs stored in Postgres (`rental_landin
 
 ## Related
 
-- Public city routes load these rows in `+page.server.ts` under `/cda`, `/mos`, `/spt`.
+- Public city routes load these rows in `src/routes/rent/[city]/+page.server.ts` (`/rent/cda`, `/rent/mos`, `/rent/spt`). `/cda`, `/mos`, and `/spt` redirect there.
 - Cities list comes from [`$lib/cities`](../../src/lib/cities.ts).

@@ -99,7 +99,7 @@ pnpm dev
 |-----|---------|
 | `http://localhost:5000/` | Ops hub (requires login) |
 | `http://localhost:5000/login` | Sign in |
-| `http://localhost:5000/cda`, `/mos`, `/spt` | City rental pages |
+| `http://localhost:5000/rent/cda`, `/rent/mos`, `/rent/spt` | City rental pages (`/cda`, `/mos`, `/spt` redirect) |
 | `http://localhost:5000/admin/rental-links` | Rental links editor |
 
 ### Common commands

@@ -15,7 +15,7 @@ City rental landing layout: **nav tiles** (short-term, mid-term, long-term listi
 
 ## Admin WYSIWYG (preview)
 
-**Who:** Logged-in users with `role === 'admin'` on the public city pages (`/cda`, `/mos`, `/spt`).
+**Who:** Logged-in users with `role === 'admin'` on the public city pages (`/rent/cda`, `/rent/mos`, `/rent/spt`). Old `/cda`, `/mos`, and `/spt` redirect there. Vanity hosts still show the city page at `/`.
 
 **UI:** A gear control appears at the top-left of (1) the **left nav column**, (2) the **hero / banner** area, and (3) the **landing main column** (headline/body). Each opens a small panel:
 
@@ -44,6 +44,6 @@ City rental landing layout: **nav tiles** (short-term, mid-term, long-term listi
 
 ## Related
 
-- Imported by city routes under `src/routes/` (e.g. `cda`, `mos`, `spt`).
+- Imported by `src/routes/rent/[city]/+page.svelte`.
 - Uses `RentalLandingFrame.svelte` for the main column content.
 - AppFolio URLs are edited in admin (`/admin/rental-links`) and stored in Postgres (`rental_landing_links`).

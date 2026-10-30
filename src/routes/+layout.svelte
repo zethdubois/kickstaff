@@ -4,7 +4,7 @@
   import { goto, invalidateAll } from "$app/navigation";
   import { env } from "$env/dynamic/public";
   import { onMount } from "svelte";
-  import { cities } from "$lib/cities";
+  import { cities, rentalPagePath, isCitySlug } from "$lib/cities";
   import UserRetroIdenticon from "$lib/UserRetroIdenticon.svelte";
   import { vanityPathForRootHost } from "$lib/vanityHosts";
   import Palette from "$lib/devConsole/Palette.svelte";
@@ -56,9 +56,7 @@
    * to the longest word, so those routes need a definite containing block.
    */
   const mainSurfaceFullWidth = $derived(
-    page.route.id === "/cda" ||
-      page.route.id === "/mos" ||
-      page.route.id === "/spt" ||
+    page.route.id === "/rent/[city]" ||
       isVanityRoot ||
       isLogin ||
       page.route.id === "/account/password",
@@ -159,13 +157,13 @@
     userMenuOpen = false;
 
     if (!useExternalLink) {
-      void goto(`/${slug}`);
+      if (isCitySlug(slug)) void goto(rentalPagePath(slug));
       return;
     }
 
     const vanityUrl = vanityUrlForSlug(slug);
     if (!vanityUrl) {
-      void goto(`/${slug}`);
+      if (isCitySlug(slug)) void goto(rentalPagePath(slug));
       return;
     }
 

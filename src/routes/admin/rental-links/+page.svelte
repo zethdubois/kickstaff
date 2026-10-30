@@ -68,8 +68,8 @@
 
 	<h1 class="admin__title">Rental landing links</h1>
 	<p class="admin__lead">
-		AppFolio URLs for each city page (<code>/cda</code>, <code>/mos</code>,
-		<code>/spt</code>). Leave a URL field empty to hide that tile. URLs must use
+		AppFolio URLs for each city page (<code>/rent/cda</code>, <code>/rent/mos</code>,
+		<code>/rent/spt</code>). Leave a URL field empty to hide that tile. URLs must use
 		<code>https://</code>. The <strong>embedded listings</strong> field is the AppFolio
 		<em>property group</em> for the on-page iframe (same as the AppFolio
 		<code>Appfolio.Listing</code> <code>propertyGroup</code> option). Optional <strong>theme color</strong>
