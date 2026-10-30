@@ -1,7 +1,10 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { CommandOutcome } from "$lib/kickagent/contracts";
+import type {
+  CommandOutcome,
+  KickagentOpsDatabase,
+} from "$lib/kickagent/contracts";
 import type { DbTarget } from "$lib/server/dbTarget";
 import { getActiveDbTarget, toKickagentDbTarget } from "$lib/server/dbTarget";
 import { buildKickagentSpawnEnv } from "$lib/server/kickagentEnv";
@@ -30,6 +33,11 @@ export type RunKickagentCatalogOptions = {
   userEmail: string;
   /** Defaults to kickstaff active DB target (`db` / `db use` / cookie). */
   db?: DbTarget;
+  /**
+   * Host-resolved ops dataset. Forwarded on the API body; CLI still uses
+   * spawn env path rewrite until kickagent opens ctx.opsDatabase.
+   */
+  opsDatabase?: KickagentOpsDatabase;
 };
 
 /**

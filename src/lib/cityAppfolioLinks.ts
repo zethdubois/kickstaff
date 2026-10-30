@@ -24,10 +24,12 @@ export type RentalWysiwygTheme = {
 
 export type CityAppfolioLinks = {
 	shortTerm: string | null;
+	midTerm: string | null;
 	longTerm: string | null;
 	apply: string | null;
 	contact: string | null;
 	shortTermNewTab: boolean;
+	midTermNewTab: boolean;
 	longTermNewTab: boolean;
 	applyNewTab: boolean;
 	contactNewTab: boolean;
@@ -111,10 +113,12 @@ function wysiwygFromRow(row: {
 export function cityAppfolioLinksFromRow(
 	row: {
 		shortTermUrl: string | null;
+		midTermUrl: string | null;
 		longTermUrl: string | null;
 		applyUrl: string | null;
 		contactUrl: string | null;
 		shortTermNewTab: boolean;
+		midTermNewTab: boolean;
 		longTermNewTab: boolean;
 		applyNewTab: boolean;
 		contactNewTab: boolean;
@@ -145,10 +149,12 @@ export function cityAppfolioLinksFromRow(
 	if (!row) {
 		return {
 			shortTerm: null,
+			midTerm: null,
 			longTerm: null,
 			apply: null,
 			contact: null,
 			shortTermNewTab: false,
+			midTermNewTab: false,
 			longTermNewTab: false,
 			applyNewTab: false,
 			contactNewTab: false,
@@ -166,10 +172,12 @@ export function cityAppfolioLinksFromRow(
 	}
 	return {
 		shortTerm: optional(row.shortTermUrl),
+		midTerm: optional(row.midTermUrl),
 		longTerm: optional(row.longTermUrl),
 		apply: optional(row.applyUrl),
 		contact: optional(row.contactUrl),
 		shortTermNewTab: row.shortTermNewTab ?? false,
+		midTermNewTab: row.midTermNewTab ?? false,
 		longTermNewTab: row.longTermNewTab ?? false,
 		applyNewTab: row.applyNewTab ?? false,
 		contactNewTab: row.contactNewTab ?? false,

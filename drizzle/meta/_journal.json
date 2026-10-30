@@ -162,6 +162,20 @@
       "when": 1779960000000,
       "tag": "0022_sessions_last_seen",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1780400000000,
+      "tag": "0023_ops_datasets",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1780500000000,
+      "tag": "0024_midterm_rentals",
+      "breakpoints": true
     }
   ]
 }

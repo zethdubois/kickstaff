@@ -16,7 +16,7 @@
 	const MOBILE_DRAWER_ID = 'rental-mobile-nav-drawer';
 	const MOBILE_MENU_BTN_ID = 'rental-mobile-menu-btn';
 
-	type TileKey = 'short' | 'long' | 'apply' | 'contact';
+	type TileKey = 'short' | 'mid' | 'long' | 'apply' | 'contact';
 
 	let {
 		links,
@@ -61,6 +61,7 @@
 
 	const tiles = $derived([
 		{ key: 'short' as const, href: links.shortTerm, label: 'Short-term rentals', newTab: links.shortTermNewTab },
+		{ key: 'mid' as const, href: links.midTerm, label: 'Mid-term rentals', newTab: links.midTermNewTab },
 		{ key: 'long' as const, href: links.longTerm, label: 'Long-term rentals', newTab: links.longTermNewTab },
 		{ key: 'apply' as const, href: links.apply, label: 'Apply today', newTab: links.applyNewTab },
 		{ key: 'contact' as const, href: links.contact, label: 'Contact us', newTab: links.contactNewTab }
@@ -176,6 +177,13 @@
 			<path
 				fill="currentColor"
 				d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
+			/>
+		</svg>
+	{:else if key === 'mid'}
+		<svg class="rentalLanding__iconSvg" viewBox="0 0 24 24">
+			<path
+				fill="currentColor"
+				d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
 			/>
 		</svg>
 	{:else if key === 'long'}

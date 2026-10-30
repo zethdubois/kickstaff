@@ -2,6 +2,7 @@ import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { getActiveDbTarget } from "$lib/server/dbTarget";
 import { runKickagentCatalogCommand } from "$lib/server/kickagentCliRun";
+import { resolveOpsDatabase } from "$lib/server/opsDatasets";
 
 type RunBody = {
   command?: unknown;
@@ -56,6 +57,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
   }
   const db = dbOverride ?? getActiveDbTarget();
 
+  let opsDatabase;
+  try {
+    opsDatabase = await resolveOpsDatabase({
+      user: locals.user,
+      datasetName: db,
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return json({ message }, { status: 403 });
+  }
+
   try {
     const outcome = await runKickagentCatalogCommand({
       command,
@@ -63,11 +75,12 @@ export const POST: RequestHandler = async ({ request, locals }) => {
       userId: locals.user.id,
       userEmail: locals.user.email,
       db,
+      opsDatabase,
     });
     return json({ outcome });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    console.error("[kickagent/run]", command, e);
+    console.error("[kickagent/run]", command, "ops", opsDatabase.name, e);
     return json({ message }, { status: 500 });
   }
 };

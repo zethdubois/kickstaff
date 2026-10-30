@@ -1,6 +1,6 @@
 # Now
 
-**Updated:** 2026-10-28  
+**Updated:** 2026-10-30  
 **Focus:** Product database + host-supplied ops datasets ([frontend guide](../../kickagent/docs/kickagent/architecture/frontend-guide.md))
 
 **Kickstaff** is the default frontend. Contract: [frontend-guide.md](../../kickagent/docs/kickagent/architecture/frontend-guide.md). Dataset requirement: [host-ops-database.md](../../kickagent/docs/kickagent/architecture/host-ops-database.md). Standing host aim: [host-mission.md](guides/host-mission.md). Phase outcomes: [plan.md](plan.md).
@@ -9,31 +9,31 @@
 
 ## This week
 
-- [ ] **Product database:** `DATABASE_URL` / `DATABASE_URL_DEV` **are** the product DB URLs (`…/kickstaff_dev` locally). Ops is the other database on that instance (`…/kickagent_ops_dev`, staging/prod `…/kickagent_ops`). Path = database name. Rows hold the ops URL; until the form ships, spawn rewrites the path.
-- [ ] **Dataset table + admin form** per [host-ops-database](../../kickagent/docs/kickagent/architecture/host-ops-database.md): `name`, `label`, `connectionString` (write-only after save), `enabled`. Seed once from env; then rows win.
-- [ ] **Subscriptions:** admin sees all enabled datasets on this deploy; other users need a grant row (`user` → dataset `name`). SQL inserts are enough for v1 — no subscription dashboard required.
-- [ ] **Active dataset:** `db use` / cookie keeps the **name** only. Check grant, resolve the row server-side, inject `opsDatabase: { name, connectionString }`. Browser never sees the URL.
-- [ ] **Do not read kickagent `.env` for a database.** Prefer in-process handlers so the URL stays in this process.
+- [x] **Product database:** `DATABASE_URL` / `DATABASE_URL_DEV` **are** the product DB URLs (`…/kickstaff_dev` locally). Ops is the other database on that instance (`…/kickagent_ops_dev`, staging/prod `…/kickagent_ops`). Path = database name. Rows hold the ops URL; spawn still rewrites path as bridge.
+- [x] **Dataset table + admin form** per [host-ops-database](../../kickagent/docs/kickagent/architecture/host-ops-database.md): `/admin/datasets`, migration `0023_ops_datasets`, `pnpm seed:ops-datasets`. Seed once from env; then rows win.
+- [x] **Subscriptions:** admin sees all enabled datasets; others need `ops_dataset_grants` (SQL v1). Enforced in `resolveOpsDatabase`.
+- [x] **Active dataset:** active product target name → ops row; inject `opsDatabase` on `/api/kickagent/run`. Browser never sees the URL. (Product multi-DB switch unchanged this pass.)
+- [x] **Do not read kickagent `.env` for a database.** Spawn skips kickagent `DATABASE_URL*`; injects host-resolved ops URL / `opsDatabase`.
 - [ ] **Subscriber `load`:** console `load` / palette done — finish [kickstaff-subscriber-load.md](guides/contracts/kickstaff-subscriber-load.md) wiki/progress proxies + `KICKSTAFF_SUBSCRIBERS` registry. Token rotation is done.
 
 Keep ≤7 active bullets.
 
 ## Before next prod deploy (do NOT forget)
 
-- [ ] **Migrate prod** before deploying the per-DB sessions change: `pnpm db:migrate --db prod` applies `0022_sessions_last_seen` (and carries 0021 if needed). Without it, sign-in 500s. Human approval + backup + dry run + [data-ops-log](data-ops-log.md) entry. Check: `pnpm db:status --db prod`.
-- [x] Staging and dev already have those migrations (verified 2026-10-26).
+- [ ] **Migrate prod** before next deploy: `pnpm db:migrate --db prod` (includes `0022_sessions_last_seen`, `0023_ops_datasets`, and `0024_midterm_rentals`). Human approval + backup + dry run + [data-ops-log](data-ops-log.md) entry. Then `pnpm seed:ops-datasets --db prod`. Check: `pnpm db:status --db prod`.
+- [x] Staging and dev already have 0021/0022 (verified 2026-10-26). Apply **0023** on each product DB after pull.
 - [ ] Heads-up after deploy: everyone signs in once (`ka_session` → `ka_session_<target>`).
 - [x] Rotated `KICKAGENT_SERVICE_TOKEN` and related secrets (finished 2026-10-28).
 
 ## Blocked
 
-- Kickagent must accept `opsDatabase` and fail without it ([kickagent now](../../kickagent/docs/now.md)). Form and inject can land first; hosted cutover needs both sides.
+- Kickagent must accept `opsDatabase` and fail without it ([kickagent now](../../kickagent/docs/now.md)). Form and inject landed; hosted cutover needs both sides.
 
 ## Done recently
 
+- Ops datasets table + `/admin/datasets` + `opsDatabase` inject on kickagent run (spawn rewrite bridge remains).
 - Frontend guide pointer in [AGENTS.md](../AGENTS.md); subscriber brief links the contract instead of duplicating it.
 - List-detail host for `resources.gl`; KAM console chrome; host mission doc.
-- Manifest 0.6.0 consumption (one-way fields, structural role caching).
 
 ## How to use this file
 

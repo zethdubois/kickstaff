@@ -2,6 +2,26 @@
 
 **Audience:** Developers and agents in **kickstaff**. Kickagent still uses `dev` | `prod` only — kickstaff maps `staging` → kickagent `prod` with the staging URL in the child env. See kickagent `docs/database-targeting.md` in the sibling repo.
 
+Contract: [frontend-guide.md](../../kickagent/docs/kickagent/architecture/frontend-guide.md) · [host-ops-database.md](../../kickagent/docs/kickagent/architecture/host-ops-database.md).
+
+## Two databases (same Postgres instance)
+
+| Database | Contents | Where the URL lives |
+| -------- | -------- | ------------------- |
+| **Product** | Users, sessions, `ops_datasets`, grants, host chrome | Env only: `DATABASE_URL` / `DATABASE_URL_DEV` (laptop). Path = DB name, e.g. `…/kickstaff_dev`. |
+| **Ops** | Tables Kickagent queries (`sites`, `units`, `gl`, …) | **Rows** in `ops_datasets` (admin form `/admin/datasets` or SQL). Local ops name: `kickagent_ops_dev`. Staging/prod ops name on that instance: `kickagent_ops`. |
+
+Not two schemas. Not an ops URL in env. The browser sees dataset **names** only.
+
+**Seed:** `pnpm seed:ops-datasets` (or empty `/admin/datasets` auto-seed) inserts missing rows by rewriting the product URL path via [`opsConnectionString`](../../src/lib/server/opsConnectionString.ts). After seed, rows win. Grant non-admins with SQL:
+
+```sql
+INSERT INTO ops_dataset_grants (user_id, dataset_name)
+VALUES ('<user-uuid>', 'dev');
+```
+
+**Run path:** `POST /api/kickagent/run` resolves the active target name → enabled row (admin or grant), injects `opsDatabase: { name, connectionString }`. CLI spawn still rewrites child `DATABASE_URL*` until Kickagent accepts `opsDatabase`. Never log `connectionString`.
+
 ## Problem we avoid
 
 Do **not** resolve the active database with:
@@ -14,7 +34,7 @@ A shell-exported `DATABASE_URL` (e.g. Railway prod) would always win over `.env`
 
 There is **no** `KICKSTAFF_DB_DEFAULT` — pick explicitly, or accept the inference below.
 
-## Kickstaff model
+## Kickstaff model (product DB)
 
 Implementation:
 
@@ -82,6 +102,7 @@ Laptop → staging: set `DATABASE_URL_STAGING` to the staging public URL, then `
 | Check staging / prod from laptop | `pnpm db:status --db staging` · `pnpm db:status --db prod` |
 | Check runtime target (app) | KAM `db status` |
 | Migrate | `pnpm db:migrate` · `--db staging` · `--db prod` |
+| Seed ops dataset rows | `pnpm seed:ops-datasets` · `--db staging` · or `/admin/datasets` |
 | Login against a DB (pre-auth) | `/login?db=dev` \| `staging` \| `prod` |
 | Switch running local server | KAM `db use …` (needs a sign-in on the target DB; opens its login if none) |
 
@@ -97,7 +118,7 @@ Laptop → staging: set `DATABASE_URL_STAGING` to the staging public URL, then `
 | Targets | `dev` \| `staging` \| `prod` | `dev` \| `prod` only |
 | Pre-auth pick | `/login?db=…` | n/a |
 
-When kickstaff spawns kickagent against **staging**, it passes `--db prod` and sets the child’s `DATABASE_URL` to the staging connection string.
+When kickstaff spawns kickagent against **staging**, it passes `--db prod` and sets the child’s `DATABASE_URL` to the **ops** URL for that instance (path rewrite), not the product URL. Kickagent `.env` database keys are ignored when spawning.
 
 ## Troubleshooting
 

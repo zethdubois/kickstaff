@@ -62,6 +62,8 @@
 		<span class="admin__navCurrent">Rental links</span>
 		<span class="admin__navSep" aria-hidden="true">·</span>
 		<a class="admin__navLink" href="/admin/users">Users</a>
+		<span class="admin__navSep" aria-hidden="true">·</span>
+		<a class="admin__navLink" href="/admin/datasets">Datasets</a>
 	</nav>
 
 	<h1 class="admin__title">Rental landing links</h1>
@@ -130,6 +132,22 @@
 						/>
 						<label class="field__checkbox">
 							<input type="checkbox" name="short_term_new_tab" value="on" checked={c.shortTermNewTab} />
+							<span>Open in new tab</span>
+						</label>
+					</label>
+					<label class="field">
+						<span class="field__label">Mid-term listings</span>
+						<input
+							class="field__input"
+							name="mid_term_url"
+							type="url"
+							inputmode="url"
+							autocomplete="off"
+							placeholder="https://…"
+							value={c.midTermUrl}
+						/>
+						<label class="field__checkbox">
+							<input type="checkbox" name="mid_term_new_tab" value="on" checked={c.midTermNewTab} />
 							<span>Open in new tab</span>
 						</label>
 					</label>

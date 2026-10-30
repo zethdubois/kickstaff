@@ -42,6 +42,10 @@ Each city links to an external booking platform (not AppFolio):
 - **Sandpoint:** `https://resnexus.com/resnexus/reservations/book/58E27E80-9578-47E9-BF60-DCB4CC22E962`
 - **CDA:** *none configured*
 
+### Mid-term rentals
+
+Each city has an optional mid-term listings URL, edited in **Rental links** between short-term and long-term. Until a URL is saved, the tile stays disabled.
+
 ### Resnexus iFrame restriction & new-tab workaround
 
 Resnexus.com does **not** allow its pages to be served inside a third-party iframe (X-Frame-Options: DENY). To handle this, the admin panel includes an **"Open in new tab"** checkbox per link (added May 2026):
@@ -49,7 +53,7 @@ Resnexus.com does **not** allow its pages to be served inside a third-party ifra
 - When checked, clicking the tile opens the destination URL in a new browser tab (`target="_blank"`)
 - When unchecked, the URL loads inside the site's embedded iframe (default behavior for compatible URLs)
 
-This checkbox is available for short-term, long-term, apply, and contact links individually.
+This checkbox is available for short-term, mid-term, long-term, apply, and contact links individually.
 
 ### Tenant portal
 

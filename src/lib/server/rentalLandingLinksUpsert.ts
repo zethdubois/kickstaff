@@ -225,10 +225,12 @@ export function parseOptionalLandingBody(
 
 export type RentalLandingFullParsed = {
 	shortTermUrl: string | null;
+	midTermUrl: string | null;
 	longTermUrl: string | null;
 	applyUrl: string | null;
 	contactUrl: string | null;
 	shortTermNewTab: boolean;
+	midTermNewTab: boolean;
 	longTermNewTab: boolean;
 	applyNewTab: boolean;
 	contactNewTab: boolean;
@@ -298,10 +300,12 @@ export async function upsertRentalLandingFull(citySlug: CitySlug, row: RentalLan
 		.values({
 			citySlug,
 			shortTermUrl: row.shortTermUrl,
+			midTermUrl: row.midTermUrl,
 			longTermUrl: row.longTermUrl,
 			applyUrl: row.applyUrl,
 			contactUrl: row.contactUrl,
 			shortTermNewTab: row.shortTermNewTab,
+			midTermNewTab: row.midTermNewTab,
 			longTermNewTab: row.longTermNewTab,
 			applyNewTab: row.applyNewTab,
 			contactNewTab: row.contactNewTab,
@@ -332,10 +336,12 @@ export async function upsertRentalLandingFull(citySlug: CitySlug, row: RentalLan
 			target: rentalLandingLinks.citySlug,
 			set: {
 				shortTermUrl: row.shortTermUrl,
+				midTermUrl: row.midTermUrl,
 				longTermUrl: row.longTermUrl,
 				applyUrl: row.applyUrl,
 				contactUrl: row.contactUrl,
 				shortTermNewTab: row.shortTermNewTab,
+				midTermNewTab: row.midTermNewTab,
 				longTermNewTab: row.longTermNewTab,
 				applyNewTab: row.applyNewTab,
 				contactNewTab: row.contactNewTab,

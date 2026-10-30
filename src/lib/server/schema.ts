@@ -57,11 +57,14 @@ export const passwordResetTokens = pgTable(
 export const rentalLandingLinks = pgTable('rental_landing_links', {
 	citySlug: text('city_slug').primaryKey(),
 	shortTermUrl: text('short_term_url'),
+	midTermUrl: text('mid_term_url'),
 	longTermUrl: text('long_term_url'),
 	applyUrl: text('apply_url'),
 	contactUrl: text('contact_url'),
 	/** Open link in a new tab instead of the iframe. */
 	shortTermNewTab: boolean('short_term_new_tab').notNull().default(false),
+	/** Open link in a new tab instead of the iframe. */
+	midTermNewTab: boolean('mid_term_new_tab').notNull().default(false),
 	/** Open link in a new tab instead of the iframe. */
 	longTermNewTab: boolean('long_term_new_tab').notNull().default(false),
 	/** Open link in a new tab instead of the iframe. */
@@ -166,7 +169,47 @@ export const klogs = pgTable(
 	})
 );
 
+/**
+ * Ops datasets kickagent queries. Rows live in the **product** database.
+ * `connectionString` is secret — never send it to the browser.
+ * See kickagent host-ops-database.md.
+ */
+export const opsDatasets = pgTable(
+	'ops_datasets',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		/** Lowercase id: letters, digits, hyphens. Often `dev` / `staging` / `prod`. */
+		name: text('name').notNull(),
+		label: text('label').notNull(),
+		connectionString: text('connection_string').notNull(),
+		enabled: boolean('enabled').notNull().default(true),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		nameUnique: uniqueIndex('ops_datasets_name_unique').on(t.name)
+	})
+);
+
+/** Per-user subscription to an ops dataset (by name). Admin sees all enabled rows. */
+export const opsDatasetGrants = pgTable(
+	'ops_dataset_grants',
+	{
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		datasetName: text('dataset_name').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		pk: primaryKey({ columns: [t.userId, t.datasetName] }),
+		userIdx: index('ops_dataset_grants_user_idx').on(t.userId)
+	})
+);
+
 export type User = typeof users.$inferSelect;
 export type RentalLandingLink = typeof rentalLandingLinks.$inferSelect;
 export type DashboardLink = typeof dashboardLinks.$inferSelect;
 export type Klog = typeof klogs.$inferSelect;
+export type OpsDataset = typeof opsDatasets.$inferSelect;
+export type OpsDatasetGrant = typeof opsDatasetGrants.$inferSelect;

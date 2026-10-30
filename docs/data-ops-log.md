@@ -39,4 +39,19 @@ Copy below the rules; fill in; leave older entries intact.
 
 ## Log
 
-_(No entries yet.)_
+### 2026-10-30 — `rental-landing-links-dev-to-staging`
+
+| Field | Value |
+|-------|--------|
+| Who / host | `[c]` · Enki |
+| Script | `~/backups/kickstaff/staging/2026-10-30_rental-landing-links-dev-to-staging/copy-rental-landing-links.mjs` |
+| Scope | Staging **product** DB (`railway` @ tokaido…); table `rental_landing_links`; 3 rows (`cda`, `mos`, `spt`) copied from local product `kickstaff_dev` |
+| Backup | `~/backups/kickstaff/staging/2026-10-30_rental-landing-links-dev-to-staging/` · see `SHA256SUMS` (before dump was empty `[]`) |
+| What changed | Upserted full `rental_landing_links` from local dev into staging product (staging had 0 rows) |
+| Verified how | Post-apply select: 3 slugs; `dev-source.json` sha256 matches `staging-after.json` |
+| Data lost or overwritten | **none** (staging table was empty) |
+| Restore | `node copy-rental-landing-links.mjs` cannot restore empty; re-`DELETE FROM rental_landing_links` then leave empty, or reload `rental_landing_links.staging-before.json` (empty array) |
+| Follow-ups | Confirm staging deploy serves rental media paths if any are site-relative; **none** blocking |
+| Runbook | Ask/Agent session: Node Plan B copy (no host `pg_dump`) |
+
+---

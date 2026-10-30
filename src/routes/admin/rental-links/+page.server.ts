@@ -31,10 +31,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 				slug,
 				label,
 				shortTermUrl: row?.shortTermUrl ?? '',
+				midTermUrl: row?.midTermUrl ?? '',
 				longTermUrl: row?.longTermUrl ?? '',
 				applyUrl: row?.applyUrl ?? '',
 				contactUrl: row?.contactUrl ?? '',
 				shortTermNewTab: row?.shortTermNewTab ?? false,
+				midTermNewTab: row?.midTermNewTab ?? false,
 				longTermNewTab: row?.longTermNewTab ?? false,
 				applyNewTab: row?.applyNewTab ?? false,
 				contactNewTab: row?.contactNewTab ?? false,
@@ -63,11 +65,13 @@ export const actions: Actions = {
 		}
 
 		const st = parseOptionalHttpsUrl(form.get('short_term_url'));
+		const mt = parseOptionalHttpsUrl(form.get('mid_term_url'));
 		const lt = parseOptionalHttpsUrl(form.get('long_term_url'));
 		const ap = parseOptionalHttpsUrl(form.get('apply_url'));
 		const ct = parseOptionalHttpsUrl(form.get('contact_url'));
 		const tp = parseOptionalHttpsUrl(form.get('tenant_portal_url'));
 		const stNewTab = form.get('short_term_new_tab') === 'on';
+		const mtNewTab = form.get('mid_term_new_tab') === 'on';
 		const ltNewTab = form.get('long_term_new_tab') === 'on';
 		const apNewTab = form.get('apply_new_tab') === 'on';
 		const ctNewTab = form.get('contact_new_tab') === 'on';
@@ -80,6 +84,7 @@ export const actions: Actions = {
 		const lb = parseOptionalLandingBody(form.get('landing_body'));
 
 		if (!st.ok) return fail(400, { message: st.message, city: cityRaw });
+		if (!mt.ok) return fail(400, { message: mt.message, city: cityRaw });
 		if (!lt.ok) return fail(400, { message: lt.message, city: cityRaw });
 		if (!ap.ok) return fail(400, { message: ap.message, city: cityRaw });
 		if (!ct.ok) return fail(400, { message: ct.message, city: cityRaw });
@@ -101,10 +106,12 @@ export const actions: Actions = {
 
 		await upsertRentalLandingFull(cityRaw, {
 			shortTermUrl: st.value,
+			midTermUrl: mt.value,
 			longTermUrl: lt.value,
 			applyUrl: ap.value,
 			contactUrl: ct.value,
 			shortTermNewTab: stNewTab,
+			midTermNewTab: mtNewTab,
 			longTermNewTab: ltNewTab,
 			applyNewTab: apNewTab,
 			contactNewTab: ctNewTab,

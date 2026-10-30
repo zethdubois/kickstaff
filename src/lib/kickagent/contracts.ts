@@ -63,11 +63,21 @@ export interface KlogBroadcaster {
 	error(msg: string): void;
 }
 
+/** Host-supplied ops database for data commands. Never log `connectionString`. */
+export type KickagentOpsDatabase = {
+	/** Host dataset id (e.g. `dev`). Kickagent may log this. */
+	name: string;
+	/** Postgres URL for this call. Not read from kickagent env. */
+	connectionString: string;
+};
+
 export interface KickagentHostContext {
 	userId: string;
 	userEmail: string;
 	logger: KlogBroadcaster;
 	apiBaseUrl?: string;
+	/** Required for data commands once kickagent Story A lands. */
+	opsDatabase?: KickagentOpsDatabase;
 }
 
 export type CommandHandler = (

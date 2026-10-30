@@ -2,11 +2,11 @@
 
 ## Purpose
 
-City rental landing layout: **nav tiles** (short/long listings, apply, contact) and a **main column** that either shows marketing content or an embedded AppFolio listings iframe after the user picks a tile.
+City rental landing layout: **nav tiles** (short-term, mid-term, long-term listings, apply, contact) and a **main column** that either shows marketing content or an embedded AppFolio listings iframe after the user picks a tile.
 
 ## Props / data
 
-- **`links`** — `CityAppfolioLinks`: URLs for short-term, long-term, apply, contact (from server / DB).
+- **`links`** — `CityAppfolioLinks`: URLs for short-term, mid-term, long-term, apply, contact (from server / DB). Tile order is short, mid, long, apply, contact.
 - **`title`**, **`tagline`** — City branding text.
 - **`theme`** — `CitySlug` (`cda` | `mos` | `spt`) for styling and behavior.
 - **`listingEmbedUrl`** — AppFolio `/listings` embed URL or `null` if iframe should not be used.

@@ -44,16 +44,25 @@ export async function runKickagentCatalogCommandViaApi(
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const body: Record<string, unknown> = {
+    command: options.command,
+    args: options.args,
+    userId: options.userId,
+    userEmail: options.userEmail,
+    db: toKickagentDbTarget(options.db),
+  };
+  // Forward-compatible: kickagent ignores until Story A accepts opsDatabase.
+  if (options.opsDatabase) {
+    body.opsDatabase = {
+      name: options.opsDatabase.name,
+      connectionString: options.opsDatabase.connectionString,
+    };
+  }
+
   const res = await fetch(`${base}/v1/commands/run`, {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      command: options.command,
-      args: options.args,
-      userId: options.userId,
-      userEmail: options.userEmail,
-      db: toKickagentDbTarget(options.db),
-    }),
+    body: JSON.stringify(body),
   });
 
   const payload = (await res.json()) as {

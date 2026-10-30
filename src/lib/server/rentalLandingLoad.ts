@@ -14,10 +14,12 @@ export async function loadCityAppfolioLinks(slug: CitySlug) {
 	const [row] = await db
 		.select({
 			shortTermUrl: rentalLandingLinks.shortTermUrl,
+			midTermUrl: rentalLandingLinks.midTermUrl,
 			longTermUrl: rentalLandingLinks.longTermUrl,
 			applyUrl: rentalLandingLinks.applyUrl,
 			contactUrl: rentalLandingLinks.contactUrl,
 			shortTermNewTab: rentalLandingLinks.shortTermNewTab,
+			midTermNewTab: rentalLandingLinks.midTermNewTab,
 			longTermNewTab: rentalLandingLinks.longTermNewTab,
 			applyNewTab: rentalLandingLinks.applyNewTab,
 			contactNewTab: rentalLandingLinks.contactNewTab,

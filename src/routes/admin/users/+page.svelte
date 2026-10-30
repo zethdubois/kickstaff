@@ -30,6 +30,8 @@
     <a class="admin__navLink" href="/admin/rental-links">Rental links</a>
     <span class="admin__navSep" aria-hidden="true">·</span>
     <span class="admin__navCurrent">Users</span>
+    <span class="admin__navSep" aria-hidden="true">·</span>
+    <a class="admin__navLink" href="/admin/datasets">Datasets</a>
   </nav>
 
   <h1 class="admin__title">Users</h1>
