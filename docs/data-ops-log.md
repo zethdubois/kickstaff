@@ -39,6 +39,21 @@ Copy below the rules; fill in; leave older entries intact.
 
 ## Log
 
+### 2026-10-30 — `staging-seed-users-max-otto`
+
+| Field | Value |
+|-------|--------|
+| Who / host | `[c]` · Enki |
+| Script | `scripts/seed-users.ts` via `pnpm seed:users --db staging …` |
+| Scope | Staging product DB @ tokaido…; table `users`; inserted 2 admin rows |
+| Backup | `~/backups/kickstaff/staging/2026-10-30_seed-users/` · see `SHA256SUMS` |
+| What changed | Created `max@kickassetmanagement.com` and `n.ottonielson@gmail.com` as `admin` (`must_change_password=true`) |
+| Verified how | `pnpm list:users --db staging` → 3 users including both new emails |
+| Data lost or overwritten | **none** |
+| Restore | `DELETE FROM users WHERE email IN ('max@kickassetmanagement.com','n.ottonielson@gmail.com');` |
+| Follow-ups | SMTP BadCredentials — temp passwords printed once in terminal, not logged here |
+| Runbook | Human asked same two emails on staging |
+
 ### 2026-10-30 — `prod-seed-users-max-otto`
 
 | Field | Value |
