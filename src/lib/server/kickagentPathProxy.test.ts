@@ -4,8 +4,10 @@ import { isRedirect } from '@sveltejs/kit';
 import {
 	buildKickagentProxyRequestHeaders,
 	buildKickagentProxyUpstreamUrl,
+	normalizeKickagentProxyPathname,
 	proxyKickagentPath,
-	requireKickagentProxyUser
+	requireKickagentProxyUser,
+	rewriteProxyLocationHeader
 } from './kickagentPathProxy.ts';
 
 describe('kickagentPathProxy', () => {
@@ -31,6 +33,24 @@ describe('kickagentPathProxy', () => {
 			),
 			'https://kickagent-staging.up.railway.app/wiki/docs/foo.md?q=1'
 		);
+	});
+
+	it('requests /progress and /wiki with a trailing slash upstream', () => {
+		assert.equal(normalizeKickagentProxyPathname('/progress'), '/progress/');
+		assert.equal(normalizeKickagentProxyPathname('/wiki'), '/wiki/');
+		assert.equal(
+			buildKickagentProxyUpstreamUrl('https://ka.example', '/progress', ''),
+			'https://ka.example/progress/'
+		);
+	});
+
+	it('rewrites Location to path-only without trailing slash on mounts', () => {
+		assert.equal(rewriteProxyLocationHeader('/progress/'), '/progress');
+		assert.equal(
+			rewriteProxyLocationHeader('https://kickagent.example/progress/'),
+			'/progress'
+		);
+		assert.equal(rewriteProxyLocationHeader('/progress/api/entries'), '/progress/api/entries');
 	});
 
 	it('sets Bearer and user headers; does not set Cookie', () => {
@@ -96,5 +116,46 @@ describe('kickagentPathProxy', () => {
 		assert.equal(h.get('X-Kickagent-User-Id'), 'uid-9');
 		assert.equal(h.get('X-Kickagent-User-Email'), 'user@example.com');
 		assert.equal(h.get('Cookie'), null);
+	});
+
+	it('does not forward a /progress → /progress/ redirect to the browser', async () => {
+		const fetchImpl: typeof fetch = async (input) => {
+			assert.equal(String(input), 'https://kickagent.example/progress/');
+			return new Response('<html>progress</html>', {
+				status: 200,
+				headers: { 'content-type': 'text/html; charset=utf-8' }
+			});
+		};
+
+		const res = await proxyKickagentPath({
+			baseUrl: 'https://kickagent.example',
+			token: 'svc-token',
+			user: { id: 'uid-9', email: 'user@example.com' },
+			request: new Request('https://host.example/progress', { method: 'GET' }),
+			fetchImpl
+		});
+
+		assert.equal(res.status, 200);
+		assert.equal(res.headers.get('location'), null);
+		assert.equal(await res.text(), '<html>progress</html>');
+	});
+
+	it('rewrites upstream Location so slash ping-pong cannot restart', async () => {
+		const fetchImpl: typeof fetch = async () =>
+			new Response(null, {
+				status: 302,
+				headers: { Location: 'https://kickagent.example/progress/' }
+			});
+
+		const res = await proxyKickagentPath({
+			baseUrl: 'https://kickagent.example',
+			token: 't',
+			user: { id: 'u', email: 'a@example.com' },
+			request: new Request('https://host.example/progress', { method: 'GET' }),
+			fetchImpl
+		});
+
+		assert.equal(res.status, 302);
+		assert.equal(res.headers.get('location'), '/progress');
 	});
 });

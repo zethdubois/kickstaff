@@ -31,14 +31,44 @@ export function requireKickagentProxyUser(
 	requireUser(user);
 }
 
+/**
+ * Kickagent progress (and similar mounts) redirect `/progress` → `/progress/`.
+ * SvelteKit defaults to trailingSlash "never" (`/progress/` → `/progress`).
+ * Request the slashed form upstream so we never bounce that redirect to the browser.
+ */
+export function normalizeKickagentProxyPathname(pathname: string): string {
+	const path = pathname.startsWith('/') ? pathname : `/${pathname}`;
+	if (path === '/progress' || path === '/wiki') return `${path}/`;
+	return path;
+}
+
 export function buildKickagentProxyUpstreamUrl(
 	base: string,
 	pathname: string,
 	search: string
 ): string {
 	const origin = base.replace(/\/+$/, '');
-	const path = pathname.startsWith('/') ? pathname : `/${pathname}`;
+	const path = normalizeKickagentProxyPathname(pathname);
 	return `${origin}${path}${search}`;
+}
+
+/**
+ * Keep the browser on the kickstaff origin and avoid slash ping-pong:
+ * absolute kickagent Locations become path-only; `/progress/` → `/progress`.
+ */
+export function rewriteProxyLocationHeader(location: string): string {
+	try {
+		const u = location.startsWith('/')
+			? new URL(location, 'http://kickstaff.proxy.local')
+			: new URL(location);
+		let path = u.pathname;
+		if (path === '/progress/' || path === '/wiki/') {
+			path = path.slice(0, -1);
+		}
+		return `${path}${u.search}${u.hash}`;
+	} catch {
+		return location;
+	}
 }
 
 export function buildKickagentProxyRequestHeaders(opts: {
@@ -64,7 +94,8 @@ export function pickKickagentProxyResponseHeaders(upstream: Headers): Headers {
 	const out = new Headers();
 	for (const name of FORWARD_RESPONSE_HEADERS) {
 		const value = upstream.get(name);
-		if (value != null) out.set(name, value);
+		if (value == null) continue;
+		out.set(name, name === 'location' ? rewriteProxyLocationHeader(value) : value);
 	}
 	return out;
 }
