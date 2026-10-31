@@ -70,9 +70,12 @@ Auth gate on every handler:
 - **Any signed-in user** (any role). Not admin-only (unlike `/api/kickagent/run`).
 - Signed out → **redirect 303 to `/login`** for navigations (use existing `requireUser` / equivalent). Spec acceptance requires this for `GET /wiki`.
 
+### HTML base tag (required on kickstaff)
+
+Kickagent shells use relative assets (`href="wiki.css"`). SvelteKit serves `/wiki` without a trailing slash, so the browser would resolve that to `/wiki.css` (404). The proxy injects `<base href="/wiki/" />` (and `/progress/`) into those HTML shells only. Nested/non-HTML responses stay untouched.
+
 ### Do not
 
-- Rewrite HTML or asset URLs (relative links must keep working on kickstaff origin).
 - Expose the service token to the client.
 - Mount wiki/progress on production kickagent (`publish` only).
 - Add nav/menu links unless trivial; not required for acceptance.

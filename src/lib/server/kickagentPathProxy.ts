@@ -100,6 +100,32 @@ export function pickKickagentProxyResponseHeaders(upstream: Headers): Headers {
 	return out;
 }
 
+/**
+ * SvelteKit serves `/wiki` without a trailing slash. Relative `href="wiki.css"` then
+ * resolves to `/wiki.css` (404). A base tag makes assets resolve under `/wiki/…`.
+ */
+/** Only the app shells at `/wiki` and `/progress` need a base tag. */
+export function htmlBaseHrefForPathname(pathname: string): string | null {
+	const path = pathname.startsWith('/') ? pathname : `/${pathname}`;
+	if (path === '/wiki' || path === '/wiki/') return '/wiki/';
+	if (path === '/progress' || path === '/progress/') return '/progress/';
+	return null;
+}
+
+export function injectHtmlBaseHref(html: string, baseHref: string): string {
+	if (/<base\s/i.test(html)) return html;
+	const tag = `<base href="${baseHref}" />`;
+	if (/<head[^>]*>/i.test(html)) {
+		return html.replace(/<head[^>]*>/i, (open) => `${open}\n    ${tag}`);
+	}
+	return `${tag}\n${html}`;
+}
+
+function isHtmlContentType(value: string | null): boolean {
+	if (!value) return false;
+	return value.toLowerCase().includes('text/html');
+}
+
 export type ProxyKickagentPathInput = {
 	/** Null/empty → 502. */
 	baseUrl: string | null | undefined;
@@ -111,7 +137,8 @@ export type ProxyKickagentPathInput = {
 };
 
 /**
- * Proxy one request to kickagent at the same path. Streams the upstream body.
+ * Proxy one request to kickagent at the same path.
+ * Streams non-HTML bodies; HTML shells get a `<base href>` so relative assets work.
  */
 export async function proxyKickagentPath(input: ProxyKickagentPathInput): Promise<Response> {
 	const base = input.baseUrl?.trim();
@@ -145,10 +172,29 @@ export async function proxyKickagentPath(input: ProxyKickagentPathInput): Promis
 
 	const fetchImpl = input.fetchImpl ?? fetch;
 	const upstream = await fetchImpl(upstreamUrl, init);
+	const outHeaders = pickKickagentProxyResponseHeaders(upstream.headers);
+	const baseHref = htmlBaseHrefForPathname(url.pathname);
+
+	if (
+		method !== 'HEAD' &&
+		baseHref &&
+		upstream.ok &&
+		isHtmlContentType(upstream.headers.get('content-type')) &&
+		upstream.body
+	) {
+		const html = await upstream.text();
+		const body = injectHtmlBaseHref(html, baseHref);
+		outHeaders.delete('content-length');
+		return new Response(body, {
+			status: upstream.status,
+			statusText: upstream.statusText,
+			headers: outHeaders
+		});
+	}
 
 	return new Response(upstream.body, {
 		status: upstream.status,
 		statusText: upstream.statusText,
-		headers: pickKickagentProxyResponseHeaders(upstream.headers)
+		headers: outHeaders
 	});
 }

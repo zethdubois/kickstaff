@@ -4,6 +4,8 @@ import { isRedirect } from '@sveltejs/kit';
 import {
 	buildKickagentProxyRequestHeaders,
 	buildKickagentProxyUpstreamUrl,
+	htmlBaseHrefForPathname,
+	injectHtmlBaseHref,
 	normalizeKickagentProxyPathname,
 	proxyKickagentPath,
 	requireKickagentProxyUser,
@@ -121,9 +123,9 @@ describe('kickagentPathProxy', () => {
 	it('does not forward a /progress → /progress/ redirect to the browser', async () => {
 		const fetchImpl: typeof fetch = async (input) => {
 			assert.equal(String(input), 'https://kickagent.example/progress/');
-			return new Response('<html>progress</html>', {
+			return new Response('ok', {
 				status: 200,
-				headers: { 'content-type': 'text/html; charset=utf-8' }
+				headers: { 'content-type': 'text/plain; charset=utf-8' }
 			});
 		};
 
@@ -137,7 +139,7 @@ describe('kickagentPathProxy', () => {
 
 		assert.equal(res.status, 200);
 		assert.equal(res.headers.get('location'), null);
-		assert.equal(await res.text(), '<html>progress</html>');
+		assert.equal(await res.text(), 'ok');
 	});
 
 	it('rewrites upstream Location so slash ping-pong cannot restart', async () => {
@@ -157,5 +159,30 @@ describe('kickagentPathProxy', () => {
 
 		assert.equal(res.status, 302);
 		assert.equal(res.headers.get('location'), '/progress');
+	});
+
+	it('injects <base href> so relative wiki.css resolves under /wiki/', async () => {
+		assert.equal(htmlBaseHrefForPathname('/wiki'), '/wiki/');
+		assert.equal(
+			injectHtmlBaseHref('<html><head><title>x</title></head></html>', '/wiki/'),
+			'<html><head>\n    <base href="/wiki/" /><title>x</title></head></html>'
+		);
+
+		const fetchImpl: typeof fetch = async () =>
+			new Response('<html><head><title>Wiki</title></head><body></body></html>', {
+				status: 200,
+				headers: { 'content-type': 'text/html; charset=utf-8' }
+			});
+
+		const res = await proxyKickagentPath({
+			baseUrl: 'https://kickagent.example',
+			token: 't',
+			user: { id: 'u', email: 'a@example.com' },
+			request: new Request('https://host.example/wiki', { method: 'GET' }),
+			fetchImpl
+		});
+
+		const html = await res.text();
+		assert.match(html, /<base href="\/wiki\/" \/>/);
 	});
 });
