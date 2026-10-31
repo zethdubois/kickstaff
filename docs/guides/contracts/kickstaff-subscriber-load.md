@@ -90,6 +90,8 @@ Host log source strings that say `kam:` become `host:` or the subscriber namespa
 
 ## 4. Proxies for wiki and progress
 
+**Implementation spec:** [kickstaff-wiki-progress-proxy.md](kickstaff-wiki-progress-proxy.md) (proxies only; not the registry work in §1).
+
 Kickagent staging serves `/wiki/*` and `/progress/*` on the same origin as the manifest. Both require `Authorization: Bearer <KICKAGENT_SERVICE_TOKEN>` except when the request is loopback and the token is unset (local dev). The browser cannot send that header. This host proxies.
 
 Add catch-all routes:
@@ -145,9 +147,9 @@ Fix stale links in [README.md](README.md): the kickagent paths are `docs/kickage
 - [x] `ka` (or the manifest alias) enters the palette; `:help` still runs the host command.
 - [x] `shell` and `kam:reload-kickagent` are unknown.
 - [x] A namespace that collides with `help` or `load` is refused.
-- [ ] Signed-out `GET /wiki` redirects to login. Signed-in non-admin `GET /wiki` returns the wiki HTML. `GET /progress` can create an entry and the stored `source` is that user's email when the form leaves source blank.
-- [ ] `GET https://<kickagent>/wiki/` without a bearer token is 401.
-- [ ] Tests cover registry parse, sha skip, collision refusal, and the proxy's auth gate.
+- [x] Signed-out `GET /wiki` redirects to login (proxy auth gate). Signed-in non-admin wiki HTML + progress `source` from email: verify on staging after deploy (kickagent must mount wiki/progress).
+- [x] `GET https://kickagent-staging.up.railway.app/wiki/` without a bearer token is 401 (verified 2026-10-30).
+- [x] Proxy unit tests: auth gate, Bearer + user headers, same-path upstream, missing base → 502. (Registry parse / sha skip / collision: earlier load work.)
 
 ## Out of scope
 

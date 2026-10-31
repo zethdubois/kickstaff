@@ -19,7 +19,8 @@ Filename prefix = **audience** (who should read it), not which repo wrote the fi
 4. [kickstaff-hello-world.md](kickstaff-hello-world.md) — Phase 1 hello wiring in this codebase.
 5. [../kam-console.md](../kam-console.md) — KAM console, kickagent mode, `[KA] >`.
 6. [kickstaff-subscriber-load.md](kickstaff-subscriber-load.md) — `load`, registry, wiki and progress proxies.
-7. [Host ops database](../../../kickagent/docs/kickagent/architecture/host-ops-database.md) — dataset form. The host holds every database URL, including dev.
+7. [kickstaff-wiki-progress-proxy.md](kickstaff-wiki-progress-proxy.md) — **implement now:** signed-in `/wiki` and `/progress` proxies.
+8. [Host ops database](../../../kickagent/docs/kickagent/architecture/host-ops-database.md) — dataset form. The host holds every database URL, including dev.
 
 ## Kickagent platform (kickagent repo)
 

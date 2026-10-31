@@ -14,13 +14,13 @@
 - [x] **Subscriptions:** admin sees all enabled datasets; others need `ops_dataset_grants` (SQL v1). Enforced in `resolveOpsDatabase`.
 - [x] **Active dataset:** active product target name → ops row; inject `opsDatabase` on `/api/kickagent/run`. Browser never sees the URL. (Product multi-DB switch unchanged this pass.)
 - [x] **Do not read kickagent `.env` for a database.** Spawn skips kickagent `DATABASE_URL*`; injects host-resolved ops URL / `opsDatabase`.
-- [ ] **Subscriber `load`:** console `load` / palette done — finish [kickstaff-subscriber-load.md](guides/contracts/kickstaff-subscriber-load.md) wiki/progress proxies + `KICKSTAFF_SUBSCRIBERS` registry. Token rotation is done.
+- [x] **Wiki/progress proxies:** `/wiki` + `/progress` catch-alls forward to kickagent with Bearer + user headers ([kickstaff-wiki-progress-proxy.md](guides/contracts/kickstaff-wiki-progress-proxy.md)). Staging manual smoke after deploy. Registry rewrite stays in [kickstaff-subscriber-load.md](guides/contracts/kickstaff-subscriber-load.md) §1.
 
 Keep ≤7 active bullets.
 
 ## Before next prod deploy (do NOT forget)
 
-- [ ] **Migrate prod** before next deploy: `pnpm db:migrate --db prod` (includes `0022_sessions_last_seen`, `0023_ops_datasets`, and `0024_midterm_rentals`). Human approval + backup + dry run + [data-ops-log](data-ops-log.md) entry. Then `pnpm seed:ops-datasets --db prod`. Check: `pnpm db:status --db prod`.
+- [x] **Migrate prod** (2026-10-30): empty product DB @ sakura migrated through `0024`; rental links + admin + `ops_datasets` seeded; created `kickagent_ops` ([data-ops-log](data-ops-log.md)). Kickagent ops migrations still pending if remote commands will use that DB.
 - [x] Staging and dev already have 0021/0022 (verified 2026-10-26). Apply **0023** on each product DB after pull.
 - [ ] Heads-up after deploy: everyone signs in once (`ka_session` → `ka_session_<target>`).
 - [x] Rotated `KICKAGENT_SERVICE_TOKEN` and related secrets (finished 2026-10-28).

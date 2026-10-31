@@ -39,6 +39,66 @@ Copy below the rules; fill in; leave older entries intact.
 
 ## Log
 
+### 2026-10-30 — `prod-seed-users-max-otto`
+
+| Field | Value |
+|-------|--------|
+| Who / host | `[c]` · Enki |
+| Script | `scripts/seed-users.ts` via `pnpm seed:users --db prod …` |
+| Scope | Prod product DB @ sakura…; table `users`; inserted 2 admin rows |
+| Backup | `~/backups/kickstaff/prod/2026-10-30_seed-users/` · see `SHA256SUMS` (`users.before.json` / `users.after.json`) |
+| What changed | Created `max@kickassetmanagement.com` and `n.ottonielson@gmail.com` as `admin` (`must_change_password=true`) |
+| Verified how | `pnpm list:users --db prod` → 3 users including both new emails |
+| Data lost or overwritten | **none** |
+| Restore | `DELETE FROM users WHERE email IN ('max@kickassetmanagement.com','n.ottonielson@gmail.com');` (or re-load from before dump if needed) |
+| Follow-ups | SMTP BadCredentials from laptop — temp passwords printed once in terminal, not logged here. Local/dev also got `n.ottonielson@gmail.com` (`max@` already existed). |
+| Runbook | Human asked seed both emails on prod + dev |
+
+### 2026-10-30 — `prod-reset-admin-password`
+
+| Field | Value |
+|-------|--------|
+| Who / host | `[c]` · Enki |
+| Script | `pnpm reset:admin-password --db prod` |
+| Scope | Prod product DB @ sakura…; user `ADMIN_EMAIL`; password rotated, `must_change_password=true` |
+| Backup | Waived (credential rotate only) |
+| What changed | New password hash for existing admin (seed was no-op: user already existed) |
+| Verified how | Script reported updated |
+| Data lost or overwritten | Previous password hash for that user |
+| Restore | Reset again or Forgot password |
+| Follow-ups | Temp password printed once in terminal; not logged here |
+| Runbook | Human asked new admin on prod |
+
+### 2026-10-30 — `prod-seed-admin-and-ops-datasets`
+
+| Field | Value |
+|-------|--------|
+| Who / host | `[c]` · Enki |
+| Script | `CREATE DATABASE kickagent_ops`; `pnpm seed:admin --db prod`; `pnpm seed:ops-datasets --db prod` |
+| Scope | Prod product DB @ sakura…; created sibling DB `kickagent_ops`; inserted admin user for `ADMIN_EMAIL`; inserted `ops_datasets` row `prod` → path `/kickagent_ops` |
+| Backup | Waived earlier this session for this greenfield DB |
+| What changed | New DB `kickagent_ops`; 1 admin user; 1 ops_datasets row |
+| Verified how | Script output: admin created; ops insert reported `/kickagent_ops` |
+| Data lost or overwritten | **none** |
+| Restore | Drop user / ops row / DB as needed; re-run seeds |
+| Follow-ups | SMTP from laptop failed (BadCredentials) — temp password printed once in terminal; rotate via Forgot password if lost. Kickagent ops schema still needs migrate against `…/kickagent_ops` if remote commands will use it. |
+| Runbook | Human asked for admin + ops-datasets seed |
+
+### 2026-10-30 — `prod-migrate-and-rental-landing-links`
+
+| Field | Value |
+|-------|--------|
+| Who / host | `[c]` · Enki |
+| Script | `pnpm db:migrate --db prod`; Node upsert (same pattern as staging copy) |
+| Scope | Prod **product** DB (`railway` @ sakura…); full schema migrate 0000–0024; table `rental_landing_links` 3 rows (`cda`, `mos`, `spt`) from local `kickstaff_dev` |
+| Backup | Human waived formal dump. Artifacts: `~/backups/kickstaff/prod/2026-10-30_rental-landing-links-dev-to-prod/` · after sha256 `49df23bbb9bec5865fcf587f5a296028217ceeb94366697532705cdeb49be4d9` |
+| What changed | Empty DB → migrated; upserted full `rental_landing_links` from local (prod had 0 rows) |
+| Verified how | `pnpm db:status --db prod` → migrations ok; post-apply select 3 slugs; key URL/headline fields match source |
+| Data lost or overwritten | **none** (table was empty) |
+| Restore | Delete rows or re-upsert from `rental_landing_links.dev-source.json` in that backup dir |
+| Follow-ups | Confirm Railway kickstaff production `DATABASE_URL` is this same Postgres (sakura public / matching internal). Empty greenfield: still need `pnpm seed:admin --db prod` and `pnpm seed:ops-datasets --db prod` if this is the live product DB. |
+| Runbook | Human asked seed + waived backups |
+
 ### 2026-10-30 — `rental-landing-links-dev-to-staging`
 
 | Field | Value |
