@@ -39,6 +39,21 @@ Copy below the rules; fill in; leave older entries intact.
 
 ## Log
 
+### 2026-11-02 — `staging-ops-seed-from-local`
+
+| Field | Value |
+|-------|--------|
+| Who / host | `[c]` · Enki |
+| Script | `~/backups/kickstaff/staging_kickagent_ops/2026-11-02_seed-from-local-ops/restore.sh` (docker `pg_dump` from local `kickagent_ops_dev` → `psql` into staging `kickagent_ops`); also `pnpm seed:ops-datasets --db staging` |
+| Scope | Staging ops DB `kickagent_ops` @ tokaido…; tables `gl_accounts` (84), `gl_account_audit` (95), `owners` (27), `sites` (120), `site_owners` (78), `units` (120), `site_units` (0), `unit_external_aliases` (0). Product DB already lacked these tables. Inserted `ops_datasets` row `staging` → path `/kickagent_ops`. |
+| Backup | `~/backups/kickstaff/staging_kickagent_ops/2026-11-02_seed-from-local-ops/` · `local-ops-data.sql` sha256 `58b0db7728679212d0a27dbe4bc1fc99235cf9c23d702468676e884b26c224c6` |
+| What changed | Filled empty staging ops tables from local ops dump; added missing `ops_datasets` row |
+| Verified how | Row counts match local; `gl_accounts` id-aggregate md5 `404e475c1d1b98d97022dc9766bc209f` equal on local and staging |
+| Data lost or overwritten | **none** (staging tables were empty) |
+| Restore | Truncate the eight tables on staging ops, then re-run `restore.sh` with `DATABASE_URL_STAGING` set |
+| Follow-ups | Prod ops DB still empty (no schema/rows). Staging accounts UI should show data after `kam:reload` / refresh. |
+| Runbook | Human asked copy local/dev ops tables into staging |
+
 ### 2026-10-30 — `staging-seed-users-max-otto`
 
 | Field | Value |
