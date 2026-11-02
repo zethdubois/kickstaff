@@ -20,6 +20,11 @@
 			<p class="dlg__msg" class:dlg__msg--ok={form.ok} class:dlg__err={!form.ok} role="status">
 				{form.message}
 			</p>
+			{#if form.devResetUrl}
+				<p class="dlg__devLink">
+					<a href={form.devResetUrl}>{form.devResetUrl}</a>
+				</p>
+			{/if}
 		{/if}
 
 		<form method="POST" class="dlg__form" autocomplete="on">
@@ -89,6 +94,13 @@
 
 	.dlg__err {
 		color: color-mix(in srgb, crimson 70%, currentColor);
+	}
+
+	.dlg__devLink {
+		margin: -0.35rem 0 0.75rem;
+		font-size: 0.82rem;
+		line-height: 1.4;
+		overflow-wrap: anywhere;
 	}
 
 	.dlg__form {

@@ -31,23 +31,24 @@ export const actions: Actions = {
 			const user = await findUserByEmail(email);
 			if (user) {
 				const token = await createPasswordResetToken(user.id);
-				await sendPasswordResetLinkEmail(
+				const { sent, resetUrl, skipped } = await sendPasswordResetLinkEmail(
 					user.email,
 					token,
 					isDbSwitchingEnabled() ? getActiveDbTarget() : undefined,
 					url.origin
 				);
+				if (!sent && !isProductionRuntime()) {
+					return {
+						ok: true,
+						message: skipped
+							? 'Mail is logged only in this environment. This dev-only link expires in 1 hour:'
+							: 'Mail was not sent (SMTP login rejected). This dev-only link expires in 1 hour:',
+						devResetUrl: resetUrl
+					};
+				}
 			}
 		} catch (e) {
 			console.error('[forgot-password]', e);
-			const smtpRejected =
-				e instanceof Error && (e.message.includes('EAUTH') || /535|Invalid login/i.test(e.message));
-			if (!isProductionRuntime() && smtpRejected) {
-				return fail(500, {
-					message:
-						'Could not send mail: the SMTP login was rejected. Set a real SMTP_PASSWORD, or MAIL_DEV_ONLY=true to log the reset link in the server console instead.'
-				});
-			}
 			return fail(500, { message: 'Could not process that request. Try again later.' });
 		}
 

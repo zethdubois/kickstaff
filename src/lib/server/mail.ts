@@ -158,7 +158,7 @@ export async function sendPasswordResetLinkEmail(
 	dbTarget?: string,
 	/** Host the person used. Wins over PUBLIC_BASE_URL. */
 	requestOrigin?: string
-): Promise<boolean> {
+): Promise<{ sent: boolean; resetUrl: string; skipped: boolean }> {
 	const dbQuery = dbTarget ? `&db=${encodeURIComponent(dbTarget)}` : '';
 	const path = `/reset-password?token=${encodeURIComponent(rawToken)}${dbQuery}`;
 	const resetUrl = appPath(path, requestOrigin);
@@ -176,14 +176,17 @@ export async function sendPasswordResetLinkEmail(
 	].join('\n');
 
 	try {
-		return await sendMail({
+		const sent = await sendMail({
 			to: email,
 			subject,
 			text
 		});
+		return { sent, resetUrl, skipped: !sent };
 	} catch (error) {
+		// Local SMTP is often a placeholder. Keep the one-time link usable on the page.
 		if (!isProductionRuntime()) {
-			console.error('[MAIL] Reset email was not sent. Use this link from the dev server log:', resetUrl);
+			console.error('[MAIL] Reset email was not sent.', error);
+			return { sent: false, resetUrl, skipped: false };
 		}
 		throw error;
 	}
