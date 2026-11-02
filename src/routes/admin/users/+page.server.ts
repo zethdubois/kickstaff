@@ -37,7 +37,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	create: async ({ request, locals }) => {
+	create: async ({ request, locals, url }) => {
 		requireAdmin(locals.user);
 
 		const form = await request.formData();
@@ -77,7 +77,7 @@ export const actions: Actions = {
 		}
 
 		try {
-			await sendUserCreatedEmail(email, plain);
+			await sendUserCreatedEmail(email, plain, url.origin);
 		} catch (error) {
 			console.error('Failed to send user created email', error);
 		}
@@ -89,7 +89,7 @@ export const actions: Actions = {
 		};
 	},
 
-	reset: async ({ request, locals }) => {
+	reset: async ({ request, locals, url }) => {
 		requireAdmin(locals.user);
 
 		const form = await request.formData();
@@ -124,7 +124,7 @@ export const actions: Actions = {
 
 		let emailSent = false;
 		try {
-			emailSent = await sendPasswordResetEmail(target.email, plain);
+			emailSent = await sendPasswordResetEmail(target.email, plain, url.origin);
 		} catch (error) {
 			console.error('Failed to send password reset email', error);
 			emailSent = false;

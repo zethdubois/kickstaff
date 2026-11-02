@@ -1,5 +1,8 @@
 import { env } from '$env/dynamic/private';
+import { env as publicEnv } from '$env/dynamic/public';
 import nodemailer from 'nodemailer';
+import { isProductionRuntime } from '$lib/server/runtimeEnv';
+import { absoluteAppPath } from '$lib/server/mailLinks';
 
 type MailPayload = {
 	to: string;
@@ -89,11 +92,17 @@ async function sendMail(payload: MailPayload): Promise<boolean> {
 	return false;
 }
 
-export async function sendUserCreatedEmail(email: string, plainPassword: string): Promise<boolean> {
-	const loginUrl =
-		env.PUBLIC_BASE_URL && typeof env.PUBLIC_BASE_URL === 'string'
-			? `${env.PUBLIC_BASE_URL}/login`
-			: '/login';
+function appPath(path: string, requestOrigin?: string): string {
+	// PUBLIC_BASE_URL is a public var. $env/dynamic/private omits it (always undefined).
+	return absoluteAppPath(path, requestOrigin, publicEnv.PUBLIC_BASE_URL);
+}
+
+export async function sendUserCreatedEmail(
+	email: string,
+	plainPassword: string,
+	requestOrigin?: string
+): Promise<boolean> {
+	const loginUrl = appPath('/login', requestOrigin);
 
 	const subject = 'Your new KAM account';
 	const text = [
@@ -117,12 +126,10 @@ export async function sendUserCreatedEmail(email: string, plainPassword: string)
 
 export async function sendPasswordResetEmail(
 	email: string,
-	temporaryPassword: string
+	temporaryPassword: string,
+	requestOrigin?: string
 ): Promise<boolean> {
-	const loginUrl =
-		env.PUBLIC_BASE_URL && typeof env.PUBLIC_BASE_URL === 'string'
-			? `${env.PUBLIC_BASE_URL}/login`
-			: '/login';
+	const loginUrl = appPath('/login', requestOrigin);
 
 	const subject = 'Your password has been reset';
 	const text = [
@@ -148,13 +155,13 @@ export async function sendPasswordResetLinkEmail(
 	email: string,
 	rawToken: string,
 	/** Local dev only: pins the link to the database that issued the token. */
-	dbTarget?: string
+	dbTarget?: string,
+	/** Host the person used. Wins over PUBLIC_BASE_URL. */
+	requestOrigin?: string
 ): Promise<boolean> {
-	const rawBase = env.PUBLIC_BASE_URL as string | undefined;
-	const base = rawBase && typeof rawBase === 'string' ? rawBase.replace(/\/+$/, '') : '';
 	const dbQuery = dbTarget ? `&db=${encodeURIComponent(dbTarget)}` : '';
 	const path = `/reset-password?token=${encodeURIComponent(rawToken)}${dbQuery}`;
-	const resetUrl = base ? `${base}${path}` : path;
+	const resetUrl = appPath(path, requestOrigin);
 
 	const subject = 'Reset your KAM password';
 	const text = [
@@ -168,11 +175,18 @@ export async function sendPasswordResetLinkEmail(
 		'If you did not request this, you can ignore this email.'
 	].join('\n');
 
-	return sendMail({
-		to: email,
-		subject,
-		text
-	});
+	try {
+		return await sendMail({
+			to: email,
+			subject,
+			text
+		});
+	} catch (error) {
+		if (!isProductionRuntime()) {
+			console.error('[MAIL] Reset email was not sent. Use this link from the dev server log:', resetUrl);
+		}
+		throw error;
+	}
 }
 
 /** Public rental “Contact us” form; delivers to CONTACT_INBOX or ADMIN_EMAIL. */

@@ -54,7 +54,7 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 
 - **Required for local app + product DB:** `DATABASE_URL_DEV` (`…:5043/kickstaff_dev`). `DATABASE_URL` is this deploy's product database (Railway), not the laptop default.
 - **Admin seed / dev recovery:** `ADMIN_EMAIL`, `ADMIN_PASSWORD` (`pnpm seed:admin`). In non-production, the same password (or `DEV_ADMIN_BYPASS_PASSWORD`) is a master login for **admin** accounts when the stored hash does not match.
-- **Mail:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`; optional `SMTP_SECURE`; `ADMIN_EMAIL` as From; optional `MAIL_DEV_ONLY=true` to skip SMTP and log only; optional `PUBLIC_BASE_URL` for absolute links in emails.
+- **Mail:** `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`; optional `SMTP_SECURE`; `ADMIN_EMAIL` as From; optional `MAIL_DEV_ONLY=true` to skip SMTP and log only; optional `PUBLIC_BASE_URL` as the fallback origin for email links (public env; the request host wins for forgot-password).
 - **Vanity hosts:** `PUBLIC_VANITY_HOST_CDA`, `PUBLIC_VANITY_HOST_MOS`, `PUBLIC_VANITY_HOST_SPT` as documented there.
 - **Kickagent Phase 2 (optional):** `PUBLIC_KICKAGENT_MANIFEST_URL` — URL of `manifest.json` for browser plugin load; unset uses Phase 1 linked-package catalog registration (`[.env.example](.env.example)`).
 

@@ -3,6 +3,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { createPasswordResetToken, findUserByEmail } from '$lib/server/auth';
 import { getActiveDbTarget, isDbSwitchingEnabled } from '$lib/server/dbTarget';
 import { sendPasswordResetLinkEmail } from '$lib/server/mail';
+import { isProductionRuntime } from '$lib/server/runtimeEnv';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (locals.user) {
@@ -12,7 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, url }) => {
 		const form = await request.formData();
 		const email = String(form.get('email') ?? '')
 			.trim()
@@ -33,11 +34,20 @@ export const actions: Actions = {
 				await sendPasswordResetLinkEmail(
 					user.email,
 					token,
-					isDbSwitchingEnabled() ? getActiveDbTarget() : undefined
+					isDbSwitchingEnabled() ? getActiveDbTarget() : undefined,
+					url.origin
 				);
 			}
 		} catch (e) {
 			console.error('[forgot-password]', e);
+			const smtpRejected =
+				e instanceof Error && (e.message.includes('EAUTH') || /535|Invalid login/i.test(e.message));
+			if (!isProductionRuntime() && smtpRejected) {
+				return fail(500, {
+					message:
+						'Could not send mail: the SMTP login was rejected. Set a real SMTP_PASSWORD, or MAIL_DEV_ONLY=true to log the reset link in the server console instead.'
+				});
+			}
 			return fail(500, { message: 'Could not process that request. Try again later.' });
 		}
 
