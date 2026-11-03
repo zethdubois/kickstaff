@@ -50,9 +50,9 @@ Keep ≤7 active bullets.
 
 Low-priority. Not this week’s queue.
 
-- [ ] Smoke `/ops/accounts` against current manifest after `load kickagent`
+- [ ] Smoke `/ops/gl` and `/ops/sites` against the current manifest after `load kickagent`
 - [ ] Keep `/ops/units` on thin v1 until kickagent lifts units to list-detail
 - [ ] `kam:history` — collapse consecutive duplicates
 - [ ] After units are list-detail: drop thin v1 parser path
-- [ ] Optional shared list-detail ops chrome by resource name
+- [x] Shared list-detail ops chrome: `/ops/[resource]` (`/ops/gl`, `/ops/sites`). Units stays on its own route.
 - [ ] Toolbar for `role: "structural"` once kickagent documents invoke shape

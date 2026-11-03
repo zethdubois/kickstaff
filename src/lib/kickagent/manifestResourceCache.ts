@@ -28,6 +28,8 @@ export type ManifestResourceColumn = {
 
 export type ManifestUnitsListResource = {
 	command: string;
+	/** Command button text (`commands[].label`). */
+	label?: string;
 	primaryKey: string;
 	rowsKey: string;
 	defaultLimit: number;
@@ -47,17 +49,23 @@ export type ManifestUnitsDetailResource = {
 		required?: boolean;
 	}>;
 	readonlyKeys: string[];
-	submitCommand: string;
+	submitCommand?: string;
 };
 
 export type ManifestUnitsUpdateResource = {
 	command: string;
+	/** Command button text (`commands[].label`). */
+	label?: string;
 	editableFields: string[];
 };
 
 /** Units v1 leftover — keep until kickagent lifts units to list-detail. */
 export type ManifestUnitsResource = {
 	version: number;
+	/** Page heading. Absent → the resource key. */
+	label?: string;
+	/** Ops nav. Absent → the resource key. */
+	shortLabel?: string;
 	list: ManifestUnitsListResource;
 	detail?: ManifestUnitsDetailResource;
 	update?: ManifestUnitsUpdateResource;
@@ -95,6 +103,8 @@ export type ManifestListDetailField = {
 };
 
 export type ManifestListDetailList = ManifestListSchema & {
+	/** Command button text (`commands[].label`). */
+	label?: string;
 	filters: ManifestListFilter[];
 	defaultLimit?: number;
 	sortKeys?: string[];
@@ -104,12 +114,15 @@ export type ManifestListDetailDetail = {
 	command: string;
 	titleKey: string;
 	recordKey: string;
-	submitCommand: string;
+	/** Absent on show-only resources (e.g. sites). */
+	submitCommand?: string;
 	fields: ManifestListDetailField[];
 };
 
 export type ManifestListDetailUpdate = {
 	command: string;
+	/** Command button text (`commands[].label`). */
+	label?: string;
 	editableFields: string[];
 	fields: Array<{ key: string; flag: string }>;
 };
@@ -119,9 +132,14 @@ export type ManifestListDetailResource = {
 	name: string;
 	class: 'list-detail';
 	version: number;
+	/** Page heading. Absent → the resource key. */
+	label?: string;
+	/** Ops nav. Absent → the resource key. */
+	shortLabel?: string;
 	list: ManifestListDetailList;
 	detail: ManifestListDetailDetail;
-	update: ManifestListDetailUpdate;
+	/** Absent when the resource has no save command. */
+	update?: ManifestListDetailUpdate;
 };
 
 export type ManifestResources = {
@@ -130,13 +148,6 @@ export type ManifestResources = {
 	/** All list-detail instances, keyed by resource name (`gl`, …). */
 	listDetail: Record<string, ManifestListDetailResource>;
 };
-
-/** @deprecated Prefer `getListDetailResource('gl')`. */
-export type ManifestGlListResource = ManifestListDetailList;
-/** @deprecated Prefer `getListDetailResource('gl')`. */
-export type ManifestGlDetailResource = ManifestListDetailDetail;
-/** @deprecated Prefer `getListDetailResource('gl')`. */
-export type ManifestGlUpdateResource = ManifestListDetailUpdate;
 
 let cached: ManifestResources | null = null;
 
@@ -170,23 +181,6 @@ export function getUnitsDetailSchema(): ManifestUnitsDetailResource | null {
 
 export function getListDetailResource(name: string): ManifestListDetailResource | null {
 	return cached?.listDetail[name] ?? null;
-}
-
-export function getGlListSchema(): ManifestListDetailList | null {
-	return cached?.listDetail.gl?.list ?? null;
-}
-
-export function getGlDetailSchema(): ManifestListDetailDetail | null {
-	return cached?.listDetail.gl?.detail ?? null;
-}
-
-export function getGlUpdateSchema(): ManifestListDetailUpdate | null {
-	return cached?.listDetail.gl?.update ?? null;
-}
-
-export function isGlListPresentationRef(ref: string): boolean {
-	const key = ref.trim().toLowerCase();
-	return key === 'gl.list' || key === 'gl-list';
 }
 
 function splitPresentationRef(ref: string): { name: string; kind: 'list' | 'detail' } | null {
@@ -278,10 +272,18 @@ function parseFilters(raw: unknown): ManifestListFilter[] {
 	return out;
 }
 
+function publishedLabel(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const text = value.trim();
+	return text || undefined;
+}
+
 function parseUnitsList(raw: unknown): ManifestUnitsListResource | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const o = raw as Record<string, unknown>;
-	const command = typeof o.command === 'string' ? o.command.trim() : 'units-list';
+	const command = typeof o.command === 'string' ? o.command.trim() : '';
+	if (!command) return null;
+	const label = publishedLabel(o.label);
 	const primaryKey = typeof o.primaryKey === 'string' ? o.primaryKey.trim() : 'id';
 	const rowsKey = typeof o.rowsKey === 'string' ? o.rowsKey.trim() : 'rows';
 	const defaultLimit =
@@ -295,6 +297,7 @@ function parseUnitsList(raw: unknown): ManifestUnitsListResource | null {
 	if (columns.length === 0) return null;
 	return {
 		command,
+		...(label ? { label } : {}),
 		primaryKey,
 		rowsKey,
 		defaultLimit,
@@ -307,10 +310,11 @@ function parseUnitsList(raw: unknown): ManifestUnitsListResource | null {
 function parseUnitsDetail(raw: unknown): ManifestUnitsDetailResource | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const o = raw as Record<string, unknown>;
-	const command = typeof o.command === 'string' ? o.command.trim() : 'units-show';
+	const command = typeof o.command === 'string' ? o.command.trim() : '';
+	if (!command) return null;
 	const titleKey = typeof o.titleKey === 'string' ? o.titleKey.trim() : 'name';
 	const submitCommand =
-		typeof o.submitCommand === 'string' ? o.submitCommand.trim() : 'units-update';
+		typeof o.submitCommand === 'string' ? o.submitCommand.trim() : '';
 	const readonlyKeys = Array.isArray(o.readonlyKeys)
 		? o.readonlyKeys.filter((k): k is string => typeof k === 'string')
 		: [];
@@ -330,31 +334,26 @@ function parseUnitsDetail(raw: unknown): ManifestUnitsDetailResource | null {
 			});
 		}
 	}
-	return { command, titleKey, fields, readonlyKeys, submitCommand };
+	return {
+		command,
+		titleKey,
+		fields,
+		readonlyKeys,
+		...(submitCommand ? { submitCommand } : {})
+	};
 }
 
 function parseUnitsUpdate(raw: unknown): ManifestUnitsUpdateResource | null {
 	if (!raw || typeof raw !== 'object') return null;
 	const o = raw as Record<string, unknown>;
-	const command = typeof o.command === 'string' ? o.command.trim() : 'units-update';
+	const command = typeof o.command === 'string' ? o.command.trim() : '';
+	if (!command) return null;
+	const label = publishedLabel(o.label);
 	const editableFields = Array.isArray(o.editableFields)
 		? o.editableFields.filter((k): k is string => typeof k === 'string')
 		: [];
-	return { command, editableFields };
+	return { command, ...(label ? { label } : {}), editableFields };
 }
-
-const DEFAULT_UNITS_DETAIL: ManifestUnitsDetailResource = {
-	command: 'units-show',
-	titleKey: 'name',
-	fields: [],
-	readonlyKeys: [],
-	submitCommand: 'units-update'
-};
-
-const DEFAULT_UNITS_UPDATE: ManifestUnitsUpdateResource = {
-	command: 'units-update',
-	editableFields: []
-};
 
 function parseListDetailFields(raw: unknown): ManifestListDetailField[] {
 	if (!Array.isArray(raw)) return [];
@@ -405,6 +404,7 @@ function parseListDetailList(raw: unknown): ManifestListDetailList | null {
 	const rowsKey = typeof o.rowsKey === 'string' ? o.rowsKey.trim() : 'rows';
 	const columns = parseColumns(o.columns);
 	if (!command || columns.length === 0) return null;
+	const label = publishedLabel(o.label);
 	const defaultLimit =
 		typeof o.defaultLimit === 'number' && Number.isFinite(o.defaultLimit)
 			? o.defaultLimit
@@ -414,6 +414,7 @@ function parseListDetailList(raw: unknown): ManifestListDetailList | null {
 		: undefined;
 	return {
 		command,
+		...(label ? { label } : {}),
 		primaryKey,
 		rowsKey,
 		columns,
@@ -431,18 +432,25 @@ function parseListDetailDetail(raw: unknown): ManifestListDetailDetail | null {
 	const recordKey = typeof o.recordKey === 'string' ? o.recordKey.trim() : '';
 	const submitCommand = typeof o.submitCommand === 'string' ? o.submitCommand.trim() : '';
 	const fields = parseListDetailFields(o.fields);
-	if (!command || !recordKey || !submitCommand || fields.length === 0) return null;
-	return { command, titleKey, recordKey, submitCommand, fields };
+	if (!command || !recordKey || fields.length === 0) return null;
+	return {
+		command,
+		titleKey,
+		recordKey,
+		fields,
+		...(submitCommand ? { submitCommand } : {})
+	};
 }
 
 function parseListDetailUpdate(
 	raw: unknown,
 	detail: ManifestListDetailDetail
-): ManifestListDetailUpdate {
+): ManifestListDetailUpdate | undefined {
 	const fallbackFields = detail.fields
 		.filter((f) => f.editable && f.flag)
 		.map((f) => ({ key: f.key, flag: f.flag! }));
 	if (!raw || typeof raw !== 'object') {
+		if (!detail.submitCommand) return undefined;
 		return {
 			command: detail.submitCommand,
 			editableFields: fallbackFields.map((f) => f.key),
@@ -453,7 +461,8 @@ function parseListDetailUpdate(
 	const command =
 		typeof o.command === 'string' && o.command.trim() !== ''
 			? o.command.trim()
-			: detail.submitCommand;
+			: detail.submitCommand ?? '';
+	if (!command) return undefined;
 	const editableFields = Array.isArray(o.editableFields)
 		? o.editableFields.filter((k): k is string => typeof k === 'string' && k.trim() !== '')
 		: fallbackFields.map((f) => f.key);
@@ -468,8 +477,10 @@ function parseListDetailUpdate(
 			fields.push({ key, flag });
 		}
 	}
+	const label = publishedLabel(o.label);
 	return {
 		command,
+		...(label ? { label } : {}),
 		editableFields,
 		fields: fields.length > 0 ? fields : fallbackFields
 	};
@@ -487,13 +498,18 @@ function parseListDetailResource(
 	const list = parseListDetailList(g.list);
 	const detail = parseListDetailDetail(g.detail);
 	if (!list || !detail) return null;
+	const update = parseListDetailUpdate(g.update, detail);
+	const label = publishedLabel(g.label);
+	const shortLabel = publishedLabel(g.shortLabel);
 	return {
 		name,
 		class: 'list-detail',
 		version,
+		...(label ? { label } : {}),
+		...(shortLabel ? { shortLabel } : {}),
 		list,
 		detail,
-		update: parseListDetailUpdate(g.update, detail)
+		...(update ? { update } : {})
 	};
 }
 
@@ -504,11 +520,17 @@ function parseUnitsResource(raw: unknown): ManifestUnitsResource | null {
 	const list = parseUnitsList(u.list);
 	if (!list) return null;
 	const version = typeof u.version === 'number' && Number.isFinite(u.version) ? u.version : 1;
+	const detail = parseUnitsDetail(u.detail);
+	const update = parseUnitsUpdate(u.update);
+	const label = publishedLabel(u.label);
+	const shortLabel = publishedLabel(u.shortLabel);
 	return {
 		version,
+		...(label ? { label } : {}),
+		...(shortLabel ? { shortLabel } : {}),
 		list,
-		detail: parseUnitsDetail(u.detail) ?? DEFAULT_UNITS_DETAIL,
-		update: parseUnitsUpdate(u.update) ?? DEFAULT_UNITS_UPDATE
+		...(detail ? { detail } : {}),
+		...(update ? { update } : {})
 	};
 }
 

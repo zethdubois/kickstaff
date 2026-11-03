@@ -170,7 +170,7 @@ describe('resolveRequestTarget', () => {
 	it('ignores ?db= on non-pre-auth paths', () => {
 		const r = resolveRequestTarget(env(), {
 			...base,
-			pathname: '/ops/accounts',
+			pathname: '/ops/gl',
 			dbParam: 'prod',
 			cookie: 'dev'
 		});

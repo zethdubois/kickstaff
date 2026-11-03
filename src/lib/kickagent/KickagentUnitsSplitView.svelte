@@ -24,7 +24,7 @@
   let {
     model,
     detailSchema = null,
-    title = "Units",
+    title = "units",
     variant = "page",
     onActionMessage,
   }: Props = $props();

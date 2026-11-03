@@ -3,6 +3,9 @@ import type { PageServerLoad } from './$types';
 import { and, asc, eq } from 'drizzle-orm';
 import { describeDbFailure, messageForDbError } from '$lib/server/dbErrors';
 import { getDb } from '$lib/server/db';
+import { fetchKickagentManifestResources } from '$lib/server/fetchKickagentManifestResources';
+import { ensureKickagentDocDashboardLinks } from '$lib/server/kickagentDocDashboard';
+import { ensureOpsResourceDashboardLinks } from '$lib/server/opsResourceDashboard';
 import { dashboardLinks, userDashboardLinkPreferences } from '$lib/server/schema';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -22,6 +25,18 @@ async function loadDashboard(
 	userId: string,
 	db: ReturnType<typeof getDb>
 ) {
+	try {
+		const manifest = await fetchKickagentManifestResources();
+		await ensureOpsResourceDashboardLinks(manifest.resources);
+	} catch (e) {
+		console.error('[dashboard] ops resource links', e);
+	}
+	try {
+		await ensureKickagentDocDashboardLinks();
+	} catch (e) {
+		console.error('[dashboard] kickagent docs', e);
+	}
+
 	const allLinks = await db
 		.select()
 		.from(dashboardLinks)
@@ -38,7 +53,11 @@ async function loadDashboard(
 		);
 
 	const hidden = new Set(hiddenRows.map((r) => r.linkId));
-	const visible = allLinks.filter((l) => !hidden.has(l.id));
+	const visible = allLinks.filter(
+		(l) =>
+			!hidden.has(l.id) &&
+			!(l.itemType === 'command' && (l.commandKey ?? '').startsWith('kickagent:'))
+	);
 
 	/** Category order: by minimum sort_order in category, then name */
 	const catOrder = new Map<string, number>();

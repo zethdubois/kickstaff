@@ -95,20 +95,13 @@ When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is unset, admin login runs [`registerKi
 
 Low-level helper: [src/lib/kickagent/commands.ts](../../../src/lib/kickagent/commands.ts) re-exports `registerKickagentCommand` for exceptional host-only commands outside the catalog.
 
-### Ops hub command cards (KAM-UI v0)
+### Ops hub (KAM-UI v0)
 
-The authenticated home page (`/`) is a category-column **linkboard** backed by `dashboard_links`. Kickagent commands can appear as **command cards** in the same UI after **lazy materialization**:
+The authenticated home page (`/`) is a category-column **linkboard** backed by `dashboard_links`. Running a kickagent command does not add a card.
 
-1. Each kickagent row in **`COMMAND_CATALOG`** must include **`category`** (and optional **`sortOrder`**) so cards sort with URL links.
-2. On first successful run of a `kickagent:*` command (palette, console, or hub **Run**), the host calls **`POST /api/dashboard/materialize-command`** with `commandKey` (e.g. `kickagent:hello`).
-3. Server inserts a `dashboard_links` row (`item_type = command`, `command_key`, no `hyperlink`) using catalog/manifest metadata unless a row already exists (user edits in Settings are preserved).
-4. Users hide/reorder/relabel cards under **Settings → Dashboard** like ordinary links.
+When the dashboard loads, the host inserts or updates one **Kickagent Resources** link per manifest resource. The label is the resource key and the href is `/ops/<name>` (`/ops/units` is still the v1 page; list-detail keys use [`/ops/[resource]`](../../../src/routes/ops/[resource]/+page.svelte)). The host does not rename a key. List, detail, and save commands come from that resource's manifest block. Sites stays show-only when `submitCommand` is absent.
 
-Implementation: [dashboardCommandMaterialize.ts](../../../src/lib/server/dashboardCommandMaterialize.ts), [materialize-command API](../../../src/routes/api/dashboard/materialize-command/+server.ts), hub [`+page.svelte`](../../../src/routes/+page.svelte). Phase 2 manifest `commands[]` includes `category`; cached client-side in [manifestCommandCache.ts](../../../src/lib/kickagent/manifestCommandCache.ts) after plugin load.
-
-**Units list (resource UI):** Hub card `kickagent:units-list` → **Open units** → [`/ops/units`](../../../src/routes/ops/units/+page.svelte). Table from `outcome.data` + manifest `resources.units.list` — not KAM pipe log. See [kickagent-resource-ui.md](../kickagent-resource-ui.md).
-
-**Chart of accounts:** Hub card `kickagent:gl-list` → **Open accounts** → [`/ops/accounts`](../../../src/routes/ops/accounts/+page.svelte). List from `gl-list` + `resources.gl.list`; detail `gl-show`; save `gl-update`. Include-hidden and include-retired are host flags, not manifest filters.
+**Kickagent Docs** lists `wiki` (`/wiki`) and `progress` (`/progress`) only when `GET` of that path on the kickagent origin returns 2xx. A path that stops answering is removed on the next dashboard load. See [kickagent-resource-ui.md](../kickagent-resource-ui.md) and [`opsResources.ts`](../../../src/lib/kickagent/opsResources.ts).
 
 ---
 

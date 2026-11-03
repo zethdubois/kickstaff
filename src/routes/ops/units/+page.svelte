@@ -5,6 +5,7 @@
   import { browser } from "$app/environment";
   import { invalidateAll } from "$app/navigation";
   import { onMount } from "svelte";
+  import OpsResourceNav from "$lib/kickagent/OpsResourceNav.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import KickagentUnitsSplitView from "$lib/kickagent/KickagentUnitsSplitView.svelte";
   import {
@@ -19,7 +20,6 @@
     type ResourceTableModel,
   } from "$lib/kickagent/outcomeToTableModel";
   import { runManifestCommand } from "$lib/kickagent/runManifestCommand";
-  import { UNITS_LIST_COMMAND } from "$lib/kickagent/unitsOps";
 
   let { data } = $props();
 
@@ -30,6 +30,9 @@
 
   const detailSchema = $derived(
     data.manifest.unitsDetail ?? getUnitsDetailSchema(),
+  );
+  const pageTitle = $derived(
+    data.opsLinks.find((link) => link.name === "units")?.label || "units",
   );
 
   let loading = $state(false);
@@ -55,13 +58,13 @@
     if (!listSchema) {
       error =
         data.manifest.error ??
-        "Units list schema not loaded. Deploy kickagent ≥ 0.0.3 and reload manifest.";
+        "Manifest resources.units.list is not loaded. Reload the kickagent manifest.";
       return;
     }
     loading = true;
     error = null;
     try {
-      const outcome = await runManifestCommand(UNITS_LIST_COMMAND, args);
+      const outcome = await runManifestCommand(listSchema.command, args);
       const model = outcomeToTableModel(outcome, listSchema);
       if (model) {
         table = model;
@@ -109,20 +112,14 @@
 </script>
 
 <svelte:head>
-  <title>Units</title>
+  <title>{pageTitle}</title>
 </svelte:head>
 
 <div class="ops">
-  <nav class="ops__nav" aria-label="Ops">
-    <a class="ops__navLink" href="/">Dashboard</a>
-    <span class="ops__navSep" aria-hidden="true">·</span>
-    <span class="ops__navCurrent">Units</span>
-    <span class="ops__navSep" aria-hidden="true">·</span>
-    <a class="ops__navLink" href="/ops/accounts">Accounts</a>
-  </nav>
+  <OpsResourceNav links={data.opsLinks} current="units" />
 
   <header class="ops__header">
-    <h1 class="ops__title">Units</h1>
+    <h1 class="ops__title">{pageTitle}</h1>
     <p class="ops__lead">
       Operations units from kickagent. Select a unit in the list to load its detail form.
       ↑↓ navigate · Space menu.
@@ -159,6 +156,7 @@
     <KickagentListFilters
       filters={schema.filters}
       command={schema.command}
+      commandLabel={schema.label}
       {loading}
       onRun={runList}
     />
@@ -171,7 +169,7 @@
       <KickagentUnitsSplitView
         model={table}
         detailSchema={detailSchema}
-        title="Units"
+        title={pageTitle}
       />
     {:else if !loading && !error}
       <p class="ops__empty">No rows returned.</p>
@@ -184,27 +182,6 @@
     max-width: 72rem;
     margin: 0 auto;
     padding: 1.25rem 1rem 2rem;
-  }
-
-  .ops__nav {
-    margin-bottom: 1rem;
-    font-size: 0.88rem;
-    color: color-mix(in srgb, currentColor 65%, transparent);
-  }
-
-  .ops__navLink {
-    color: inherit;
-    font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 0.12em;
-  }
-
-  .ops__navSep {
-    margin: 0 0.35rem;
-  }
-
-  .ops__navCurrent {
-    font-weight: 600;
   }
 
   .ops__header {

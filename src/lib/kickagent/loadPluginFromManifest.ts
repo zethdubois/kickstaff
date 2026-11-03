@@ -29,6 +29,7 @@ import { registerManifestServerCommands } from "./registerManifestServerCommands
 
 type KickagentManifestCommandJson = {
   name: string;
+  label?: string;
   description: string;
   category: string;
   execution: "local" | "remote";
@@ -172,6 +173,7 @@ function parseManifestCommands(raw: unknown): KickagentManifestCommandJson[] {
     if (!item || typeof item !== "object") continue;
     const row = item as Record<string, unknown>;
     const name = typeof row.name === "string" ? row.name.trim() : "";
+    const label = typeof row.label === "string" ? row.label.trim() : "";
     const description =
       typeof row.description === "string" ? row.description.trim() : "";
     const category = typeof row.category === "string" ? row.category.trim() : "";
@@ -191,6 +193,7 @@ function parseManifestCommands(raw: unknown): KickagentManifestCommandJson[] {
         : undefined;
     out.push({
       name,
+      ...(label ? { label } : {}),
       description,
       category,
       execution,

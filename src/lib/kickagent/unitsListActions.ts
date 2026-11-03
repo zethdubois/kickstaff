@@ -35,13 +35,16 @@ export function buildUnitsListActions(
 		onActionMessage?: (message: string) => void;
 	}
 ): UnitsListActionSet {
-	const detailCommand =
-		getManifestResources()?.units?.detail?.command ?? 'units-show';
+	const detailCommand = getManifestResources()?.units?.detail?.command;
 
 	const primary: UnitsListAction = {
 		id: 'show',
 		label: 'View unit',
 		run: async (item) => {
+			if (!detailCommand) {
+				opts?.onActionMessage?.('Manifest resources.units.detail has no command.');
+				return;
+			}
 			const id = rowId(model, item.row);
 			const outcome = await runManifestCommand(detailCommand, ['--id', id]);
 			const log = outcome.log;

@@ -117,7 +117,7 @@ Direct requests to the kickagent host without the bearer token get **401**. That
 After `load` is generic:
 
 - Delete the Phase 1 static path once nothing calls it: `BROWSER_PLUGIN_CATALOG`, `registerHelloCommand`, `registerKickagentCatalogCommands`. Confirm with a search first.
-- Units and GL pages go through the list/detail builder. Drop `getUnitsListSchema` / `getGlListSchema` checks in the reload message. The thin units v1 path stays only until kickagent lifts `resources.units`; do not add a new name-specific parser.
+- Layout reload checks `getManifestResources()`, not a named resource. `getGlListSchema` is gone. The thin units v1 path stays only until kickagent lifts `resources.units`; do not add a new name-specific parser.
 - ~~`src/lib/kickagent/outcomeToTableModel.ts` tells the user to run `kam:reload-kickagent`. Say `load kickagent`.~~ Done.
 
 ## 6. Files that moved here

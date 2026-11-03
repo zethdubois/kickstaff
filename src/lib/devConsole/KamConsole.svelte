@@ -14,7 +14,6 @@
   import { showsKlogTimestamp } from "./klogStamp";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
-  import { UNITS_LIST_COMMAND } from "$lib/kickagent/unitsOps";
 
   let bodyEl: HTMLDivElement | undefined = $state();
   let inlineInput = $state("");
@@ -41,8 +40,9 @@
   );
 
   async function runUnitsListFromConsole(args: string[]) {
-    const parts = [UNITS_LIST_COMMAND, ...args];
-    await runCommand(parts.join(" "));
+    const command = getUnitsListSchema()?.command;
+    if (!command) return;
+    await runCommand([command, ...args].join(" "));
   }
 
   $effect(() => {
@@ -132,6 +132,7 @@
             variant="console"
             filters={unitsListSchema.filters}
             command={unitsListSchema.command}
+            commandLabel={unitsListSchema.label}
             onRun={runUnitsListFromConsole}
           />
         {/if}

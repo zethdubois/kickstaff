@@ -264,6 +264,8 @@
   ): Promise<string | void> {
     const current = detailRecord;
     if (!current) return "No record loaded.";
+    const submitCommand = resource.detail.submitCommand;
+    if (!submitCommand) return;
     const args = buildListDetailUpdateArgs(current, draft, resource.detail);
     if (args === null) return "Record has no identity flag.";
     if (args.length === 0) return "No changes to save.";
@@ -271,10 +273,7 @@
     detailSaving = true;
     detailError = null;
     try {
-      const outcome = await runManifestCommand(
-        resource.detail.submitCommand,
-        args,
-      );
+      const outcome = await runManifestCommand(submitCommand, args);
       const record = recordFromShowOutcome(outcome, resource.detail.recordKey);
       if (!record) {
         detailError = recordOutcomeMessage(outcome, resource.detail.recordKey);
@@ -442,7 +441,8 @@
         saving={detailSaving}
         error={detailError}
         {variant}
-        onSave={saveDetail}
+        onSave={resource.detail.submitCommand ? saveDetail : undefined}
+        saveLabel={resource.update?.label || resource.detail.submitCommand}
       />
     </div>
   {/if}

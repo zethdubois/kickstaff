@@ -12,6 +12,8 @@
   type Props = {
     filters: ManifestListFilter[];
     command?: string;
+    /** Visible text for the run button. `commands[].label` for this list command. */
+    commandLabel?: string;
     onRun: (args: string[]) => Promise<void>;
     loading?: boolean;
     variant?: "console" | "page";
@@ -30,6 +32,7 @@
   let {
     filters,
     command = "list",
+    commandLabel = "",
     onRun,
     loading = false,
     variant = "page",
@@ -48,6 +51,7 @@
     Object.values(values).some((v) => v === true || (typeof v === "string" && v !== "")),
   );
   const clearEnabled = $derived(canClear ?? hasValues);
+  const runLabel = $derived(commandLabel.trim() || command);
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
@@ -111,9 +115,9 @@
           type="submit"
           class="run"
           disabled={loading}
-          title={`Run ${command}`}
+          title={command}
         >
-          {loading ? "Loading…" : "Refresh"}
+          {loading ? "Loading…" : runLabel}
         </button>
         <button
           type="button"

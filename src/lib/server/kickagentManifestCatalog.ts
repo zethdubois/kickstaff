@@ -3,6 +3,7 @@ import type { CommandCatalogDefaults } from '$lib/server/dashboardCommandTypes';
 
 type ManifestCommandJson = {
 	name: string;
+	label?: string;
 	description?: string;
 	category?: string;
 	execution?: string;
@@ -35,7 +36,8 @@ function defaultsFromManifestRow(row: ManifestCommandJson): CommandCatalogDefaul
 	if (!name || !category) return null;
 	const execution = row.execution;
 	if (execution !== 'local' && execution !== 'remote') return null;
-	const label = name.length > 0 ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+	const published = row.label?.trim();
+	const label = published || name;
 	return {
 		label,
 		description: typeof row.description === 'string' ? row.description.trim() : '',

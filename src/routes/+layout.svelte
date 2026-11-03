@@ -17,7 +17,7 @@
     klogInfo,
     klogWarn,
   } from "$lib/devConsole/state.svelte";
-  import { getGlListSchema, getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
+  import { getManifestResources } from "$lib/kickagent/manifestResourceCache";
   import {
     registerRefreshTarget,
     unregisterRefreshTarget,
@@ -62,8 +62,8 @@
       page.route.id === "/account/password",
   );
 
-  /** Accounts fills the main column; list/detail manage their own scroll. */
-  const mainSurfaceFillHeight = $derived(page.route.id === "/ops/accounts");
+  /** List-detail ops pages fill the main column; list/detail manage their own scroll. */
+  const mainSurfaceFillHeight = $derived(page.route.id === "/ops/[resource]");
 
   let useExternalLink = $state(false);
   let rentalMenuOpen = $state(false);
@@ -105,7 +105,7 @@
     const manifestUrl = env.PUBLIC_KICKAGENT_MANIFEST_URL?.trim();
     const shouldForceReload =
       lastKickagentBootUserId !== user.id ||
-      (manifestUrl && !getUnitsListSchema() && !getGlListSchema());
+      (manifestUrl && !getManifestResources());
 
     if (lastKickagentBootUserId === user.id && !shouldForceReload) return;
     lastKickagentBootUserId = user.id;

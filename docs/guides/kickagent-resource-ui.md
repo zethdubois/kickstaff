@@ -15,16 +15,16 @@ Standing mission: [host-mission.md](host-mission.md) — one builder per UI clas
 
 | Surface | Role |
 | ------- | ---- |
-| **Hub command card** (`kickagent:units-list`) | **Trigger** — materialize card, navigate to [`/ops/units`](/ops/units) |
-| **`/ops/units`** | **Canonical UI** — filters + [`KickagentUnitsSplitView`](../../src/lib/kickagent/KickagentUnitsSplitView.svelte) (list + detail form) |
-| **`/ops/accounts`** | Chart of accounts — `gl-list` table from `resources.gl.list.columns`, detail `gl-show`, save `gl-update`. See [ops-accounts-ui-map.md](ops-accounts-ui-map.md) |
+| **Hub link** (`/ops/<name>`) | **Kickagent Resources** column. One link per manifest resource. The label is the resource key |
+| **`/ops/units`** | Units v1 page — filters + [`KickagentUnitsSplitView`](../../src/lib/kickagent/KickagentUnitsSplitView.svelte). List command is `resources.units.list.command` |
+| **`/ops/<name>`** | List-detail page for that resource key. See [ops-accounts-ui-map.md](ops-accounts-ui-map.md). Show-only when `submitCommand` is absent |
 | **KAM Console** | Ad-hoc CLI; log lines stay; optional console table preview |
 
 ## Manifest (kickagent ≥ 0.0.3)
 
 See kickagent `docs/manifest-resources.md`. After publish, admin runs **`load kickagent`** (or re-login).
 
-Kickstaff parses `resources.units.list` even when `detail` / `update` are not yet published (defaults applied).
+Kickstaff parses `resources.units.list` when `detail` / `update` are absent. It does not invent `units-show` or `units-update`.
 
 ## Run outcome shape (`units-list`)
 
@@ -44,7 +44,7 @@ Client: [`runManifestCommand`](../../src/lib/kickagent/runManifestCommand.ts) �
 
 1. `PUBLIC_KICKAGENT_MANIFEST_URL` set; manifest includes `resources.units.list` with columns.
 2. `load kickagent` — filters appear in KAM `[KA]` mode.
-3. Hub **Open units** or visit `/ops/units` — table headers match manifest, not pipes.
+3. Hub link `units` or visit `/ops/units` — table headers match manifest, not pipes.
 4. Network: `POST /api/kickagent/run` body includes `data.rows` and `presentationRef`.
 
 If table missing but pipes show: check klog for `table UI: missing manifest resources…`.
@@ -58,9 +58,8 @@ If table missing but pipes show: check klog for `table UI: missing manifest reso
 | [`KickagentResourceList.svelte`](../../src/lib/kickagent/KickagentResourceList.svelte) | Name list + keyboard actions |
 | [`KickagentResourceTable.svelte`](../../src/lib/kickagent/KickagentResourceTable.svelte) | Typed columns (legacy / other resources) |
 | [`routes/ops/units/+page.svelte`](../../src/routes/ops/units/+page.svelte) | Full-page units |
-| [`routes/ops/accounts/+page.svelte`](../../src/routes/ops/accounts/+page.svelte) | Chart of accounts |
-| [`unitsOps.ts`](../../src/lib/kickagent/unitsOps.ts) | Hub path + command key helpers |
-| [`accountsOps.ts`](../../src/lib/kickagent/accountsOps.ts) | Accounts hub path |
+| [`routes/ops/[resource]/+page.svelte`](../../src/routes/ops/[resource]/+page.svelte) | List-detail resources (`/ops/gl`, `/ops/sites`) |
+| [`opsResources.ts`](../../src/lib/kickagent/opsResources.ts) | Nav and hub links from resource keys |
 
 ## Related
 

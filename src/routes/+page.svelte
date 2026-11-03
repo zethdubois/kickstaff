@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto, invalidateAll } from "$app/navigation";
+  import { invalidateAll } from "$app/navigation";
   import {
     categoryBorder,
     categoryForeground,
@@ -9,14 +9,6 @@
   import { materializeDashboardCommand } from "$lib/client/dashboardCommandMaterialize";
   import { runCommand } from "$lib/devConsole/commands";
   import { devConsole } from "$lib/devConsole/state.svelte";
-  import {
-    ACCOUNTS_OPS_PATH,
-    isAccountsHubCommandKey,
-  } from "$lib/kickagent/accountsOps";
-  import {
-    isUnitsHubCommandKey,
-    UNITS_OPS_PATH,
-  } from "$lib/kickagent/unitsOps";
 
   let { data } = $props();
 
@@ -28,14 +20,6 @@
     try {
       await materializeDashboardCommand(commandKey);
       await invalidateAll();
-      if (isUnitsHubCommandKey(commandKey)) {
-        await goto(UNITS_OPS_PATH);
-        return;
-      }
-      if (isAccountsHubCommandKey(commandKey)) {
-        await goto(ACCOUNTS_OPS_PATH);
-        return;
-      }
       if (!devConsole.consoleOpen) {
         devConsole.consoleOpen = true;
       }
@@ -47,16 +31,12 @@
 </script>
 
 <svelte:head>
-  <title>Kick Assets Ops</title>
+  <title>Kickstaff Services</title>
 </svelte:head>
 
 <div class="dash">
   <header class="dash__header">
     <h1 class="dash__title">Internal Ops Dashboard</h1>
-    <p class="dash__subtitle">
-      Quick links and commands you have run at least once. Run more from the KAM
-      palette (<kbd>Ctrl+/</kbd>).
-    </p>
   </header>
 
   <section class="dash__section" aria-label="Resources">
@@ -95,8 +75,6 @@
                   <div class="card__expand">
                     <p class="card__desc">{item.description}</p>
                     {#if item.itemType === "command" && item.commandKey}
-                      {@const unitsCard = isUnitsHubCommandKey(item.commandKey)}
-                      {@const accountsCard = isAccountsHubCommandKey(item.commandKey)}
                       <button
                         type="button"
                         class="card__open card__run"
@@ -104,22 +82,22 @@
                         onclick={() => openHubCommand(item.commandKey!)}
                       >
                         {runningKey === item.commandKey
-                          ? "Opening…"
-                          : unitsCard
-                            ? "Open units"
-                            : accountsCard
-                              ? "Open accounts"
-                              : "Run command"}
+                          ? "Running…"
+                          : "Run command"}
                       </button>
                     {:else if item.hyperlink}
-                      <a
-                        class="card__open"
-                        href={item.hyperlink}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open in new tab
-                      </a>
+                      {#if item.hyperlink.startsWith("/")}
+                        <a class="card__open" href={item.hyperlink}>Open</a>
+                      {:else}
+                        <a
+                          class="card__open"
+                          href={item.hyperlink}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Open in new tab
+                        </a>
+                      {/if}
                     {/if}
                   </div>
                 </details>
@@ -138,15 +116,10 @@
   }
 
   .dash__title {
-    margin: 0 0 0.35rem;
+    margin: 0;
     font-size: 1.75rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-  }
-
-  .dash__subtitle {
-    margin: 0;
-    color: color-mix(in srgb, currentColor 70%, transparent);
   }
 
   .dash__empty {

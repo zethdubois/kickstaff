@@ -23,6 +23,8 @@
     error?: string | null;
     variant?: "console" | "page";
     onSave?: (draft: Record<string, unknown>) => Promise<string | void>;
+    /** Idle text for the save button. `commands[].label` for the update command. */
+    saveLabel?: string;
   };
 
   let {
@@ -34,6 +36,7 @@
     error = null,
     variant = "page",
     onSave,
+    saveLabel = "Save",
   }: Props = $props();
 
   let draft = $state<Record<string, unknown>>({});
@@ -238,10 +241,10 @@
         </div>
       {/if}
 
-      {#if valueFields.length > 0 || statusFields.length > 0}
+      {#if onSave && (valueFields.length > 0 || statusFields.length > 0)}
         <div class="actions">
-          <button type="submit" class="save" disabled={busy || !onSave}>
-            {saving ? "Saving…" : "Save"}
+          <button type="submit" class="save" disabled={busy}>
+            {saving ? "Saving…" : saveLabel}
           </button>
           {#if status}
             <p class="note" role="status">{status}</p>

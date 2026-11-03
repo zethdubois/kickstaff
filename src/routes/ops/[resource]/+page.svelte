@@ -10,6 +10,7 @@
     getListPrefs,
     saveListPrefs,
   } from "$lib/client/uiSettings.svelte";
+  import OpsResourceNav from "$lib/kickagent/OpsResourceNav.svelte";
   import KickagentListDetailSplitView from "$lib/kickagent/KickagentListDetailSplitView.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import {
@@ -38,8 +39,13 @@
 
   let { data } = $props();
 
+  const resourceName = $derived(data.resourceName);
+  const pageTitle = $derived(
+    data.opsLinks.find((link) => link.name === resourceName)?.label || resourceName,
+  );
   const resource = $derived(
-    data.manifest.glResource ?? getListDetailResource("gl"),
+    data.manifest.resources?.listDetail[resourceName] ??
+      getListDetailResource(resourceName),
   );
   const schema = $derived(resource?.list ?? null);
 
@@ -51,12 +57,14 @@
   let autoLoaded = $state(false);
 
   // Saved in the browser (uiSettings.listPrefs[resource]); empty = defaults.
-  const prefsKey = $derived(resource?.name ?? "gl");
+  const prefsKey = $derived(resourceName);
   let filterValues = $state<ListFilterValues>({});
   let columnFilters = $state<Record<string, string>>({});
   let sort = $state<ListSort | null>(null);
   let visibleCount = $state(0);
   let prefsReady = $state(false);
+  /** Resource name whose prefs are currently in the controls. */
+  let prefsBoundTo = $state<string | null>(null);
 
   const hasPrefs = $derived(
     !isEmptyListPrefs(normalizeListPrefs({ filterValues, columnFilters, sort })),
@@ -78,22 +86,32 @@
 
   function syncServerSchemaToClientCache(): void {
     if (!browser || !data.manifest.resources) return;
-    if (getListDetailResource("gl")) return;
+    if (getListDetailResource(resourceName)) return;
     setManifestResourceCache(data.manifest.resources);
   }
 
   onMount(() => {
     syncServerSchemaToClientCache();
-    if (data.manifest.error && !schema) error = data.manifest.error;
-    const saved = getListPrefs(untrack(() => prefsKey));
+  });
+
+  // Switching /ops/gl → /ops/sites reuses this page; rebind prefs and reload.
+  $effect(() => {
+    const name = resourceName;
+    if (!browser || prefsBoundTo === name) return;
+    const saved = getListPrefs(name);
     filterValues = { ...saved.filterValues };
     columnFilters = { ...saved.columnFilters };
     sort = saved.sort;
+    table = null;
+    notice = null;
+    error = data.manifest.error && !getListDetailResource(name) ? data.manifest.error : null;
+    autoLoaded = false;
+    prefsBoundTo = name;
     prefsReady = true;
   });
 
   $effect(() => {
-    if (!prefsReady) return;
+    if (!prefsReady || prefsBoundTo !== prefsKey) return;
     saveListPrefs(prefsKey, {
       filterValues: $state.snapshot(filterValues),
       columnFilters: $state.snapshot(columnFilters),
@@ -117,7 +135,7 @@
     if (!listSchema) {
       error =
         data.manifest.error ??
-        "Accounts list schema not loaded. Reload the kickagent manifest.";
+        `${pageTitle} list schema not loaded. Reload the kickagent manifest.`;
       return;
     }
     loading = true;
@@ -132,7 +150,7 @@
       }
       table = null;
       if (!outcome.data && !outcome.presentationRef) {
-        notice = outcomeLogText(outcome) ?? "No accounts found.";
+        notice = outcomeLogText(outcome) ?? "No rows found.";
         return;
       }
       error =
@@ -156,8 +174,8 @@
         error = result.error;
         return;
       }
-      if (!getListDetailResource("gl")) {
-        error = `kickagent ${result.version} loaded but manifest has no list-detail resources.gl`;
+      if (!getListDetailResource(resourceName)) {
+        error = `kickagent ${result.version} loaded but manifest has no list-detail resources.${resourceName}`;
         return;
       }
       await invalidateAll();
@@ -182,7 +200,7 @@
   }
 
   $effect(() => {
-    if (!schema || !prefsReady || autoLoaded) return;
+    if (!schema || !prefsReady || autoLoaded || prefsBoundTo !== resourceName) return;
     autoLoaded = true;
     void runList(
       untrack(() => buildListFilterArgs(presenceFilters(schema.filters), filterValues)),
@@ -191,27 +209,21 @@
 </script>
 
 <svelte:head>
-  <title>Accounts</title>
+  <title>{pageTitle}</title>
 </svelte:head>
 
 <div class="ops">
   <div class="ops__chrome">
-    <nav class="ops__nav" aria-label="Ops">
-      <a class="ops__navLink" href="/">Dashboard</a>
-      <span class="ops__navSep" aria-hidden="true">·</span>
-      <a class="ops__navLink" href="/ops/units">Units</a>
-      <span class="ops__navSep" aria-hidden="true">·</span>
-      <span class="ops__navCurrent">Accounts</span>
-    </nav>
+    <OpsResourceNav links={data.opsLinks} current={resourceName} />
 
     <header class="ops__header">
       <h1 class="ops__title">
-        Accounts
+        {pageTitle}
         <button
           type="button"
           class="ops__info"
-          title="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
-          aria-label="Chart of accounts from kickagent list-detail schema. Filters, columns, and save flags come from the manifest."
+          title={`resources.${resourceName} list-detail. Filters, columns, and save flags come from the manifest.`}
+          aria-label={`resources.${resourceName} list-detail. Filters, columns, and save flags come from the manifest.`}
         >i</button>
       </h1>
     </header>
@@ -223,7 +235,7 @@
         {#if data.manifest.error}
           {data.manifest.error}
         {:else}
-          Manifest <code>resources.gl</code> list-detail is not available.
+          Manifest <code>resources.{resourceName}</code> list-detail is not available.
         {/if}
       </p>
       <button
@@ -240,6 +252,7 @@
       <KickagentListFilters
         filters={schema.filters}
         command={schema.command}
+        commandLabel={schema.label}
         {loading}
         onRun={runList}
         bind:values={filterValues}
@@ -270,7 +283,7 @@
       <KickagentListDetailSplitView
         model={displayModel}
         {resource}
-        title="Accounts"
+        title={pageTitle}
         {onRecordUpdated}
         bind:sort
         bind:columnFilters
@@ -304,27 +317,6 @@
 
   .ops__chrome {
     flex: 0 0 auto;
-  }
-
-  .ops__nav {
-    margin-bottom: 0.75rem;
-    font-size: 0.88rem;
-    color: color-mix(in srgb, currentColor 65%, transparent);
-  }
-
-  .ops__navLink {
-    color: inherit;
-    font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 0.12em;
-  }
-
-  .ops__navSep {
-    margin: 0 0.35rem;
-  }
-
-  .ops__navCurrent {
-    font-weight: 600;
   }
 
   .ops__header {

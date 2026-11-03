@@ -15,6 +15,8 @@ export const MANIFEST_COMMAND_ROLES: readonly ManifestCommandRole[] = [
 
 export type CachedManifestCommand = {
 	name: string;
+	/** `commands[].label`. Absent → callers show `name`. */
+	label?: string;
 	description: string;
 	category: string;
 	execution: 'local' | 'remote';
@@ -38,6 +40,12 @@ export function getManifestCommandDefaults(shortName: string): CachedManifestCom
 	if (!cached) return null;
 	const key = shortName.trim().toLowerCase();
 	return cached.find((c) => c.name.toLowerCase() === key) ?? null;
+}
+
+/** Button text for a manifest command. `commands[].label`, then the command name. */
+export function manifestCommandLabel(command: { name: string; label?: string }): string {
+	const label = command.label?.trim();
+	return label ? label : command.name;
 }
 
 /** Commands a host may draw as buttons: `structural` only. Shortcuts and unclassified are skipped. */

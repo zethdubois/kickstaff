@@ -46,7 +46,7 @@ Before adding kickstaff code for a kickagent command:
 2. If **yes** — extend or call the generic builder. Do not add `src/lib/kickagent/<resource>Ops.ts` flag tables.
 3. If **no** — the class is new. Add one builder and document the class. Do not invent a one-resource page that cannot be reused.
 
-A new `resources.vendors` of the same shape as `resources.gl` is a **reload**, not a `/ops/vendors` rewrite. A dedicated route is optional chrome.
+A new `resources.vendors` of the same shape as `resources.gl` is a **reload**. The page is already `/ops/vendors`. Do not add another route file.
 
 ### Field vs command (no button per command)
 
@@ -80,10 +80,10 @@ These exist because the app predates this mission. Prefer the generic path on ev
 | Deviation | Why it is here | Direction |
 | --------- | -------------- | --------- |
 | Parser historically required `resources.units` and treated other keys as optional extras | Host grew around units first | Cache every `resources.<name>`; discover by key |
-| `/ops/accounts` still has accounts-only filter/form constants (`glAccountForm`, custom list controls) | Built before `resources.gl` list-detail | **Done path:** drive from `class: list-detail` v2; generic filters + detail builders |
+| Page title used to say Accounts for `resources.gl` | Host alias, not a manifest field | **Done:** title and nav use the resource key |
 | Units detail uses `readonlyKeys` / no per-field `flag` / no `recordKey` | Older resource shape | Prefer GL v2 as the target shape; do not fork a third schema in the host |
 | `feature-flow.md` in kickagent still says a new `resources.<name>` is a host change | Written when the host special-cased keys | Treat same-class resources as reload; only a **new class** extends the host library |
-| Dedicated `/ops/units` and `/ops/accounts` routes | Useful chrome | Keep routes if they help; they should share one builder |
+| Dedicated `/ops/units` next to `/ops/[resource]` | Units is still the thin v1 shape. List-detail resources are `/ops/<name>` | Drop `/ops/units` when units becomes list-detail |
 
 Hub cards, aliases, and rental marketing are **not** deviations from the consumer mission. They are other products in the same app.
 
