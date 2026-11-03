@@ -22,7 +22,7 @@ The same page serves every `class: "list-detail"` resource (`/ops/gl`, `/ops/sit
 
 ## Hub entry
 
-Dashboard **Kickagent Resources**: one link per resource (`/ops/<name>`). The card uses `resources.<name>.label` (or the key). Running a command does not add a card. **Kickagent Docs**: `wiki` and `progress` when those paths answer on the kickagent origin.
+Dashboard **Kickagent Resources**: one link per resource (`/ops/<name>`). The card uses `resources.<name>.label` (or the key). Running a command does not add a card. **Kickagent Docs**: `wiki` and `progress` when the publish origin serves `/wiki` and `/progress`, or when the local servers answer at `127.0.0.1:7097` and `:7095`.
 
 ## Data flow
 

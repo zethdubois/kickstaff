@@ -50,13 +50,16 @@
   const showInternalNav = $derived(!isLogin && !isVanityRoot);
 
   /**
-   * Rental landings need a full-width surface; hub/ops shrink-wrap.
-   * Auth cards use `<dialog>`, which is absolutely positioned by the
-   * browser. A shrink-wrapped parent makes that percentage width resolve
-   * to the longest word, so those routes need a definite containing block.
+   * Rental landings need a full-width surface. The hub does too: its card
+   * groups use `auto-fit`, which collapses to one column inside a
+   * shrink-wrapped parent. Auth cards use `<dialog>`, which is absolutely
+   * positioned by the browser. A shrink-wrapped parent makes that
+   * percentage width resolve to the longest word, so those routes need a
+   * definite containing block.
    */
   const mainSurfaceFullWidth = $derived(
-    page.route.id === "/rent/[city]" ||
+    isHub ||
+      page.route.id === "/rent/[city]" ||
       isVanityRoot ||
       isLogin ||
       page.route.id === "/account/password",
@@ -730,7 +733,8 @@
   /* (removed) select + single-tooltip styles replaced by per-item tooltips in the custom menu */
 
   .main--hub {
-    max-width: 48rem;
+    width: min(72rem, 100%);
+    max-width: 72rem;
     margin: 0 auto;
     padding: 1.5rem 1.25rem 3rem;
   }

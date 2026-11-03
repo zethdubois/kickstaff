@@ -14,6 +14,13 @@
 
   let runningKey = $state<string | null>(null);
 
+  const kickagentColumns = $derived(
+    data.dashboardColumns.filter((col) => col.category.startsWith("Kickagent")),
+  );
+  const otherColumns = $derived(
+    data.dashboardColumns.filter((col) => !col.category.startsWith("Kickagent")),
+  );
+
   async function openHubCommand(commandKey: string) {
     if (runningKey) return;
     runningKey = commandKey;
@@ -31,7 +38,7 @@
 </script>
 
 <svelte:head>
-  <title>Kickstaff Services</title>
+  <title>Kickstaff HQ</title>
 </svelte:head>
 
 <div class="dash">
@@ -46,69 +53,80 @@
         <a href="/settings/add-link">Settings → Add link</a>.
       </p>
     {:else}
-      <div class="dash__columns">
-        {#each data.dashboardColumns as col (col.category)}
-          {@const hue = hashCategoryHue(col.category)}
-          <div class="dash__column">
-            <h2
-              class="dash__cat"
-              style="color: {categoryForeground(
-                hue,
-              )}; border-left: 3px solid {categoryBorder(
-                hue,
-              )}; padding-left: 0.5rem;"
-            >
-              {col.category}
-            </h2>
-            <div class="cards">
-              {#each col.links as item (item.id)}
-                <details
-                  class="card card--dash"
-                  style="background-color: {categoryTintBackground(
-                    hue,
-                  )}; border: 1px solid {categoryBorder(hue)};"
-                >
-                  <summary class="card__summary">
-                    <span class="card__title">{item.label}</span>
-                    <span class="card__chev" aria-hidden="true"></span>
-                  </summary>
-                  <div class="card__expand">
-                    <p class="card__desc">{item.description}</p>
-                    {#if item.itemType === "command" && item.commandKey}
-                      <button
-                        type="button"
-                        class="card__open card__run"
-                        disabled={runningKey === item.commandKey}
-                        onclick={() => openHubCommand(item.commandKey!)}
-                      >
-                        {runningKey === item.commandKey
-                          ? "Running…"
-                          : "Run command"}
-                      </button>
-                    {:else if item.hyperlink}
-                      {#if item.hyperlink.startsWith("/")}
-                        <a class="card__open" href={item.hyperlink}>Open</a>
-                      {:else}
-                        <a
-                          class="card__open"
-                          href={item.hyperlink}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Open in new tab
-                        </a>
-                      {/if}
-                    {/if}
-                  </div>
-                </details>
-              {/each}
-            </div>
+      <div class="dash__board">
+        {#if kickagentColumns.length > 0}
+          <div class="dash__kickagent">
+            {#each kickagentColumns as col (col.category)}
+              {@render group(col)}
+            {/each}
           </div>
-        {/each}
+        {/if}
+        {#if otherColumns.length > 0}
+          <div class="dash__rest">
+            {#each otherColumns as col (col.category)}
+              {@render group(col)}
+            {/each}
+          </div>
+        {/if}
       </div>
     {/if}
   </section>
 </div>
+
+{#snippet group(col)}
+  {@const hue = hashCategoryHue(col.category)}
+  <div class="dash__column">
+    <h2
+      class="dash__cat"
+      style="color: {categoryForeground(hue)}; border-left: 3px solid {categoryBorder(
+        hue,
+      )}; padding-left: 0.5rem;"
+    >
+      {col.category}
+    </h2>
+    <div class="cards">
+      {#each col.links as item (item.id)}
+        <details
+          class="card card--dash"
+          style="background-color: {categoryTintBackground(
+            hue,
+          )}; border: 1px solid {categoryBorder(hue)};"
+        >
+          <summary class="card__summary">
+            <span class="card__title">{item.label}</span>
+            <span class="card__chev" aria-hidden="true"></span>
+          </summary>
+          <div class="card__expand">
+            <p class="card__desc">{item.description}</p>
+            {#if item.itemType === "command" && item.commandKey}
+              <button
+                type="button"
+                class="card__open card__run"
+                disabled={runningKey === item.commandKey}
+                onclick={() => openHubCommand(item.commandKey!)}
+              >
+                {runningKey === item.commandKey ? "Running…" : "Run command"}
+              </button>
+            {:else if item.hyperlink}
+              {#if item.hyperlink.startsWith("/")}
+                <a class="card__open" href={item.hyperlink}>Open</a>
+              {:else}
+                <a
+                  class="card__open"
+                  href={item.hyperlink}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open in new tab
+                </a>
+              {/if}
+            {/if}
+          </div>
+        </details>
+      {/each}
+    </div>
+  </div>
+{/snippet}
 
 <style>
   .dash__header {
@@ -132,11 +150,41 @@
     font-weight: 600;
   }
 
-  .dash__columns {
+  .dash__board {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     gap: 1.25rem 1.5rem;
     align-items: start;
+  }
+
+  .dash__kickagent {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
+    border-radius: 14px;
+  }
+
+  .dash__rest {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid color-mix(in srgb, black 18%, transparent);
+    border-radius: 14px;
+    background: #e6e6e6;
+    box-shadow: inset 0 2px 6px rgb(0 0 0 / 16%);
+  }
+
+  @media (max-width: 52rem) {
+    .dash__board,
+    .dash__rest {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 
   .dash__column {

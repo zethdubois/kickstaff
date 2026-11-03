@@ -101,7 +101,7 @@ The authenticated home page (`/`) is a category-column **linkboard** backed by `
 
 When the dashboard loads, the host inserts or updates one **Kickagent Resources** link per manifest resource. The label is the resource key and the href is `/ops/<name>` (`/ops/units` is still the v1 page; list-detail keys use [`/ops/[resource]`](../../../src/routes/ops/[resource]/+page.svelte)). The host does not rename a key. List, detail, and save commands come from that resource's manifest block. Sites stays show-only when `submitCommand` is absent.
 
-**Kickagent Docs** lists `wiki` (`/wiki`) and `progress` (`/progress`) only when `GET` of that path on the kickagent origin returns 2xx. A path that stops answering is removed on the next dashboard load. See [kickagent-resource-ui.md](../kickagent-resource-ui.md) and [`opsResources.ts`](../../../src/lib/kickagent/opsResources.ts).
+**Kickagent Docs** lists `wiki` and `progress` when a probe returns 2xx. The publish origin (`/wiki`, `/progress`) is tried first. If that mount is absent, the local servers at `http://127.0.0.1:7097/` and `http://127.0.0.1:7095/` are used and the card opens that URL. A surface that stops answering is removed on the next dashboard load. See [kickagent-resource-ui.md](../kickagent-resource-ui.md) and [`opsResources.ts`](../../../src/lib/kickagent/opsResources.ts).
 
 ---
 
