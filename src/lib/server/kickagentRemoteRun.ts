@@ -51,7 +51,6 @@ export async function runKickagentCatalogCommandViaApi(
     userEmail: options.userEmail,
     db: toKickagentDbTarget(options.db),
   };
-  // Forward-compatible: kickagent ignores until Story A accepts opsDatabase.
   if (options.opsDatabase) {
     body.opsDatabase = {
       name: options.opsDatabase.name,

@@ -401,7 +401,8 @@
     border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
     background: color-mix(in srgb, Canvas 88%, transparent);
     backdrop-filter: blur(10px);
-    padding: 0.75rem 1.25rem;
+    /* Horizontal inset lives on `.nav` so it shares the hub/ops shell box. */
+    padding: 0.75rem 0;
   }
 
   .main {
@@ -420,8 +421,11 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem 1.25rem;
-    max-width: 48rem;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--ks-shell-max, 72rem);
     margin: 0 auto;
+    padding: 0 var(--ks-shell-pad-x, 1.25rem);
     font-size: 0.95rem;
   }
 
@@ -733,10 +737,11 @@
   /* (removed) select + single-tooltip styles replaced by per-item tooltips in the custom menu */
 
   .main--hub {
-    width: min(72rem, 100%);
-    max-width: 72rem;
+    box-sizing: border-box;
+    width: min(var(--ks-shell-max, 72rem), 100%);
+    max-width: var(--ks-shell-max, 72rem);
     margin: 0 auto;
-    padding: 1.5rem 1.25rem 3rem;
+    padding: 1.5rem var(--ks-shell-pad-x, 1.25rem) 3rem;
   }
 
   .main--city {

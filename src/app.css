@@ -6,6 +6,9 @@
 
 html {
 	-webkit-text-size-adjust: 100%;
+	/* Shared measure for site header + hub/ops content column. */
+	--ks-shell-max: 72rem;
+	--ks-shell-pad-x: 1.25rem;
 }
 
 body {

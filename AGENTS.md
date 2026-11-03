@@ -104,6 +104,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 - **Operations handoff (kickagent):** `[docs/upgrade/README.md](docs/upgrade/README.md)` — primers + ETL reference (no bill code in this repo).
 - **KAM dev console + command palette** (palette: `Ctrl+/`; focus console pane: ``` (backtick); `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
 - **Host mission (kickagent UI):** `[docs/guides/host-mission.md](docs/guides/host-mission.md)` — kickstaff is a generic manifest consumer; new same-class resources are a reload.
+- **Draft — client data cache:** `[docs/guides/client-data-cache-story.md](docs/guides/client-data-cache-story.md)` — Svelte store / pending edits story for planning; not a build spec until promoted into `now.md`.
 - **kickagent integration** (no npm/git dependency in kickstaff — Phase 2 manifest + ESM): sibling `../kickagent` only to publish/serve artifacts; `[docs/guides/contracts/kickstaff-kickagent-consumer.md](docs/guides/contracts/kickstaff-kickagent-consumer.md)`.
 - **New kickagent command (checklist):** `[docs/guides/register-kickagent-command.md](docs/guides/register-kickagent-command.md)` — catalog in kickagent, auto-register in kickstaff, KAM verify, optional hub card.
 - **Human setup (local dev):** [README.md → Development](README.md#development).

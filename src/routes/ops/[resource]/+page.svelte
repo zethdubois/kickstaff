@@ -302,10 +302,10 @@
     flex-direction: column;
     height: 100%;
     min-height: 100%;
-    max-width: 72rem;
+    max-width: var(--ks-shell-max, 72rem);
     width: 100%;
     margin: 0 auto;
-    padding: 1.25rem 1rem 1rem;
+    padding: 1.25rem var(--ks-shell-pad-x, 1.25rem) 1rem;
     overflow: hidden;
   }
 
