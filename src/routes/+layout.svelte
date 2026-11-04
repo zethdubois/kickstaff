@@ -234,15 +234,39 @@
 {#if showInternalNav}
   <header class="site-header" style:z-index={Z_SITE_HEADER}>
     <nav class="nav" aria-label="Main">
-      <a class="nav__home" href="/" aria-label="KAM home">
-        <img
-          class="nav__homeLogo"
-          src="/kam_logo.png"
-          alt=""
-          loading="eager"
-          decoding="async"
-        />
-      </a>
+      <div class="nav__homeCluster">
+        {#if isAdmin}
+          <a
+            class="nav__adminGear"
+            href="/admin/rental-links"
+            aria-label="Admin"
+            title="Admin"
+          >
+            <svg
+              class="nav__adminGearIcon"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                fill="currentColor"
+                d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.07 7.07 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 14.3 2h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.55-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .6.22l2.39-.96c.5.39 1.04.7 1.63.94l.36 2.54a.5.5 0 0 0 .49.42h3.84a.5.5 0 0 0 .49-.42l.36-2.54c.59-.24 1.13-.55 1.63-.94l2.39.96a.5.5 0 0 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
+              />
+            </svg>
+          </a>
+        {/if}
+        <a class="nav__home" href="/" aria-label="KAM home">
+          <img
+            class="nav__homeLogo"
+            src="/kam_logo.png"
+            alt=""
+            loading="eager"
+            decoding="async"
+          />
+        </a>
+      </div>
 
       <div class="rentalMenu">
         <button
@@ -294,10 +318,6 @@
       </div>
 
       <div class="nav__trailing">
-        {#if isAdmin}
-          <a class="nav__admin" href="/admin/rental-links">Admin</a>
-        {/if}
-
         {#if page.data.user}
           <div class="userMenu">
             <button
@@ -403,6 +423,8 @@
     backdrop-filter: blur(10px);
     /* Horizontal inset lives on `.nav` so it shares the hub/ops shell box. */
     padding: 0.75rem 0;
+    /* Let the admin gear peek into the left shell pad without clipping. */
+    overflow: visible;
   }
 
   .main {
@@ -538,7 +560,27 @@
     margin-top: 0.3rem;
   }
 
+  .nav__homeCluster {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    z-index: 2;
+  }
+
+  /* Invisible hit bridge so the mouse can travel home → gear without
+     dropping :hover in the gap (gear is absolutely positioned left). */
+  .nav__homeCluster::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    top: -0.35rem;
+    bottom: -0.35rem;
+    width: 2.6rem;
+  }
+
   .nav__home {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -551,19 +593,57 @@
     line-height: 0;
   }
 
-  .nav__admin {
-    font: inherit;
-    font-weight: 650;
+  /* Absolute — does not take layout width; slides into the left shell pad.
+     Height is ~90% of the home control (logo 1.75rem + 0.4rem pad ≈ 2.15rem).
+     Hide is delayed so a short mouse trip to the gear still counts. */
+  .nav__adminGear {
+    position: absolute;
+    right: calc(100% + 0.3rem);
+    top: 50%;
+    z-index: 0;
+    box-sizing: border-box;
+    height: 1.94rem;
+    aspect-ratio: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+    background: color-mix(in srgb, Canvas 94%, transparent);
     color: inherit;
     text-decoration: none;
-    padding: 0.35rem 0.65rem;
-    border-radius: 10px;
-    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-    background: color-mix(in srgb, currentColor 2%, transparent);
+    line-height: 0;
+    opacity: 0;
+    transform: translate(calc(100% + 0.55rem), -50%);
+    transition:
+      transform 220ms ease 320ms,
+      opacity 180ms ease 320ms,
+      background-color 160ms ease,
+      border-color 160ms ease;
   }
 
-  .nav__admin:hover {
-    background: color-mix(in srgb, currentColor 6%, transparent);
+  .nav__homeCluster:hover .nav__adminGear,
+  .nav__homeCluster:focus-within .nav__adminGear {
+    opacity: 1;
+    transform: translate(0, -50%);
+    transition-delay: 0ms, 0ms, 0ms, 0ms;
+  }
+
+  .nav__adminGear:hover {
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    border-color: color-mix(in srgb, currentColor 28%, transparent);
+  }
+
+  .nav__adminGear:focus-visible {
+    outline: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+    outline-offset: 2px;
+  }
+
+  .nav__adminGearIcon {
+    display: block;
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   .nav__home:hover {
