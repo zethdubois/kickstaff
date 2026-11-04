@@ -1,4 +1,5 @@
 # Runs on every branch (push + PR). Do not add `branches: [main]` unless you intend to limit checks.
+# Gate is Typecheck / Unit tests / Production build. Node/ubuntu runner notices are warnings only.
 name: CI
 
 on:
@@ -8,11 +9,12 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Pin the image so the ubuntu-latest → 26 migration notice is not noise on every run.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
 
       - uses: actions/setup-node@v7
         with:

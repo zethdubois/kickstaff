@@ -35,12 +35,21 @@ export type { CommandOutcome };
 import { materializeDashboardCommand } from "../client/dashboardCommandMaterialize";
 import { listRowLines } from "./listRowLine";
 import {
+  buildSubscriberHelpNodes,
+  formatHelpTree,
+  type HelpResourceRef,
+} from "./helpTree";
+import {
   executeHistoryCommand,
   expandHistoryBang,
   recordCommand,
   shouldSkipHistoryRecord,
 } from "./commandHistory";
 import { listRefreshTargets, runRefreshTarget } from "./refresh";
+import {
+  getManifestResources,
+  listCachedResourceKeys,
+} from "$lib/kickagent/manifestResourceCache";
 
 export type CommandHandler = (
   args: string[],
@@ -56,6 +65,13 @@ type LoadedSubscriberMeta = {
   id: string;
   namespace: string;
   alias?: string;
+  /** Manifest `version` (package version), when a subscriber is loaded. */
+  version?: string;
+  /**
+   * Resource parents for help (from manifest `resources`), stashed at load
+   * so the tree does not depend on the separate resource cache staying warm.
+   */
+  resources?: HelpResourceRef[];
 };
 
 let loadedSubscriber: LoadedSubscriberMeta | null = null;
@@ -149,6 +165,44 @@ export function listKickagentShortNames(): string[] {
   return listCommands()
     .filter((name) => name.startsWith(prefix))
     .map((name) => name.slice(prefix.length));
+}
+
+function resourceShortLabel(key: string): string {
+  const resources = getManifestResources();
+  if (!resources) return "";
+  const detail = resources.listDetail[key];
+  if (detail) return detail.shortLabel ?? detail.label ?? "";
+  if (key === "units" && resources.units) {
+    return resources.units.shortLabel ?? resources.units.label ?? "";
+  }
+  return "";
+}
+
+/** Prefer stashed load meta; else live resource cache. */
+function helpResourceRefs(): HelpResourceRef[] {
+  const stashed = loadedSubscriber?.resources;
+  if (stashed && stashed.length > 0) return stashed;
+  return listCachedResourceKeys().map((key) => ({
+    key,
+    label: resourceShortLabel(key),
+  }));
+}
+
+/**
+ * Subscriber help: namespace once, then a tree of resources → commands.
+ * Commands that do not match a resource key are leftover leaves at the root.
+ */
+function formatSubscriberCatalog(): string {
+  const ns = subscriberNs();
+  const version = loadedSubscriber?.version?.trim();
+  const head = version
+    ? `Subscriber: ${ns} (v${version})`
+    : `Subscriber: ${ns}`;
+  const nodes = buildSubscriberHelpNodes(
+    listKickagentShortNames(),
+    helpResourceRefs(),
+  );
+  return formatHelpTree(head, nodes);
 }
 
 /**
@@ -414,11 +468,8 @@ registerCommand("help", (): CommandOutcome => {
     blocks.push(
       `host commands (use : prefix): ${globals.map((c) => `:${c}`).join(", ")}`,
     );
-    const shorts = listKickagentShortNames();
-    if (shorts.length > 0) {
-      blocks.push(
-        `${ns} commands: ${shorts.map((s) => `${s} (→ ${prefix}${s})`).join(", ")}`,
-      );
+    if (listKickagentShortNames().length > 0) {
+      blocks.push(formatSubscriberCatalog());
     }
   } else {
     const host = listCommands().filter((c) => !c.includes(":"));
@@ -426,7 +477,7 @@ registerCommand("help", (): CommandOutcome => {
 
     blocks.push(`Host: ${host.join(", ")}`);
     if (subs.length > 0) {
-      blocks.push(`Subscriber: ${subs.join(", ")}`);
+      blocks.push(formatSubscriberCatalog());
     }
     blocks.push(
       "Palette: off — enter with kickagent (or alias), leave with :exit. Load: load | load kickagent | load --list.",

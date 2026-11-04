@@ -212,6 +212,28 @@ function resourceKeysFrom(resources: ManifestResources | null | undefined): stri
   return [...keys].sort();
 }
 
+/** Resource parents for help — kept on loaded-subscriber meta at load time. */
+function resourceHelpRefs(
+  resources: ManifestResources | null | undefined,
+): Array<{ key: string; label: string }> {
+  if (!resources) return [];
+  const refs: Array<{ key: string; label: string }> = [];
+  for (const key of Object.keys(resources.listDetail).sort()) {
+    const block = resources.listDetail[key]!;
+    const label = (block.shortLabel ?? block.label ?? "").trim();
+    refs.push({ key, label });
+  }
+  if (resources.units) {
+    const label = (
+      resources.units.shortLabel ??
+      resources.units.label ??
+      ""
+    ).trim();
+    refs.push({ key: "units", label });
+  }
+  return refs.sort((a, b) => a.key.localeCompare(b.key));
+}
+
 function formatStatusLine(r: Extract<LoadSubscriberResult, { ok: true }>): string {
   const res =
     r.resourceKeys.length > 0
@@ -314,6 +336,8 @@ export async function loadSubscriber(
         id,
         namespace: manifest.namespace,
         alias: manifest.alias,
+        version: manifest.version,
+        resources: resourceHelpRefs(manifest.resources ?? null),
       });
       return {
         ok: true,
@@ -402,6 +426,8 @@ export async function loadSubscriber(
       id,
       namespace: ns,
       alias: manifest.alias,
+      version: manifest.version,
+      resources: resourceHelpRefs(manifest.resources ?? null),
     });
 
     const pluginNames = new Set<string>();

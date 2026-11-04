@@ -9,8 +9,11 @@
   import { materializeDashboardCommand } from "$lib/client/dashboardCommandMaterialize";
   import { runCommand } from "$lib/devConsole/commands";
   import { devConsole } from "$lib/devConsole/state.svelte";
+  import type { PageData } from "./$types";
 
-  let { data } = $props();
+  type DashboardColumn = PageData["dashboardColumns"][number];
+
+  let { data }: { data: PageData } = $props();
 
   let runningKey = $state<string | null>(null);
 
@@ -73,7 +76,7 @@
   </section>
 </div>
 
-{#snippet group(col)}
+{#snippet group(col: DashboardColumn)}
   {@const hue = hashCategoryHue(col.category)}
   <div class="dash__column">
     <h2

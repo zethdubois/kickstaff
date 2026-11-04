@@ -50,23 +50,27 @@
   onMount(() => {
     function onKey(e: KeyboardEvent) {
       if (e.repeat) return;
+      // Capture phase: win over the focused palette input (else ` would type).
       if (isConsoleFocusHotkey(e)) {
         e.preventDefault();
+        e.stopPropagation();
         devConsole.toggleConsoleHotkey();
         return;
       }
       if (isPaletteHotkey(e)) {
         e.preventDefault();
+        e.stopPropagation();
         devConsole.togglePalette();
         return;
       }
       if (e.key === "Escape" && devConsole.paletteOpen) {
         e.preventDefault();
-        devConsole.paletteOpen = false;
+        e.stopPropagation();
+        close();
       }
     }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
   });
 
   $effect(() => {
@@ -89,8 +93,10 @@
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
+    // Raise the floor every submit so the modal only shows this command's
+    // lines — does not clear the console pane / persisted klog.
     const floor = devConsole.entries.at(-1)?.id ?? 0;
-    if (!showTranscript) transcriptFloorId = floor;
+    transcriptFloorId = floor;
     const result = await runCommand(input);
     if (devConsole.consoleOpen) {
       if (result.ok) devConsole.paletteOpen = false;
@@ -123,7 +129,10 @@
     role="presentation"
     onclick={close}
     onkeydown={(e) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        close();
+      }
     }}
   >
     <div
@@ -135,6 +144,15 @@
       aria-modal="true"
       aria-label="Command palette"
       onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          close();
+          return;
+        }
+        // Keep other keys from hitting the overlay; Esc must close above.
+        e.stopPropagation();
+      }}
     >
       <div class="modalHead">
         <form
@@ -158,6 +176,7 @@
             autocapitalize="off"
             spellcheck="false"
             onkeydown={(e) => {
+              // Hotkeys (Esc, backtick, Ctrl+/) are handled in document capture.
               handleHistoryKeydown(e, input, (v) => {
                 input = v;
               });
@@ -168,7 +187,7 @@
           <p class="error">{error}</p>
         {/if}
         <p class="hint">
-          ↑/↓ history · Esc to close · backtick (`) toggles the console
+          ↑/↓ history · Esc to close · [backtick (`) toggles the full console]
         </p>
       </div>
       {#if transcriptEntries.length > 0}
@@ -276,6 +295,10 @@
     font: inherit;
     font-size: 1rem;
     padding: 0.55rem 0.4rem;
+  }
+
+  .prompt input::placeholder {
+    font-style: italic;
   }
 
   .error {

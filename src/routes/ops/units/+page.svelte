@@ -215,10 +215,6 @@
     word-break: break-all;
   }
 
-  .ops__lead code {
-    font-size: 0.9em;
-  }
-
   .ops__errBlock {
     margin-top: 1rem;
   }
