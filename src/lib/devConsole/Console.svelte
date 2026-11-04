@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { devConsole, KAM_CONSOLE_FOCUS_INPUT_EVENT } from "./state.svelte";
+  import { devConsole, CONSOLE_FOCUS_INPUT_EVENT } from "./state.svelte";
   import {
     focusStack,
     Z_CONSOLE_BASE,
@@ -25,14 +25,14 @@
 
   const promptAriaLabel = $derived(
     devConsole.kickagentModeActive
-      ? "KAM command input, kickagent mode active"
-      : "KAM command input",
+      ? "Command input, kickagent mode active"
+      : "Command input",
   );
 
   const placeholder = $derived(
     devConsole.kickagentModeActive
       ? "hello · :help · :exit"
-      : "help · history · ↑↓ recall · Ctrl+/ palette",
+      : "help · history · ↑↓ recall · (`) toggles console",
   );
 
   const unitsListSchema = $derived(
@@ -85,10 +85,10 @@
       resetHistoryNavigation();
       void tick().then(() => inlineInputEl?.focus());
     }
-    window.addEventListener(KAM_CONSOLE_FOCUS_INPUT_EVENT, onFocusConsoleInput);
+    window.addEventListener(CONSOLE_FOCUS_INPUT_EVENT, onFocusConsoleInput);
     return () =>
       window.removeEventListener(
-        KAM_CONSOLE_FOCUS_INPUT_EVENT,
+        CONSOLE_FOCUS_INPUT_EVENT,
         onFocusConsoleInput,
       );
   });
@@ -97,8 +97,8 @@
 {#if devConsole.consoleOpen}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <aside
-    class="kamConsole"
-    aria-label="KAM Console"
+    class="consolePane"
+    aria-label="Console"
     style:z-index={consoleOnTop ? Z_CONSOLE_TOP : Z_CONSOLE_BASE}
     onfocusin={onConsoleInteract}
     onpointerdown={onConsoleInteract}
@@ -111,7 +111,7 @@
         aria-label="Close console">×</button
       >
       <div class="headMain">
-        <span class="title">KAM Console</span>
+        <span class="title">Console</span>
         {#if devConsole.dbStatus}
           <span
             class="dbBadge"
@@ -143,7 +143,7 @@
             class:row--err={entry.level === "error"}
             class:row--warn={entry.level === "warn"}
             class:row--info={entry.level === "info"}
-            class:row--prompt={entry.source === "kam:prompt"}
+            class:row--prompt={entry.source === "host:prompt"}
           >
             <span class="ts"
               >{showsKlogTimestamp(entry, previous)
@@ -191,12 +191,12 @@
 {/if}
 
 <style>
-  .kamConsole {
+  .consolePane {
     position: fixed;
     top: 0;
     left: 0;
     bottom: 0;
-    width: var(--kam-console-width, min(370px, 90vw));
+    width: var(--console-width, min(370px, 90vw));
     background: #0b0d11;
     color: #d6d8de;
     border-right: 1px solid #2a2f3a;

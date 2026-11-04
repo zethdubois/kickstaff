@@ -2,9 +2,9 @@
  * Shared dev-console state.
  *
  * `klog(...)` is the proprietary logger that emits a "klog" entry into the
- * KAM Console pane. Use it from anywhere in the client codebase as a
+ * console pane. Use it from anywhere in the client codebase as a
  * dev-time alternative to console.log when you want the output visible in
- * the in-app console pane (toggled via the command palette: Ctrl+/ or ` (backtick) → focus console).
+ * the in-app console pane (Ctrl+/ opens the palette; backtick toggles this pane).
  *
  * Entries also persist to the server `klogs` table (per-user, 30-day retention)
  * via a debounced batch POST, and the pane hydrates from that table on mount.
@@ -27,7 +27,7 @@ import {
   setActiveNamespace,
 } from "../client/uiSettings.svelte";
 
-export type KamTableOutcome = ResourceTableModel;
+export type ConsoleTableOutcome = ResourceTableModel;
 
 const MAX_ENTRIES = 1000;
 const FLUSH_DEBOUNCE_MS = 800;
@@ -49,7 +49,7 @@ export type DbStatus = {
 };
 
 let _dbStatus = $state<DbStatus | null>(null);
-let _tableOutcome = $state<KamTableOutcome | null>(null);
+let _tableOutcome = $state<ConsoleTableOutcome | null>(null);
 
 type PendingEntry = {
   ts: number;
@@ -140,8 +140,8 @@ function push(
   }
 }
 
-/** Dispatched on `window` after `focusConsolePrompt()`; KamConsole focuses its input. */
-export const KAM_CONSOLE_FOCUS_INPUT_EVENT = "kam-console-focus-input";
+/** Dispatched on `window` after `focusConsolePrompt()`; the console pane focuses its input. */
+export const CONSOLE_FOCUS_INPUT_EVENT = "console-focus-input";
 
 export const devConsole = {
   get paletteOpen(): boolean {
@@ -174,10 +174,10 @@ export const devConsole = {
   get dbStatus(): DbStatus | null {
     return _dbStatus;
   },
-  get tableOutcome(): KamTableOutcome | null {
+  get tableOutcome(): ConsoleTableOutcome | null {
     return _tableOutcome;
   },
-  setTableOutcome(outcome: KamTableOutcome): void {
+  setTableOutcome(outcome: ConsoleTableOutcome): void {
     _tableOutcome = outcome;
   },
   clearTableOutcome(): void {
@@ -189,7 +189,18 @@ export const devConsole = {
   toggleConsole(): void {
     this.consoleOpen = !_consoleOpen;
   },
-  /** Open the KAM Console pane, close the palette, focus the inline prompt. */
+  /**
+   * Backtick. Closes the pane when it is open. Opens it, closes the palette,
+   * and focuses the prompt when it is closed.
+   */
+  toggleConsoleHotkey(): void {
+    if (_consoleOpen) {
+      this.consoleOpen = false;
+      return;
+    }
+    this.focusConsolePrompt();
+  },
+  /** Open the console pane, close the palette, focus the inline prompt. */
   focusConsolePrompt(): void {
     _paletteOpen = false;
     if (!_consoleOpen) {
@@ -198,7 +209,7 @@ export const devConsole = {
     }
     if (!isBrowser()) return;
     queueMicrotask(() => {
-      window.dispatchEvent(new CustomEvent(KAM_CONSOLE_FOCUS_INPUT_EVENT));
+      window.dispatchEvent(new CustomEvent(CONSOLE_FOCUS_INPUT_EVENT));
     });
   },
   clear(): void {
@@ -307,7 +318,7 @@ export async function hydrateFromServer(limit = 200): Promise<void> {
 
 /**
  * KlogBroadcaster is a simple logging interface that kickagent functions use
- * to broadcast progress and results back to the KAM console.
+ * to broadcast progress and results back to the console.
  *
  * Usage in kickagent functions:
  * ```ts

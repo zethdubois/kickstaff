@@ -2,7 +2,7 @@
 
 Audience: kickagent repo developer.
 
-Purpose: define the minimum **Phase 1** package contract for kickagent as a library-first module that `kickstaff` can import and wrap in the KAM console.
+Purpose: define the minimum **Phase 1** package contract for kickagent as a library-first module that `kickstaff` can import and wrap in the console.
 
 For the longer-term **subscriber platform** (manifest, ESM plugin, API jobs), see the kickagent repo [platform spec](../../../kickagent/docs/kickagent-platform-spec.md). kickstaff host expectations: [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md).
 
@@ -115,7 +115,7 @@ Do not make `kickstaff` depend on the HTTP server for normal integration.
 - provide a concrete `KlogBroadcaster`
 - register a console command named `kickagent:hello`
 - pass the current user context to the kickagent function
-- surface the returned message back into the KAM console
+- surface the returned message back into the console
 
 `kickstaff` should not need to know kickagent internals.
 

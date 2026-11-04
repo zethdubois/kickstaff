@@ -11,6 +11,16 @@
   let input = $state("");
   let error = $state("");
   let inputEl: HTMLInputElement | undefined = $state();
+  let transcriptEl: HTMLDivElement | undefined = $state();
+  /** Entry id at the start of this palette session. Lines after it are the transcript. */
+  let transcriptFloorId = $state(0);
+  let showTranscript = $state(false);
+
+  const transcriptEntries = $derived(
+    showTranscript
+      ? devConsole.entries.filter((entry) => entry.id > transcriptFloorId)
+      : [],
+  );
 
   const promptPrefix = $derived(
     devConsole.kickagentModeActive ? "[KA] >" : "›",
@@ -24,8 +34,8 @@
 
   const formAriaLabel = $derived(
     devConsole.kickagentModeActive
-      ? "KAM command palette, kickagent mode active"
-      : "KAM command palette",
+      ? "Command palette, kickagent mode active"
+      : "Command palette",
   );
 
   function isPaletteHotkey(e: KeyboardEvent): boolean {
@@ -34,9 +44,7 @@
   }
 
   function isConsoleFocusHotkey(e: KeyboardEvent): boolean {
-    return (
-      e.code === "Backquote" && !e.ctrlKey && !e.metaKey && !e.altKey
-    );
+    return e.code === "Backquote" && !e.ctrlKey && !e.metaKey && !e.altKey;
   }
 
   onMount(() => {
@@ -44,7 +52,7 @@
       if (e.repeat) return;
       if (isConsoleFocusHotkey(e)) {
         e.preventDefault();
-        devConsole.focusConsolePrompt();
+        devConsole.toggleConsoleHotkey();
         return;
       }
       if (isPaletteHotkey(e)) {
@@ -68,17 +76,39 @@
     } else {
       input = "";
       error = "";
+      showTranscript = false;
     }
+  });
+
+  $effect(() => {
+    transcriptEntries.length;
+    void tick().then(() => {
+      transcriptEl?.scrollTo({ top: transcriptEl.scrollHeight });
+    });
   });
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
+    const floor = devConsole.entries.at(-1)?.id ?? 0;
+    if (!showTranscript) transcriptFloorId = floor;
     const result = await runCommand(input);
+    if (devConsole.consoleOpen) {
+      if (result.ok) devConsole.paletteOpen = false;
+      else error = result.error;
+      return;
+    }
+    const hasNew = devConsole.entries.some((entry) => entry.id > floor);
+    if (hasNew) showTranscript = true;
     if (result.ok) {
-      devConsole.paletteOpen = false;
+      input = "";
+      error = "";
+    } else if (hasNew) {
+      error = "";
     } else {
       error = result.error;
     }
+    await tick();
+    inputEl?.focus();
   }
 
   function close() {
@@ -99,45 +129,66 @@
     <div
       class="modal"
       class:modal--kickagent={devConsole.kickagentModeActive}
+      class:modal--withTranscript={transcriptEntries.length > 0}
       role="dialog"
       tabindex="-1"
       aria-modal="true"
-      aria-label="KAM command palette"
+      aria-label="Command palette"
       onclick={(e) => e.stopPropagation()}
     >
-      <form
-        class="prompt"
-        class:prompt--kickagent={devConsole.kickagentModeActive}
-        aria-label={formAriaLabel}
-        onsubmit={submit}
-      >
-        <span
-          class="caret"
-          class:caret--kickagent={devConsole.kickagentModeActive}
-          aria-hidden="true">{promptPrefix}</span
+      <div class="modalHead">
+        <form
+          class="prompt"
+          class:prompt--kickagent={devConsole.kickagentModeActive}
+          aria-label={formAriaLabel}
+          onsubmit={submit}
         >
-        <input
-          bind:this={inputEl}
-          bind:value={input}
-          type="text"
-          {placeholder}
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-          onkeydown={(e) => {
-            handleHistoryKeydown(e, input, (v) => {
-              input = v;
-            });
-          }}
-        />
-      </form>
-      {#if error}
-        <p class="error">{error}</p>
+          <span
+            class="caret"
+            class:caret--kickagent={devConsole.kickagentModeActive}
+            aria-hidden="true">{promptPrefix}</span
+          >
+          <input
+            bind:this={inputEl}
+            bind:value={input}
+            type="text"
+            {placeholder}
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            onkeydown={(e) => {
+              handleHistoryKeydown(e, input, (v) => {
+                input = v;
+              });
+            }}
+          />
+        </form>
+        {#if error}
+          <p class="error">{error}</p>
+        {/if}
+        <p class="hint">
+          ↑/↓ history · Esc to close · backtick (`) toggles the console
+        </p>
+      </div>
+      {#if transcriptEntries.length > 0}
+        <div
+          class="transcript"
+          bind:this={transcriptEl}
+          role="log"
+          aria-label="Command output"
+        >
+          {#each transcriptEntries as entry (entry.id)}
+            <pre
+              class="line"
+              class:line--err={entry.level === "error"}
+              class:line--warn={entry.level === "warn"}
+              class:line--info={entry.level === "info"}
+              class:line--prompt={entry.source ===
+                "host:prompt"}>{entry.message}</pre>
+          {/each}
+        </div>
       {/if}
-      <p class="hint">
-        Enter to run · ↑/↓ history · Esc or Ctrl+/ (⌘+/) to close · ` opens KAM Console
-      </p>
     </div>
   </div>
 {/if}
@@ -155,16 +206,40 @@
 
   .modal {
     width: min(640px, 92vw);
-    background: #0f1115;
     color: #e6e6e6;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    background-color: #0f1115;
     border: 1px solid #2a2f3a;
     border-radius: 12px;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
     padding: 0.65rem 0.85rem 0.6rem;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 
   .modal--kickagent {
+    border-left: 3px solid #62d4a3;
+  }
+
+  /* Split chrome: solid prompt head, glass transcript. Modal shell goes clear. */
+  .modal--withTranscript {
+    background-color: transparent;
+    border: none;
+    box-shadow: 0 18px 40px rgb(0 0 0 / 0.25);
+    padding: 0;
+  }
+
+  .modal--withTranscript .modalHead {
+    background-color: #0f1115;
+    border: 1px solid #2a2f3a;
+    border-radius: 12px 12px 0 0;
+    border-bottom-color: transparent;
+    padding: 0.65rem 0.85rem 0.6rem;
+  }
+
+  .modal--withTranscript.modal--kickagent .modalHead {
+    border-left: 3px solid #62d4a3;
+  }
+
+  .modal--withTranscript.modal--kickagent .transcript {
     border-left: 3px solid #62d4a3;
   }
 
@@ -208,6 +283,80 @@
     color: #ff7676;
     font-size: 0.82rem;
     padding: 0 0.4rem;
+  }
+
+  .transcript {
+    max-height: min(42vh, 22rem);
+    overflow-y: auto;
+    border: 1px solid #2a2f3a;
+    border-top: 1px solid #2a2f3a;
+    border-radius: 0 0 12px 12px;
+    padding: 0.55rem 0.85rem 0.65rem;
+    background-color: rgb(0 0 0 / 0.45);
+    box-shadow: 0 18px 40px rgb(0 0 0 / 0.25);
+    scrollbar-color: #000 transparent;
+    scrollbar-width: auto;
+  }
+
+  .transcript::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  .transcript::-webkit-scrollbar-track,
+  .transcript::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .transcript::-webkit-scrollbar-thumb {
+    background: #000;
+  }
+
+  .transcript::-webkit-scrollbar-button {
+    display: block;
+    height: 12px;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  .transcript::-webkit-scrollbar-button:vertical:decrement {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpolygon points='5,2 9,8 1,8' fill='%23000'/%3E%3C/svg%3E");
+  }
+
+  .transcript::-webkit-scrollbar-button:vertical:increment {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpolygon points='1,2 9,2 5,8' fill='%23000'/%3E%3C/svg%3E");
+  }
+
+  .line {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: inherit;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #c5cad3;
+  }
+
+  .line--err {
+    color: #ff7676;
+  }
+
+  .line--warn {
+    color: #f0c674;
+  }
+
+  .line--info {
+    color: #8ab4f8;
+  }
+
+  .line--prompt {
+    color: #e2e4ea;
+    font-weight: 600;
+    margin-top: 0.35rem;
+  }
+
+  .line--prompt:first-child {
+    margin-top: 0;
   }
 
   .hint {

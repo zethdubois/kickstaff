@@ -8,7 +8,7 @@
   import UserRetroIdenticon from "$lib/UserRetroIdenticon.svelte";
   import { vanityPathForRootHost } from "$lib/vanityHosts";
   import Palette from "$lib/devConsole/Palette.svelte";
-  import KamConsole from "$lib/devConsole/KamConsole.svelte";
+  import Console from "$lib/devConsole/Console.svelte";
   import {
     devConsole,
     fetchDbStatus,
@@ -31,7 +31,7 @@
   import { setKickagentPluginSessionUser } from "$lib/kickagent/pluginSession";
   import MainContentSurface from "$lib/MainContentSurface.svelte";
   import { focusStack, Z_SITE_HEADER } from "$lib/client/focusStack.svelte";
-  import { KAM_CONSOLE_WIDTH } from "$lib/shellLayout";
+  import { CONSOLE_WIDTH } from "$lib/shellLayout";
 
   let { children } = $props();
 
@@ -88,8 +88,8 @@
   $effect(() => {
     if (!browser) return;
     document.documentElement.style.setProperty(
-      "--kam-console-width",
-      KAM_CONSOLE_WIDTH,
+      "--console-width",
+      CONSOLE_WIDTH,
     );
   });
 
@@ -368,7 +368,7 @@
 </main>
 </div>
 
-<KamConsole />
+<Console />
 </div>
 <Palette />
 
@@ -377,7 +377,7 @@
      position:fixed in that track; the empty column only reserves the width. */
   .appShell--console {
     display: grid;
-    grid-template-columns: var(--kam-console-width, min(370px, 90vw)) minmax(0, 1fr);
+    grid-template-columns: var(--console-width, min(370px, 90vw)) minmax(0, 1fr);
     align-items: stretch;
     height: 100vh;
     height: 100dvh;

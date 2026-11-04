@@ -1,6 +1,6 @@
 # Host mission — kickstaff as a generic kickagent consumer
 
-**Read this before** kickagent resource UI, KAM console presentation, or any `resources.*` parse/render work. It is standing background, not the week’s queue. Session work still starts at [now.md](../now.md).
+**Read this before** kickagent resource UI, console presentation, or any `resources.*` parse/render work. It is standing background, not the week’s queue. Session work still starts at [now.md](../now.md).
 
 **Publisher contract (sibling wiki, when `kam:wiki` is up):** [manifest-resources.md](http://127.0.0.1:7097/kickagent/architecture/manifest-resources.md) · [CHANGELOG.md](http://127.0.0.1:7097/kickagent/CHANGELOG.md) · catalog example [gl-list.md](http://127.0.0.1:7097/kickagent/catalog/gl-list.md). If the wiki is down, the same files live under `../kickagent/docs/kickagent/`.
 
@@ -30,7 +30,7 @@ This repo did **not** start with that purity. Rental landings, hub cards, and so
 A **minimal functional consumer** of the kickagent command manifest:
 
 - Auth and admin gate
-- KAM palette + console (text first)
+- Palette + console (text first)
 - Register `kickagent:<name>` from the catalog / plugin
 - Run commands (`POST /api/kickagent/run`)
 - When `presentationRef` + `resources.<name>` exist, build list/detail from **schema + `outcome.data`**
@@ -57,7 +57,7 @@ If the resource's save command (`detail.submitCommand`) can express an effect as
 | `query` | Not a button. Fills list/detail. |
 | `write` | Run by Save. |
 | `structural` (`gl-create`, `gl-import`) | Only button candidates (`listButtonCandidateCommands`). Not built yet. |
-| `shortcut` (`gl-hide`, `gl-retire`; `sugarFor` names the `write` command) | **Skipped.** CLI / KAM only. |
+| `shortcut` (`gl-hide`, `gl-retire`; `sugarFor` names the `write` command) | **Skipped.** CLI / console only. |
 | none | Unclassified. Not a button. |
 
 One-way fields (`irreversible: true`, e.g. `retired`): the control **locks** once the saved record value is `true`; a save that newly sets it asks the user to confirm (the field's `confirmText`, else a generic line). Locked fields are never sent. See `isFieldLocked`, `irreversibleChanges` in `listDetailForm.ts`.
@@ -68,7 +68,7 @@ Detail layout: skip null / empty readonly meta (no “Retired on: —”). Recor
 
 | Surface | Job |
 | ------- | --- |
-| **KAM console** | Text. Print `log`, then one line per `data.rows` when present. One timestamp per command result. |
+| **Console** | Text. Print `log`, then one line per `data.rows` when present. One timestamp per command result. |
 | **Ops page** | Programmatic UI from `resources.<name>`: filters → flags, table from `list.columns` + `data[rowsKey]`, detail from `data[recordKey]` + `detail.fields`, save from changed editable `flag`s. |
 
 The console does not mount resource widgets. The page does not parse `log`.
@@ -155,6 +155,6 @@ Until (1) exists, kickstaff agents should still implement GL v2 from the publish
 | --- | ---- |
 | [kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) | Phases, security, what kickstaff owns |
 | [kickagent-resource-ui.md](kickagent-resource-ui.md) | How this host renders resource data today |
-| [kam-console.md](kam-console.md) | Console is text; pages are tables |
+| [console.md](console.md) | Console is text; pages are tables |
 | [register-kickagent-command.md](register-kickagent-command.md) | Catalog → KAM; usually no per-command host TS |
 | kickagent `manifest-resources.md` | Publisher schema (write the interpreter there) |

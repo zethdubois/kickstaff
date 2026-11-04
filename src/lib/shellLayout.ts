@@ -1,5 +1,5 @@
-/** Matches `--kam-console-width` on `html` and `.kamConsole` width. */
-export const KAM_CONSOLE_WIDTH = "min(370px, 90vw)";
+/** Matches `--console-width` on `html` and `.consolePane` width. */
+export const CONSOLE_WIDTH = "min(370px, 90vw)";
 
 /** Matches `--ks-shell-max` / `--ks-shell-pad-x` on `html` (header + hub/ops). */
 export const KS_SHELL_MAX = "72rem";
@@ -8,7 +8,7 @@ export const KS_SHELL_PAD_X = "1.25rem";
 export function consoleBandWidthPx(): number {
   if (typeof window === "undefined") return 370;
   const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue("--kam-console-width")
+    .getPropertyValue("--console-width")
     .trim();
   if (raw.endsWith("px")) {
     const parsed = Number.parseFloat(raw);

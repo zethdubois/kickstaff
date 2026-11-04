@@ -1,10 +1,13 @@
 /**
- * KAM command-line history (bash-style): persisted in localStorage, shared by
+ * Command-line history (bash-style): persisted in localStorage, shared by
  * palette and console inputs. ArrowUp/ArrowDown walk newest → oldest.
+ *
+ * `kickstaff.kamCommandHistory` is read once and copied to the current key.
  */
 
-export const KAM_COMMAND_HISTORY_KEY = "kickstaff.kamCommandHistory";
-export const KAM_COMMAND_HISTORY_VERSION = 1;
+export const COMMAND_HISTORY_KEY = "kickstaff.commandHistory";
+const LEGACY_COMMAND_HISTORY_KEY = "kickstaff.kamCommandHistory";
+export const COMMAND_HISTORY_VERSION = 1;
 const MAX_ENTRIES = 500;
 
 type StoredHistory = {
@@ -21,13 +24,27 @@ function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
+function readHistoryRaw(): string | null {
+  const current = window.localStorage.getItem(COMMAND_HISTORY_KEY);
+  if (current) return current;
+  const legacy = window.localStorage.getItem(LEGACY_COMMAND_HISTORY_KEY);
+  if (!legacy) return null;
+  try {
+    window.localStorage.setItem(COMMAND_HISTORY_KEY, legacy);
+    window.localStorage.removeItem(LEGACY_COMMAND_HISTORY_KEY);
+  } catch {
+    /* keep reading the legacy value this session */
+  }
+  return legacy;
+}
+
 function loadEntries(): string[] {
   if (!isBrowser()) return [];
   try {
-    const raw = window.localStorage.getItem(KAM_COMMAND_HISTORY_KEY);
+    const raw = readHistoryRaw();
     if (!raw) return [];
     const parsed = JSON.parse(raw) as StoredHistory;
-    if (parsed?.version !== KAM_COMMAND_HISTORY_VERSION || !Array.isArray(parsed.entries)) {
+    if (parsed?.version !== COMMAND_HISTORY_VERSION || !Array.isArray(parsed.entries)) {
       return [];
     }
     return parsed.entries.filter((e) => typeof e === "string");
@@ -40,10 +57,10 @@ function persist(): void {
   if (!isBrowser()) return;
   try {
     const payload: StoredHistory = {
-      version: KAM_COMMAND_HISTORY_VERSION,
+      version: COMMAND_HISTORY_VERSION,
       entries,
     };
-    window.localStorage.setItem(KAM_COMMAND_HISTORY_KEY, JSON.stringify(payload));
+    window.localStorage.setItem(COMMAND_HISTORY_KEY, JSON.stringify(payload));
   } catch {
     /* quota / private mode */
   }
@@ -56,7 +73,7 @@ export function resetHistoryNavigation(): void {
 }
 
 /** Record a submitted command (non-empty, trimmed). */
-export function recordKamCommand(raw: string): void {
+export function recordCommand(raw: string): void {
   const line = raw.trim();
   if (!line) return;
   if (entries.length > 0 && entries[entries.length - 1] === line) return;

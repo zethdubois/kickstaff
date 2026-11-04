@@ -6,7 +6,7 @@
  * - local: `dev` when DATABASE_URL_DEV is set, else `prod`
  * - deploy (NODE_ENV=production): `staging` when Railway env name looks like staging, else `prod`
  *
- * Explicit picks: `/login?db=…`, cookie, KAM `db use`, CLI `--db`.
+ * Explicit picks: `/login?db=…`, cookie, console `db use`, CLI `--db`.
  */
 
 export type DbTarget = 'dev' | 'staging' | 'prod';

@@ -44,7 +44,7 @@ Implementation:
 | Running dev server | [`src/lib/server/dbTarget.ts`](../../src/lib/server/dbTarget.ts), [`src/lib/server/db.ts`](../../src/lib/server/db.ts) |
 | CLI scripts | [`scripts/lib/dbCli.ts`](../../scripts/lib/dbCli.ts) |
 | Drizzle Kit | [`drizzle.config.ts`](../../drizzle.config.ts) |
-| KAM console | `db status`, `db use …` — [kam-console.md](kam-console.md) |
+| Console | `db status`, `db use …` — [console.md](console.md) |
 
 | Concept | Behavior |
 | ------- | -------- |

@@ -5,7 +5,7 @@ import { showsKlogTimestamp } from './klogStamp.ts';
 describe('showsKlogTimestamp', () => {
 	it('stamps the first line of a result and not the following rows', () => {
 		const source = 'command:kickagent:gl-list';
-		const prompt = { ts: 1, source: 'kam:prompt' };
+		const prompt = { ts: 1, source: 'host:prompt' };
 		const head = { ts: 2, source };
 		const row = { ts: 2, source };
 		assert.equal(showsKlogTimestamp(prompt, null), true);

@@ -48,7 +48,7 @@ export function runWithDbTarget<T>(target: DbTarget, fn: () => T): T {
 	return targetStore.run(target, fn);
 }
 
-/** Local dev with a dev DB configured: cookie / `?db=` / KAM `db use` may change the target. */
+/** Local dev with a dev DB configured: cookie / `?db=` / console `db use` may change the target. */
 export function isDbSwitchingEnabled(): boolean {
 	return isLocalDevDatabaseFeaturesEnabled(env.DATABASE_URL_DEV);
 }

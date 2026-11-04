@@ -10,7 +10,7 @@
 
 ## Goal
 
-Ship the first exported function so kickstaff can import the package and run `kickagent:hello` in the KAM console (`Ctrl+/`). Behavior and types are defined in the essentials spec; do not duplicate them here.
+Ship the first exported function so kickstaff can import the package and run `kickagent:hello` in the console (`Ctrl+/`). Behavior and types are defined in the essentials spec; do not duplicate them here.
 
 ---
 

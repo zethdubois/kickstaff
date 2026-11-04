@@ -1,9 +1,9 @@
-# KAM Console and Command Palette
+# Console and command palette
 
 A lightweight in-app dev console for admins. Two surfaces:
 
-- **Command palette** — modal one-shot command input; **`Ctrl+/`** (or **`Cmd+/`**) to open/close. **`` ` `` (backtick)** focuses the KAM Console pane (left); **`Esc`** closes the palette when it is open.
-- **KAM Console pane** — full-height left column (default `min(370px, 90vw)`). The site header and page (including `/ops`) sit in the column to its right: header is a fixed row; **`main`** is the vertical scroller (the document scrollbar does not run beside the header). Closing the pane drops the reserved column so the page uses the full width. The close control is on the left of the pane header; scrollback scrolls on the right. Log timestamps sit 5px from the pane's left edge.
+- **Command palette** — modal one-shot command input; **`Ctrl+/`** (or **`Cmd+/`**) to open/close. **backtick** (`` ` ``) toggles the console pane; **`Esc`** closes the palette when it is open. With the pane closed, the palette stays open after a command and shows that command’s output underneath. With the pane open, a successful command closes the palette and the output is in the pane.
+- **Console pane** — full-height left column (default `min(370px, 90vw)`). The site header and page (including `/ops`) sit in the column to its right: header is a fixed row; **`main`** is the vertical scroller (the document scrollbar does not run beside the header). Closing the pane drops the reserved column so the page uses the full width. The close control is on the left of the pane header; scrollback scrolls on the right. Log timestamps sit 5px from the pane's left edge.
 
 Opening the palette and running `console` toggles the pane.
 
@@ -11,8 +11,8 @@ Opening the palette and running `console` toggles the pane.
 
 ```text
 Ctrl+/   (or Cmd+/)   → open or close palette
-` (backtick)         → open KAM Console (if needed) and focus its prompt
-console              → toggle the KAM Console pane (command)
+backtick (`)         → toggle the console (open and focus, or close)
+console              → toggle the console pane (command)
 help                 → list commands + refresh targets + hotkeys
 history              → numbered command history (like bash)
 history 20           → last 20 entries
@@ -96,10 +96,10 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 
 | name        | purpose                                                                                                  |
 | ----------- | -------------------------------------------------------------------------------------------------------- |
-| `console`   | Toggle the KAM Console pane.                                                                             |
+| `console`   | Toggle the console pane.                                                                                 |
 | `clear`     | Clear the in-memory klog buffer in the pane (does not touch the persisted history).                      |
 | `help`      | Print available commands, refresh targets, and hotkey hint.                                              |
-| `history`   | Numbered command history (`history`, `history 20`, `history -n 20`, `history -c` clear all, `history -d <n>` delete line). Event designators: `!n`, `!!`, `!-n`, `!prefix` (see below). Stored in `localStorage` (`kickstaff.kamCommandHistory`). |
+| `history`   | Numbered command history (`history`, `history 20`, `history -n 20`, `history -c` clear all, `history -d <n>` delete line). Event designators: `!n`, `!!`, `!-n`, `!prefix` (see below). Stored in `localStorage` (`kickstaff.commandHistory`; older browsers still have `kickstaff.kamCommandHistory`, copied over on the next read). |
 | `echo`      | klog the remaining args.                                                                                 |
 | `exit`      | Leave the active subscriber palette (normally via `:exit`). |
 | `load`      | Load/refresh subscribers from the configured manifest URL(s). `load`, `load <id>`, `load --list`, `load <id> --force`. Dedupe on content hash (`url@sha256`). |
@@ -116,7 +116,7 @@ A handler that throws is reported as failed and the error is klogged (no refresh
 - **Switching:** `db use staging` / `db use prod` set the httpOnly preference cookie (`kickstaff_db_target`) for this browser only — not a global server switch. Each DB has its own session cookie (`ka_session_<target>`), so the switch grants nothing by itself: you must hold (or log in to get) a session in that DB. See *Sessions and switching* in [database-targeting.md](database-targeting.md).
 - **Deployed runtime:** switching disabled. Badge from Railway env name (`RAILWAY_ENVIRONMENT_NAME`); both use that env’s `DATABASE_URL`.
 - **CLI:** `pnpm db:status` (inferred default, not cookie), `pnpm db:migrate:status`, `pnpm db:migrate` (dev). Staging/prod: `pnpm db:<cmd> --db staging` \| `--db prod`.
-- **KAM inspection** uses the same runtime target as the app (including after `db use …`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
+- **Console inspection** uses the same runtime target as the app (including after `db use …`). **`db migrate` is not available** in the console — use CLI/Kickdesk to apply schema changes.
 
 ### Resource tables (kickagent data UI)
 
@@ -239,7 +239,7 @@ Endpoints at [src/routes/api/klogs/+server.ts](../../src/routes/api/klogs/+serve
 - [src/lib/devConsole/commands.ts](../../src/lib/devConsole/commands.ts) — registry, `runCommand`, `CommandOutcome`, built-ins.
 - [src/lib/devConsole/refresh.ts](../../src/lib/devConsole/refresh.ts) — refresh target registry.
 - [src/lib/devConsole/Palette.svelte](../../src/lib/devConsole/Palette.svelte) — Ctrl+/ modal.
-- [src/lib/devConsole/KamConsole.svelte](../../src/lib/devConsole/KamConsole.svelte) — left-side pane.
+- [src/lib/devConsole/Console.svelte](../../src/lib/devConsole/Console.svelte) — left-side pane.
 - [src/routes/+layout.svelte](../../src/routes/+layout.svelte) — mounts both surfaces; admin `hydrateFromServer()` on mount + kickagent Phase 1/2 bootstrap (`$effect`).
 - [src/lib/kickagent/loadPluginFromManifest.ts](../../src/lib/kickagent/loadPluginFromManifest.ts) — Phase 2 manifest fetch, `sha256`, dynamic `import`, `register(registry, ctx)`.
 - [src/lib/kickagent/pluginSession.ts](../../src/lib/kickagent/pluginSession.ts) — current user snapshot for plugin `KickagentHostContext`.

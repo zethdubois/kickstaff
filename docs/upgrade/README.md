@@ -22,6 +22,6 @@ These documents capture **what existed**, **how it behaved**, and **what to reim
 | [bill-pay-field-matrix.md](bill-pay-field-matrix.md) | Appfolio vendor bill field matrix |
 | [bulk_vendor_bill_upload_template__appfolio.csv](bulk_vendor_bill_upload_template__appfolio.csv) | Appfolio bulk upload template |
 
-**Related:** [platform-overview.md](../guides/platform-overview.md), [kam-console.md](../guides/kam-console.md).
+**Related:** [platform-overview.md](../guides/platform-overview.md), [console.md](../guides/console.md).
 
 **Still in kickstaff:** rental pages, `/admin`, `/settings`, KAM host (kickagent plugin load, `db`, klog) — not bill processing.

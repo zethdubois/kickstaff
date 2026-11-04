@@ -41,10 +41,10 @@ Prefer **Runes** in new and edited code: `$props()`, `$state()`, `$derived()`, `
 
 - Shared client UI preferences live in `src/lib/client/uiSettings.svelte.ts`.
 - Current persisted shape includes:
-  - `consoleOpen` (KAM console visibility)
+  - `consoleOpen` (console pane visibility)
   - `listPrefs` (per list-detail resource: include-flags, column quick filters, sort — see `docs/guides/ops-accounts-ui-map.md`)
   - `activeNamespace` (empty = host; e.g. `kickagent` for **[KA]** palette — enter with `kickagent` / alias `ka`, leave with `:exit`; load with `load kickagent`)
-- KAM **command aliases** (`alias` / `alias --remove`; `kickstaff.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
+- Console **command aliases** (`alias` / `alias --remove`; `kickstaff.consoleUi` localStorage) live in `src/lib/client/consoleUi.svelte.ts` — separate key from UI settings; see `[docs/guides/console.md](docs/guides/console.md)`.
   - When adding/removing/changing fields, bump `UI_SETTINGS_VERSION`.
   - Keep `DEFAULT_UI_SETTINGS` and validation (`isValidShape`) in sync with the new version.
 
@@ -102,7 +102,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 - **Repository standards** for Svelte structure and file headers: `[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)`.
 - **Developer / agent guides** live under `[docs/guides/](docs/guides/)` — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Operations handoff (kickagent):** `[docs/upgrade/README.md](docs/upgrade/README.md)` — primers + ETL reference (no bill code in this repo).
-- **KAM dev console + command palette** (palette: `Ctrl+/`; focus console pane: ``` (backtick); `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/kam-console.md](docs/guides/kam-console.md)`.
+- **Console + command palette** (palette: `Ctrl+/`; toggle console pane: backtick; `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/console.md](docs/guides/console.md)`.
 - **Host mission (kickagent UI):** `[docs/guides/host-mission.md](docs/guides/host-mission.md)` — kickstaff is a generic manifest consumer; new same-class resources are a reload.
 - **Draft — client data cache:** `[docs/guides/client-data-cache-story.md](docs/guides/client-data-cache-story.md)` — Svelte store / pending edits story for planning; not a build spec until promoted into `now.md`.
 - **kickagent integration** (no npm/git dependency in kickstaff — Phase 2 manifest + ESM): sibling `../kickagent` only to publish/serve artifacts; `[docs/guides/contracts/kickstaff-kickagent-consumer.md](docs/guides/contracts/kickstaff-kickagent-consumer.md)`.

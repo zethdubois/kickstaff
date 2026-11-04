@@ -144,7 +144,7 @@ pnpm dev
 - **[docs/guides/platform-overview.md](docs/guides/platform-overview.md)** — kickstaff vs kickagent, Postgres schemas, storage, KAM / KAM-UI
 - **[docs/upgrade/README.md](docs/upgrade/README.md)** — handoff primers for bills/units/reports (ex–`/tools`)
 - **[AGENTS.md](AGENTS.md)** — Cursor agents and contributors: conventions, env summary, route-doc pipeline, Svelte 5 runes
-- **[docs/guides/README.md](docs/guides/README.md)** — index of route architecture, admin dev guides, ETL, KAM console
+- **[docs/guides/README.md](docs/guides/README.md)** — index of route architecture, admin dev guides, ETL, console
 - **[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)** — Svelte file headers and guide naming
 
 ## Production

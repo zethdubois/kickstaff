@@ -21,7 +21,7 @@
   <h1 class="dashSettings__title">Dashboard</h1>
   <p class="dashSettings__lead">
     Edit links and command cards, or choose what appears on <strong>your</strong> home page.
-    Command cards appear after you run them once from KAM. New URL links for everyone:
+    Command cards appear after you run them once from the console. New URL links for everyone:
     <a href="/settings/add-link">Add link</a>.
   </p>
 

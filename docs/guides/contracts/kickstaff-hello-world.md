@@ -2,7 +2,7 @@
 
 **Audience:** Developer working in **kickstaff**.
 
-**Consumer guide:** [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md). **Phase 1 package:** [kickagent-essentials-spec.md](kickagent-essentials-spec.md). **KAM console:** [../kam-console.md](../kam-console.md).
+**Consumer guide:** [kickstaff-kickagent-consumer.md](kickstaff-kickagent-consumer.md). **Phase 1 package:** [kickagent-essentials-spec.md](kickagent-essentials-spec.md). **Console:** [../console.md](../console.md).
 
 ---
 
@@ -18,7 +18,7 @@
 
 | Item | Value |
 |------|--------|
-| Console command | `kickagent:hello` (or `hello` in [kickagent shell](../kam-console.md#kickagent-shell-ka-mode)) |
+| Console command | `kickagent:hello` (or `hello` in the [subscriber palette](../console.md#subscriber-palette-ka-mode)) |
 | User context | `page.data.user` (`SessionUser`) |
 | Logger | Local shim → `klogWithSource` (source tag `kickagent:hello`) |
 | Result | `CommandOutcome.log` with returned `message` |

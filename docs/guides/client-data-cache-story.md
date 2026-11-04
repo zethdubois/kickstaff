@@ -72,7 +72,7 @@ Prefer A → B before C → D. Do not block Story A (`opsDatabase` fail-closed o
 - Persisting pending edits to localStorage / IndexedDB
 - Multi-server Kickstaff coordination / Redis
 - Pessimistic row locks
-- Replacing KAM console text output with the store
+- Replacing console text output with the store
 - Forcing rental marketing pages through the cache
 
 ---

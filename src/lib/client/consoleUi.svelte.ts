@@ -1,5 +1,5 @@
 /**
- * KAM-console UI preferences stored separately from broader UI settings.
+ * Console UI preferences stored separately from broader UI settings.
  * Command aliases rewrite the leading token (+ inject words) before resolution.
  */
 

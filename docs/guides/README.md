@@ -54,7 +54,7 @@ Paired guides match component filenames (see SOP):
 | Guide                                                                                  | Topic                                                           |
 | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
 | [kickdesk.registration.json](../../kickdesk.registration.json) + [KD setup for robots](../../kickdesk/docs/subscriber-setup-for-robots.md) | Kickdesk subscriber — one-sheet in KD repo; day-to-day: [README § Kickdesk](../../README.md#kickdesk-local-cockpit); values: `scripts/kickdesk-manifest.ts` |
-| [kam-console.md](kam-console.md)                                                       | Dev console, `Ctrl+/`, klog, command palette                    |
+| [console.md](console.md)                                                               | Dev console, `Ctrl+/`, klog, command palette                    |
 | [register-kickagent-command.md](register-kickagent-command.md)                         | **Checklist:** add a `kickagent:*` command (catalog → KAM → hub) |
 | [contracts/README.md](contracts/README.md)                                             | Cross-repo contract index and reading order                     |
 | [contracts/kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) | kickstaff host/subscriber (phases, security, kickstaff-owned commands) |

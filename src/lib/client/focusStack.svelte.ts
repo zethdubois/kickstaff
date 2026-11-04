@@ -1,5 +1,5 @@
 /**
- * Tracks which shell layer sits above the KAM console.
+ * Tracks which shell layer sits above the console.
  * Console wins by default when open; main content rises on pointer/focus.
  *
  * The console is a full-height left column. The site header lives in the

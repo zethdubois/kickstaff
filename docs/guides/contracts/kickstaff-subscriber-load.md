@@ -155,4 +155,4 @@ Fix stale links in [README.md](README.md): the kickagent paths are `docs/kickage
 
 - Host-provided database stores. Wait for manifest `requires`.
 - A second subscriber implementation. The registry must be keyed by id; do not add a second product in this change.
-- Renaming the KAM console product name in kickstaff. Company naming stays in this repo.
+- Company naming (KAM Suite, account email). The pane is named console — [console.md](../console.md).

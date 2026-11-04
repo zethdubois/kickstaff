@@ -1,5 +1,5 @@
 /**
- * Command registry for the KAM dev palette.
+ * Command registry for the dev palette.
  *
  * Each command is a handler that does its work and optionally returns a
  * `CommandOutcome` describing the post-action to run after successful
@@ -37,7 +37,7 @@ import { listRowLines } from "./listRowLine";
 import {
   executeHistoryCommand,
   expandHistoryBang,
-  recordKamCommand,
+  recordCommand,
   shouldSkipHistoryRecord,
 } from "./commandHistory";
 import { listRefreshTargets, runRefreshTarget } from "./refresh";
@@ -281,7 +281,7 @@ export async function runCommand(input: string): Promise<CommandResult> {
     commandLine = bang.expanded;
   }
 
-  if (!shouldSkipHistoryRecord(commandLine)) recordKamCommand(commandLine);
+  if (!shouldSkipHistoryRecord(commandLine)) recordCommand(commandLine);
 
   const [rawToken, ...args] = commandLine.split(/\s+/);
   if (!rawToken) return { ok: false, error: "empty command" };
@@ -446,7 +446,7 @@ registerCommand("help", (): CommandOutcome => {
     "History: history · !n / !! / !-n / !prefix · history -c · history -d <n> · ↑/↓ recall",
   );
   blocks.push(
-    "Hotkey: Ctrl+/ (⌘+/) — palette · ` (backtick) — KAM Console pane",
+    "Hotkey: Ctrl+/ (⌘+/) — palette · backtick (`) toggles the console",
   );
   blocks.push(
     "Database: db status · db tables · db migrations (admin) · db use dev|staging|prod (local dev; each DB needs its own sign-in)",
@@ -762,7 +762,7 @@ registerCommand("db", async (args): Promise<CommandOutcome> => {
   if (sub === "migrations" || sub === "migrate") {
     if (sub === "migrate") {
       return {
-        log: "db migrate is not available in KAM — use: pnpm db:migrate (dev) or pnpm db:migrate --db staging|prod",
+        log: "db migrate is not available from the console — use: pnpm db:migrate (dev) or pnpm db:migrate --db staging|prod",
         level: "warn",
       };
     }

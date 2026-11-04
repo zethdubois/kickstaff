@@ -101,12 +101,12 @@ When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is **unset** (typical local dev):
 When **`PUBLIC_KICKAGENT_MANIFEST_URL`** is set (see [`.env.example`](../../.env.example)):
 
 1. Build kickagent and publish manifest + ESM bundle ([plugin-manifest-and-reload.md](../../kickagent/docs/guides/plugin-manifest-and-reload.md)).
-2. Restart kickstaff or run **`load kickagent`** in KAM after republishing.
+2. Restart kickstaff or run **`load kickagent`** in the console after republishing.
 3. Plugin `register()` uses the same catalog; manifest `commands[]` includes **`category`** for hub materialize defaults.
 
 ---
 
-## 4. Verify in KAM
+## 4. Verify in the console
 
 As admin:
 
@@ -116,7 +116,7 @@ As admin:
 | `kickagent` then `<name>` | Inside subscriber palette only |
 | `Ctrl+/` palette | Same as console |
 
-**Success:** klog lines in the KAM Console pane (`` ` `` to focus).
+**Success:** klog lines in the console pane (backtick toggles it).
 
 **Failure:** `unknown command: …`
 
@@ -124,7 +124,7 @@ As admin:
 - Phase 2: stale manifest — republish and `load kickagent`.
 - Command missing from `COMMAND_CATALOG` or invalid `name` pattern.
 
-See [kam-console.md](kam-console.md) for palette mode, aliases, and `:help`.
+See [console.md](console.md) for palette mode, aliases, and `:help`.
 
 ---
 
@@ -137,7 +137,7 @@ Hub cards are **lazy**: the command does not appear on `/` until it has been **r
 3. Reload **`/`** — card shows under the command’s **`category`** column.
 4. **Settings → Dashboard** — relabel, recategorize, sort, or hide per user.
 
-Removing a card in Settings does **not** unregister the KAM command.
+Removing a card in Settings does **not** unregister the command.
 
 Details: [kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) (Ops hub command cards).
 
@@ -169,5 +169,5 @@ Details: [kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consume
 | [kickagent/docs/commands.md](../../kickagent/docs/commands.md) | Generated command table |
 | [kickagent/docs/AGENTS.md](../../kickagent/docs/AGENTS.md) | Kickagent repo conventions |
 | [contracts/kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) | Host phases, security, hub |
-| [kam-console.md](kam-console.md) | Palette, klog, kickagent shell |
+| [console.md](console.md) | Palette, klog, subscriber palette |
 | [platform-overview.md](platform-overview.md) | KAM vs KAM-UI architecture |

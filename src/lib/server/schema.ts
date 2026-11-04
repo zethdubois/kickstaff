@@ -150,7 +150,7 @@ export const klogLevels = ['log', 'info', 'warn', 'error'] as const;
 export type KlogLevel = (typeof klogLevels)[number];
 
 /**
- * Persistent dev-console log entries (KAM Console pane + command palette).
+ * Persistent dev-console log entries (console pane + command palette).
  * Per-user audit with 30-day retention (pruned on write by the ingest endpoint).
  */
 export const klogs = pgTable(

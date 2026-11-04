@@ -18,7 +18,7 @@ Standing mission: [host-mission.md](host-mission.md) — one builder per UI clas
 | **Hub link** (`/ops/<name>`) | **Kickagent Resources** column. One link per manifest resource. The label is the resource key |
 | **`/ops/units`** | Units v1 page — filters + [`KickagentUnitsSplitView`](../../src/lib/kickagent/KickagentUnitsSplitView.svelte). List command is `resources.units.list.command` |
 | **`/ops/<name>`** | List-detail page for that resource key. See [ops-accounts-ui-map.md](ops-accounts-ui-map.md). Show-only when `submitCommand` is absent |
-| **KAM Console** | Ad-hoc CLI; log lines stay; optional console table preview |
+| **Console** | Ad-hoc CLI; log lines stay; optional console table preview |
 
 ## Manifest (kickagent ≥ 0.0.3)
 
@@ -43,7 +43,7 @@ Client: [`runManifestCommand`](../../src/lib/kickagent/runManifestCommand.ts) �
 ## Activation checklist
 
 1. `PUBLIC_KICKAGENT_MANIFEST_URL` set; manifest includes `resources.units.list` with columns.
-2. `load kickagent` — filters appear in KAM `[KA]` mode.
+2. `load kickagent` — filters appear in the `[KA]` palette.
 3. Hub link `units` or visit `/ops/units` — table headers match manifest, not pipes.
 4. Network: `POST /api/kickagent/run` body includes `data.rows` and `presentationRef`.
 
@@ -64,5 +64,5 @@ If table missing but pipes show: check klog for `table UI: missing manifest reso
 ## Related
 
 - [kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md)
-- [kam-console.md](kam-console.md)
+- [console.md](console.md)
 - [ops-units-ui-map.md](ops-units-ui-map.md)

@@ -12,7 +12,7 @@
 
 | Repo | Role |
 |------|------|
-| **kickstaff** | UI, admin auth, KAM console, host commands, load plugin, proxy API (later) |
+| **kickstaff** | UI, admin auth, console, host commands, load plugin, proxy API (later) |
 | **kickagent** | Command implementations, published ESM + manifest, runtime API (later) |
 
 kickstaff does **not** design kickagent’s LLM pipelines or batch workers here; it documents **expectations** at the boundary.
@@ -71,12 +71,12 @@ These are **host** concerns — not registered by the kickagent plugin:
 
 | Concern | Location / command |
 |---------|-------------------|
-| Command palette + KAM pane | [Palette.svelte](../../../src/lib/devConsole/Palette.svelte), [KamConsole.svelte](../../../src/lib/devConsole/KamConsole.svelte) |
+| Command palette + console pane | [Palette.svelte](../../../src/lib/devConsole/Palette.svelte), [Console.svelte](../../../src/lib/devConsole/Console.svelte) |
 | Command registry | [commands.ts](../../../src/lib/devConsole/commands.ts) |
-| Subscriber palette (`[KA] >`, prefix resolution) | [commands.ts](../../../src/lib/devConsole/commands.ts), [kam-console.md](../kam-console.md) |
+| Subscriber palette (`[KA] >`, prefix resolution) | [commands.ts](../../../src/lib/devConsole/commands.ts), [console.md](../console.md) |
 | Meta: `load`, `unload`, `exit` (`:exit` from inside palette) | Built-in host commands |
 | Meta: `help`, `console`, `clear`, `echo` | Built-in host commands |
-| Meta: `alias` / `alias --remove` (`ka` → `kickagent` via `alias kickagent ka`) | Persisted in [`consoleUi.svelte.ts`](../../../src/lib/client/consoleUi.svelte.ts); see [kam-console.md](../kam-console.md) |
+| Meta: `alias` / `alias --remove` (`ka` → `kickagent` via `alias kickagent ka`) | Persisted in [`consoleUi.svelte.ts`](../../../src/lib/client/consoleUi.svelte.ts); see [console.md](../console.md) |
 | Phase 2 manifest bootstrap | [loadPluginFromManifest.ts](../../../src/lib/kickagent/loadPluginFromManifest.ts), [pluginSession.ts](../../../src/lib/kickagent/pluginSession.ts); [+layout.svelte](../../../src/routes/+layout.svelte) (`$effect` when admin + `PUBLIC_KICKAGENT_MANIFEST_URL`) |
 | Admin-only registration | [+layout.svelte](../../../src/routes/+layout.svelte): hydrate + kickagent bootstrap when `isAdmin` |
 | klog persistence | `/api/klogs`, [state.svelte.ts](../../../src/lib/devConsole/state.svelte.ts) |
@@ -85,7 +85,7 @@ These are **host** concerns — not registered by the kickagent plugin:
 - Unqualified names in the palette resolve **only** to `kickagent:<name>`. Use `:command` for host verbs (e.g. `:help`, `:exit`, `:clear`).
 - Full name `kickagent:hello` works in any mode. `:kickagent:hello` runs the same (leading `:` strips to host-qualified resolution).
 - Enter palette: **`kickagent`**, or a user alias such as **`ka`** after **`alias kickagent ka`**. Leave: **`:exit`**. Reload: **`load kickagent`**.
-- Visual: `[KA] >` prompt + green accent bar — see [kam-console.md](../kam-console.md).
+- Visual: `[KA] >` prompt + green accent bar — see [console.md](../console.md).
 
 ### Registering commands (Phase 1)
 
@@ -189,7 +189,7 @@ Track Phase 3 and production hardening in this repo; publisher-side truth stays 
 | [kickstaff-hello-world.md](kickstaff-hello-world.md) | Phase 1 hello wiring |
 | [kickagent-essentials-spec.md](kickagent-essentials-spec.md) | Phase 1 kickagent package contract |
 | [kickagent/docs/kickagent-platform-spec.md](../../../kickagent/docs/kickagent-platform-spec.md) | Platform spec (kickagent repo, source of truth) |
-| [../kam-console.md](../kam-console.md) | KAM UX, kickagent mode |
+| [../console.md](../console.md) | Console, kickagent mode |
 
 ---
 

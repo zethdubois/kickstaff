@@ -2,7 +2,7 @@
 
 **Audience:** Developers and agents working across **kickstaff** and the sibling **kickagent** repo.
 
-**Purpose:** One mental model for product boundaries, Postgres ownership, storage, and UI surfaces (KAM vs KAM-UI). For host/plugin wiring details, see [contracts/kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) and [kam-console.md](kam-console.md).
+**Purpose:** One mental model for product boundaries, Postgres ownership, storage, and UI surfaces (KAM vs KAM-UI). For host/plugin wiring details, see [contracts/kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) and [console.md](console.md).
 
 ---
 
@@ -92,7 +92,7 @@ S3 and bill pipeline env live in **kickagent** deploy config, not kickstaff [`.e
 
 | Surface | What it is | Status |
 |---------|------------|--------|
-| **KAM** | CLI: command palette (`Ctrl+/`), KAM Console pane, `kickagent:*` commands, manifest reload (`load kickagent`), klog | Implemented — [kam-console.md](kam-console.md) |
+| **KAM** | CLI: command palette (`Ctrl+/`), console pane, `kickagent:*` commands, manifest reload (`load kickagent`), klog | Implemented — [console.md](console.md) |
 | **KAM-UI** | Configurable dashboards for the same kickagent capabilities (control + feedback) | **v0 on hub** — URL link cards + lazy materialized `kickagent:*` command cards ([kickagent consumer guide](contracts/kickstaff-kickagent-consumer.md)); richer widgets planned |
 | **`/tools/*`** | *(removed)* | Replaced by kickagent + KAM-UI; behavior captured in [upgrade primers](../upgrade/README.md) |
 
@@ -108,7 +108,7 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 | Admin rental configuration (`/admin/rental-links`, etc.) | **Yes** | May reorganize in nav; must remain functional |
 | Auth (`users`, `sessions`) | **Yes** | Required for admin access |
 | Hub dashboard (links + command cards) | Incubating / internal | `dashboard_links` + lazy materialize on first command run |
-| KAM console | Incubating | Active development |
+| Console | Incubating | Active development |
 | `/tools/*` | **Removed** | See [docs/upgrade/](../upgrade/README.md) for handoff to kickagent |
 | Bills / units / reports logic | **Removed from kickstaff** | Rebuild in kickagent + KAM-UI |
 
@@ -130,7 +130,7 @@ KAM and KAM-UI share one **engine** (kickagent commands / API); they differ only
 |-----|--------|
 | [contracts/kickstaff-kickagent-consumer.md](contracts/kickstaff-kickagent-consumer.md) | Host/subscriber phases, security, commands |
 | [contracts/README.md](contracts/README.md) | Cross-repo contract index |
-| [kam-console.md](kam-console.md) | KAM UX, aliases, kickagent mode |
+| [console.md](console.md) | Console, aliases, kickagent mode |
 | [../upgrade/utility-bill-etl-scope.md](../upgrade/utility-bill-etl-scope.md) | Bills pipeline scope (KA reference) |
 | [../upgrade/README.md](../upgrade/README.md) | Handoff primers (bills, units, reports) after `/tools` removal |
 | [production-operations.md](production-operations.md) | Operators: vanity, rental links |

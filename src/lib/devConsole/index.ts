@@ -1,6 +1,6 @@
 export {
   devConsole,
-  KAM_CONSOLE_FOCUS_INPUT_EVENT,
+  CONSOLE_FOCUS_INPUT_EVENT,
   klog,
   klogInfo,
   klogWarn,
@@ -43,4 +43,4 @@ export {
   type UISettings,
 } from "../client/uiSettings.svelte";
 export { default as Palette } from "./Palette.svelte";
-export { default as KamConsole } from "./KamConsole.svelte";
+export { default as Console } from "./Console.svelte";

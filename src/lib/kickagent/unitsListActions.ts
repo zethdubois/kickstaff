@@ -92,7 +92,7 @@ export function buildUnitsListActions(
 
 	secondary.push({
 		id: 'copy-cmd',
-		label: 'Copy KAM command',
+		label: 'Copy command',
 		run: async (item) => {
 			const id = rowId(model, item.row);
 			await copyText(`${detailCommand} --id ${id}`);
