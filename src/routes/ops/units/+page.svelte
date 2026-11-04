@@ -20,6 +20,7 @@
     type ResourceTableModel,
   } from "$lib/kickagent/outcomeToTableModel";
   import { runManifestCommand } from "$lib/kickagent/runManifestCommand";
+  import { usePageLocation } from "$lib/client/pageLocation.svelte";
 
   let { data } = $props();
 
@@ -34,6 +35,7 @@
   const pageTitle = $derived(
     data.opsLinks.find((link) => link.name === "units")?.label || "units",
   );
+  usePageLocation(() => pageTitle);
 
   let loading = $state(false);
   let reloadingManifest = $state(false);
@@ -119,7 +121,6 @@
   <OpsResourceNav links={data.opsLinks} current="units" />
 
   <header class="ops__header">
-    <h1 class="ops__title">{pageTitle}</h1>
     <p class="ops__lead">
       Operations units from kickagent. Select a unit in the list to load its detail form.
       ↑↓ navigate · Space menu.
@@ -188,13 +189,6 @@
 
   .ops__header {
     margin-bottom: 1rem;
-  }
-
-  .ops__title {
-    margin: 0 0 0.35rem;
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
   }
 
   .ops__lead {

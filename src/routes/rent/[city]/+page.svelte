@@ -5,11 +5,14 @@
 <script lang="ts">
 	import RentalLandingGrid from '$lib/RentalLandingGrid.svelte';
 	import { cityBySlug, cityTaglineDefault } from '$lib/cities';
+	import { usePageLocation } from '$lib/client/pageLocation.svelte';
 
 	let { data } = $props();
 
 	const label = $derived(cityBySlug[data.slug]);
 	const taglineDefault = $derived(cityTaglineDefault[data.slug]);
+
+	usePageLocation(() => label);
 </script>
 
 <svelte:head>

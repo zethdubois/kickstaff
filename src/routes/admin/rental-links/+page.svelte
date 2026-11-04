@@ -6,8 +6,11 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { cities, isCitySlug, type CitySlug } from '$lib/cities';
+	import { usePageLocation } from '$lib/client/pageLocation.svelte';
 
 	let { data, form } = $props();
+
+	usePageLocation(() => 'Rental landing links');
 
 	function slugFromUrl(url: URL): CitySlug {
 		const q = url.searchParams.get('city');
@@ -59,6 +62,7 @@
 
 <div class="admin">
 	<nav class="admin__nav" aria-label="Admin">
+		<span class="admin__navCategory">Admin:</span>
 		<span class="admin__navCurrent">Rental links</span>
 		<span class="admin__navSep" aria-hidden="true">·</span>
 		<a class="admin__navLink" href="/admin/users">Users</a>
@@ -66,7 +70,6 @@
 		<a class="admin__navLink" href="/admin/datasets">Datasets</a>
 	</nav>
 
-	<h1 class="admin__title">Rental landing links</h1>
 	<p class="admin__lead">
 		AppFolio URLs for each city page (<code>/rent/cda</code>, <code>/rent/mos</code>,
 		<code>/rent/spt</code>). Leave a URL field empty to hide that tile. URLs must use
@@ -313,6 +316,12 @@
 		color: color-mix(in srgb, currentColor 72%, transparent);
 	}
 
+	.admin__navCategory {
+		font-weight: 700;
+		color: color-mix(in srgb, currentColor 88%, transparent);
+		margin-right: 0.45rem;
+	}
+
 	.admin__navLink {
 		color: inherit;
 		text-decoration: underline;
@@ -326,12 +335,6 @@
 	.admin__navCurrent {
 		font-weight: 600;
 		color: color-mix(in srgb, currentColor 88%, transparent);
-	}
-
-	.admin__title {
-		margin: 0 0 0.35rem;
-		font-size: 1.5rem;
-		font-weight: 700;
 	}
 
 	.admin__lead {

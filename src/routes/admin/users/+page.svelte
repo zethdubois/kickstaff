@@ -3,7 +3,11 @@
   @faq: docs/guides/admin-users.md
 -->
 <script lang="ts">
+  import { usePageLocation } from "$lib/client/pageLocation.svelte";
+
   let { data, form } = $props();
+
+  usePageLocation(() => "Users");
 
   let pendingDeleteId = $state<string | null>(null);
   let deleteConfirmTimer: ReturnType<typeof setTimeout> | null = null;
@@ -27,6 +31,7 @@
 
 <div class="admin">
   <nav class="admin__nav" aria-label="Admin">
+    <span class="admin__navCategory">Admin:</span>
     <a class="admin__navLink" href="/admin/rental-links">Rental links</a>
     <span class="admin__navSep" aria-hidden="true">·</span>
     <span class="admin__navCurrent">Users</span>
@@ -34,7 +39,6 @@
     <a class="admin__navLink" href="/admin/datasets">Datasets</a>
   </nav>
 
-  <h1 class="admin__title">Users</h1>
   <p class="admin__lead">
     Create accounts and send the generated password to each person. They must
     set a new password on first login.
@@ -167,6 +171,12 @@
     color: color-mix(in srgb, currentColor 72%, transparent);
   }
 
+  .admin__navCategory {
+    font-weight: 700;
+    color: color-mix(in srgb, currentColor 88%, transparent);
+    margin-right: 0.45rem;
+  }
+
   .admin__navLink {
     color: inherit;
     text-decoration: underline;
@@ -180,12 +190,6 @@
   .admin__navCurrent {
     font-weight: 600;
     color: color-mix(in srgb, currentColor 88%, transparent);
-  }
-
-  .admin__title {
-    margin: 0 0 0.35rem;
-    font-size: 1.5rem;
-    font-weight: 700;
   }
 
   .admin__lead {

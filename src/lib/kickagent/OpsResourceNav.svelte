@@ -15,6 +15,7 @@
 </script>
 
 <nav class="ops__nav" aria-label="Ops">
+  <span class="ops__navCategory">Operations:</span>
   {#each links as link, i (link.name)}
     {#if i > 0}
       <span class="ops__navSep" aria-hidden="true">·</span>
@@ -32,6 +33,12 @@
     margin-bottom: 0.75rem;
     font-size: 0.88rem;
     color: color-mix(in srgb, currentColor 65%, transparent);
+  }
+
+  .ops__navCategory {
+    font-weight: 700;
+    color: color-mix(in srgb, currentColor 88%, transparent);
+    margin-right: 0.45rem;
   }
 
   .ops__navLink {

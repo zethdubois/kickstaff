@@ -36,6 +36,7 @@
     type ResourceTableModel,
   } from "$lib/kickagent/outcomeToTableModel";
   import { runManifestCommand } from "$lib/kickagent/runManifestCommand";
+  import { usePageLocation } from "$lib/client/pageLocation.svelte";
 
   let { data } = $props();
 
@@ -43,6 +44,7 @@
   const pageTitle = $derived(
     data.opsLinks.find((link) => link.name === resourceName)?.label || resourceName,
   );
+  usePageLocation(() => pageTitle);
   const resource = $derived(
     data.manifest.resources?.listDetail[resourceName] ??
       getListDetailResource(resourceName),
@@ -215,18 +217,6 @@
 <div class="ops">
   <div class="ops__chrome">
     <OpsResourceNav links={data.opsLinks} current={resourceName} />
-
-    <header class="ops__header">
-      <h1 class="ops__title">
-        {pageTitle}
-        <button
-          type="button"
-          class="ops__info"
-          title={`resources.${resourceName} list-detail. Filters, columns, and save flags come from the manifest.`}
-          aria-label={`resources.${resourceName} list-detail. Filters, columns, and save flags come from the manifest.`}
-        >i</button>
-      </h1>
-    </header>
   </div>
 
   {#if !resource || !schema}
@@ -260,6 +250,7 @@
         autoRunPresence
         canClear={hasPrefs}
         onClear={clearAll}
+        info={`resources.${resourceName} list-detail. Filters, columns, and save flags come from the manifest.`}
       />
 
       {#if error}
@@ -317,48 +308,6 @@
 
   .ops__chrome {
     flex: 0 0 auto;
-  }
-
-  .ops__header {
-    margin-bottom: 0.75rem;
-  }
-
-  .ops__title {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  .ops__info {
-    appearance: none;
-    padding: 0;
-    background: transparent;
-    font-family: inherit;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.05rem;
-    height: 1.05rem;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-    color: color-mix(in srgb, currentColor 55%, transparent);
-    font-size: 0.72rem;
-    font-weight: 700;
-    font-style: italic;
-    line-height: 1;
-    cursor: help;
-    user-select: none;
-  }
-
-  .ops__info:hover,
-  .ops__info:focus-visible {
-    color: inherit;
-    border-color: color-mix(in srgb, currentColor 55%, transparent);
-    outline: none;
   }
 
   .ops__errBlock {

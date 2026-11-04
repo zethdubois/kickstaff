@@ -27,6 +27,8 @@
     canClear?: boolean;
     /** Replaces the default clear (reset controls); use to also reset sort/prefs and reload. */
     onClear?: () => void | Promise<void>;
+    /** Help note drawn inside the submit button. */
+    info?: string;
   };
 
   let {
@@ -41,6 +43,7 @@
     autoRunPresence = false,
     canClear,
     onClear,
+    info = "",
   }: Props = $props();
 
   const shown = $derived(
@@ -52,6 +55,7 @@
   );
   const clearEnabled = $derived(canClear ?? hasValues);
   const runLabel = $derived(commandLabel.trim() || command);
+  const infoText = $derived(info.trim());
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
@@ -114,10 +118,14 @@
         <button
           type="submit"
           class="run"
+          class:run--withInfo={infoText.length > 0}
           disabled={loading}
           title={command}
         >
           {loading ? "Loading…" : runLabel}
+          {#if infoText}
+            <span class="info" title={infoText} aria-hidden="true">i</span>
+          {/if}
         </button>
         <button
           type="button"
@@ -244,6 +252,34 @@
   .run {
     background: color-mix(in srgb, currentColor 8%, transparent);
     font-weight: 600;
+  }
+
+  .run--withInfo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+    color: color-mix(in srgb, currentColor 55%, transparent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-style: italic;
+    line-height: 1;
+    cursor: help;
+    user-select: none;
+  }
+
+  .info:hover {
+    color: inherit;
+    border-color: color-mix(in srgb, currentColor 55%, transparent);
   }
 
   .clear {

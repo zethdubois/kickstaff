@@ -3,7 +3,11 @@
   @faq: docs/guides/database-targeting.md
 -->
 <script lang="ts">
+  import { usePageLocation } from "$lib/client/pageLocation.svelte";
+
   let { data, form } = $props();
+
+  usePageLocation(() => "Ops datasets");
 </script>
 
 <svelte:head>
@@ -12,6 +16,7 @@
 
 <div class="admin">
   <nav class="admin__nav" aria-label="Admin">
+    <span class="admin__navCategory">Admin:</span>
     <a class="admin__navLink" href="/admin/rental-links">Rental links</a>
     <span class="admin__navSep" aria-hidden="true">·</span>
     <a class="admin__navLink" href="/admin/users">Users</a>
@@ -19,7 +24,6 @@
     <span class="admin__navCurrent">Datasets</span>
   </nav>
 
-  <h1 class="admin__title">Ops datasets</h1>
   <p class="admin__lead">
     Connection strings for Kickagent data commands. They live as rows in the
     <strong>product</strong> database. The browser never receives the URL — only
@@ -187,6 +191,10 @@
     margin-bottom: 1.25rem;
     font-size: 0.9rem;
   }
+  .admin__navCategory {
+    font-weight: 700;
+    margin-right: 0.15rem;
+  }
   .admin__navLink {
     color: inherit;
     text-decoration: underline;
@@ -197,10 +205,6 @@
   }
   .admin__navSep {
     opacity: 0.45;
-  }
-  .admin__title {
-    font-size: 1.5rem;
-    margin: 0 0 0.5rem;
   }
   .admin__lead {
     margin: 0 0 1.25rem;

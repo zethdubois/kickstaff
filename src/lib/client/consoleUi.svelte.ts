@@ -13,12 +13,18 @@ export type ConsoleUiPrefs = {
   version: number;
   /** Shortcut (lowercase) → expansion text (≥1 whitespace-separated tokens). */
   commandAliases: Record<string, string>;
+  /** When true, log rows reserve a clock column. Default off; hover still shows the time. */
+  showTimestamps: boolean;
 };
 
 export const DEFAULT_CONSOLE_UI_PREFS: ConsoleUiPrefs = {
   version: CONSOLE_UI_VERSION,
   commandAliases: {},
+  showTimestamps: false,
 };
+
+/** Separate from `cache` so a missing stored key stays off without a version bump. */
+let _showTimestamps = $state(false);
 
 let cache: ConsoleUiPrefs | null = null;
 
@@ -84,12 +90,14 @@ export function getConsoleUiPrefs(): ConsoleUiPrefs {
   if (cache) return cache;
   if (!isBrowser()) {
     cache = cloneDefaults();
+    _showTimestamps = false;
     return cache;
   }
   try {
     const raw = window.localStorage.getItem(CONSOLE_UI_STORAGE_KEY);
     if (!raw) {
       cache = cloneDefaults();
+      _showTimestamps = false;
       return cache;
     }
     const parsed = JSON.parse(raw) as unknown;
@@ -98,11 +106,15 @@ export function getConsoleUiPrefs(): ConsoleUiPrefs {
       parsed.version !== CONSOLE_UI_VERSION
     ) {
       cache = cloneDefaults();
+      _showTimestamps = false;
       return cache;
     }
     const migrated = migrateAliasExpansions({ ...parsed.commandAliases });
+    const showTimestamps = readShowTimestamps(parsed);
+    _showTimestamps = showTimestamps;
     cache = {
       ...parsed,
+      showTimestamps,
       commandAliases: migrated,
     };
     if (JSON.stringify(migrated) !== JSON.stringify(parsed.commandAliases)) {
@@ -111,8 +123,33 @@ export function getConsoleUiPrefs(): ConsoleUiPrefs {
     return cache;
   } catch {
     cache = cloneDefaults();
+    _showTimestamps = false;
     return cache;
   }
+}
+
+function readShowTimestamps(value: object): boolean {
+  const flag = (value as Record<string, unknown>).showTimestamps;
+  return flag === true;
+}
+
+/** Clock column in the console log. Reads the reactive flag; loads prefs on first call. */
+export function getShowTimestamps(): boolean {
+  getConsoleUiPrefs();
+  return _showTimestamps;
+}
+
+export function setShowTimestamps(showTimestamps: boolean): ConsoleUiPrefs {
+  const base = getConsoleUiPrefs();
+  _showTimestamps = showTimestamps;
+  const next: ConsoleUiPrefs = {
+    ...base,
+    version: CONSOLE_UI_VERSION,
+    showTimestamps,
+  };
+  cache = next;
+  persist(next);
+  return next;
 }
 
 export function getCommandAliases(): Readonly<Record<string, string>> {
@@ -209,6 +246,7 @@ export function removeCommandAlias(shortcutRaw: string): ConsoleUiPrefs {
 
 export function resetConsoleUiPrefs(): ConsoleUiPrefs {
   const next = cloneDefaults();
+  _showTimestamps = false;
   cache = next;
   persist(next);
   return next;

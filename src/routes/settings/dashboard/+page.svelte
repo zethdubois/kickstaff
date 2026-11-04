@@ -5,8 +5,11 @@
     categoryTintBackground,
     hashCategoryHue
   } from "$lib/categoryColor";
+  import { usePageLocation } from "$lib/client/pageLocation.svelte";
 
   let { data, form } = $props();
+
+  usePageLocation(() => "Dashboard");
 </script>
 
 <svelte:head>
@@ -18,7 +21,6 @@
     <a class="dashSettings__back" href="/">← Home</a>
   </nav>
 
-  <h1 class="dashSettings__title">Dashboard</h1>
   <p class="dashSettings__lead">
     Edit links and command cards, or choose what appears on <strong>your</strong> home page.
     Command cards appear after you run them once from the console. New URL links for everyone:
@@ -248,12 +250,6 @@
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 0.12em;
-  }
-
-  .dashSettings__title {
-    margin: 0 0 0.35rem;
-    font-size: 1.45rem;
-    font-weight: 700;
   }
 
   .dashSettings__lead {

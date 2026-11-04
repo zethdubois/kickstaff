@@ -12,12 +12,18 @@
   } from "./commandHistory";
   import { runCommand } from "./commands";
   import { showsKlogTimestamp } from "./klogStamp";
+  import {
+    getShowTimestamps,
+    setShowTimestamps,
+  } from "$lib/client/consoleUi.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
 
   let bodyEl: HTMLDivElement | undefined = $state();
   let inlineInput = $state("");
   let inlineInputEl: HTMLInputElement | undefined = $state();
+  /** Off until mount so SSR and the first client paint agree. Default is off. */
+  let showTimestamps = $state(false);
 
   const promptPrefix = $derived(
     devConsole.kickagentModeActive ? "[KA] >" : "›",
@@ -78,7 +84,13 @@
     focusStack.focusConsole();
   }
 
+  function toggleTimestamps() {
+    showTimestamps = !showTimestamps;
+    setShowTimestamps(showTimestamps);
+  }
+
   onMount(() => {
+    showTimestamps = getShowTimestamps();
     resetHistoryNavigation();
     function onFocusConsoleInput() {
       focusStack.focusConsole();
@@ -122,6 +134,15 @@
             {devConsole.dbStatus.target}
           </span>
         {/if}
+        <button
+          type="button"
+          class="stampToggle"
+          class:stampToggle--on={showTimestamps}
+          aria-pressed={showTimestamps}
+          aria-label="Show timestamps"
+          title={showTimestamps ? "Hide timestamps" : "Show timestamps"}
+          onclick={toggleTimestamps}>time</button
+        >
       </div>
     </header>
 
@@ -140,16 +161,20 @@
           {@const previous = i > 0 ? devConsole.entries[i - 1] : null}
           <div
             class="row"
+            class:row--stamps={showTimestamps}
             class:row--err={entry.level === "error"}
             class:row--warn={entry.level === "warn"}
             class:row--info={entry.level === "info"}
             class:row--prompt={entry.source === "host:prompt"}
+            title={fmtTs(entry.ts)}
           >
-            <span class="ts"
-              >{showsKlogTimestamp(entry, previous)
-                ? fmtTs(entry.ts)
-                : ""}</span
-            >
+            {#if showTimestamps}
+              <span class="ts"
+                >{showsKlogTimestamp(entry, previous)
+                  ? fmtTs(entry.ts)
+                  : ""}</span
+              >
+            {/if}
             <pre class="msg">{entry.message}</pre>
           </div>
         {:else}
@@ -226,6 +251,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex: 1;
     min-width: 0;
   }
 
@@ -263,6 +289,28 @@
     background: #3a2218;
     color: #f0a060;
     border-color: #6a4020;
+  }
+
+  .stampToggle {
+    appearance: none;
+    margin-left: auto;
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.4rem;
+    border-radius: 4px;
+    background: transparent;
+    color: #6a7384;
+    border: 1px solid #2a2f3a;
+    cursor: pointer;
+  }
+
+  .stampToggle--on {
+    background: #1a2a3d;
+    color: #8ab4f8;
+    border-color: #2a4a6a;
   }
 
   .close {
@@ -312,11 +360,14 @@
   }
 
   .row {
+    border-radius: 3px;
+  }
+
+  .row--stamps {
     display: grid;
     /* 8ch fits HH:MM:SS; empty timestamps still reserve the column. */
     grid-template-columns: 8ch 1fr;
     column-gap: 0.5rem;
-    border-radius: 3px;
   }
 
   .row:hover {

@@ -9,11 +9,14 @@
   import { materializeDashboardCommand } from "$lib/client/dashboardCommandMaterialize";
   import { runCommand } from "$lib/devConsole/commands";
   import { devConsole } from "$lib/devConsole/state.svelte";
+  import { usePageLocation } from "$lib/client/pageLocation.svelte";
   import type { PageData } from "./$types";
 
   type DashboardColumn = PageData["dashboardColumns"][number];
 
   let { data }: { data: PageData } = $props();
+
+  usePageLocation(() => "Internal Ops Dashboard");
 
   let runningKey = $state<string | null>(null);
 
@@ -41,14 +44,10 @@
 </script>
 
 <svelte:head>
-  <title>Kickstaff HQ</title>
+  <title>Internal Ops Dashboard</title>
 </svelte:head>
 
 <div class="dash">
-  <header class="dash__header">
-    <h1 class="dash__title">Internal Ops Dashboard</h1>
-  </header>
-
   <section class="dash__section" aria-label="Resources">
     {#if data.dashboardColumns.length === 0}
       <p class="dash__empty">
@@ -132,17 +131,6 @@
 {/snippet}
 
 <style>
-  .dash__header {
-    margin-bottom: 1.25rem;
-  }
-
-  .dash__title {
-    margin: 0;
-    font-size: 1.75rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
   .dash__empty {
     margin: 0;
     color: color-mix(in srgb, currentColor 72%, transparent);

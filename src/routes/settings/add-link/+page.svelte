@@ -1,5 +1,9 @@
 <script lang="ts">
+  import { usePageLocation } from "$lib/client/pageLocation.svelte";
+
   let { form } = $props();
+
+  usePageLocation(() => "Add dashboard link");
 </script>
 
 <svelte:head>
@@ -11,7 +15,6 @@
     <a class="addLink__back" href="/">← Home</a>
   </nav>
 
-  <h1 class="addLink__title">Add dashboard link</h1>
   <p class="addLink__lead">
     New links appear for everyone on the home page. You can hide a link from
     your own view on the Dashboard tab.
@@ -62,12 +65,6 @@
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 0.12em;
-  }
-
-  .addLink__title {
-    margin: 0 0 0.35rem;
-    font-size: 1.45rem;
-    font-weight: 700;
   }
 
   .addLink__lead {

@@ -31,6 +31,12 @@
   import { setKickagentPluginSessionUser } from "$lib/kickagent/pluginSession";
   import MainContentSurface from "$lib/MainContentSurface.svelte";
   import { focusStack, Z_SITE_HEADER } from "$lib/client/focusStack.svelte";
+  import { pageLocation } from "$lib/client/pageLocation.svelte";
+  import {
+    filterNavDestinations,
+    listNavDestinations,
+    type NavDestination,
+  } from "$lib/client/navDestinations";
   import { CONSOLE_WIDTH } from "$lib/shellLayout";
 
   let { children } = $props();
@@ -72,12 +78,88 @@
   let rentalMenuOpen = $state(false);
   let userMenuOpen = $state(false);
   let lastKickagentBootUserId = $state<string | null>(null);
+  let locationQuery = $state("");
+  let locationOpen = $state(false);
+  let locationActive = $state(0);
+  let locationInputEl = $state<HTMLInputElement | undefined>(undefined);
+  let navCatalog = $state<NavDestination[]>([]);
+
+  const locationMatches = $derived(
+    filterNavDestinations(navCatalog, locationOpen ? locationQuery : ""),
+  );
+
+  $effect(() => {
+    locationQuery;
+    locationActive = 0;
+  });
+  const locationReadout = $derived(
+    locationOpen ? locationQuery : pageLocation.label,
+  );
+
+  function refreshNavCatalog() {
+    navCatalog = listNavDestinations(
+      page.data.user?.role,
+      getManifestResources(),
+    );
+  }
+
+  function onLocationFocus() {
+    refreshNavCatalog();
+    locationQuery = "";
+    locationActive = 0;
+    locationOpen = true;
+  }
+
+  function onLocationBlur() {
+    locationOpen = false;
+    locationQuery = "";
+    locationActive = 0;
+  }
+
+  function acceptLocation(dest: NavDestination) {
+    locationOpen = false;
+    locationQuery = "";
+    locationInputEl?.blur();
+    void goto(dest.href);
+  }
+
+  function onLocationKeydown(e: KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (locationMatches.length === 0) return;
+      locationActive = (locationActive + 1) % locationMatches.length;
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (locationMatches.length === 0) return;
+      locationActive =
+        (locationActive - 1 + locationMatches.length) % locationMatches.length;
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const dest = locationMatches[locationActive];
+      if (dest) acceptLocation(dest);
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      locationInputEl?.blur();
+    }
+  }
 
   $effect(() => {
     if (!browser) return;
     if (page.data.user) {
       void fetchDbStatus();
     }
+  });
+
+  $effect(() => {
+    page.url.pathname;
+    page.data.user?.role;
+    refreshNavCatalog();
   });
 
   $effect(() => {
@@ -127,6 +209,7 @@
           } else {
             klogError(`kickagent manifest load: ${r.error}`);
           }
+          refreshNavCatalog();
         },
       );
     } else {
@@ -317,6 +400,54 @@
         {/if}
       </div>
 
+      <label class="nav__location" class:nav__location--open={locationOpen}>
+        <span class="nav__locationReadout" aria-hidden="true">
+          <span class="nav__locationText">{locationReadout}</span>
+          <span class="nav__locationCaret"></span>
+        </span>
+        <input
+          bind:this={locationInputEl}
+          class="nav__locationInput"
+          type="text"
+          role="combobox"
+          aria-label="Location"
+          aria-autocomplete="list"
+          aria-expanded={locationOpen}
+          aria-controls="nav-location-list"
+          aria-activedescendant={locationOpen && locationMatches[locationActive]
+            ? `nav-loc-${locationActive}`
+            : undefined}
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          bind:value={locationQuery}
+          onfocus={onLocationFocus}
+          onblur={onLocationBlur}
+          onkeydown={onLocationKeydown}
+        />
+        {#if locationOpen && locationMatches.length > 0}
+          <ul id="nav-location-list" class="nav__locationList" role="listbox">
+            {#each locationMatches as dest, i (dest.href)}
+              <li
+                id="nav-loc-{i}"
+                class="nav__locationOption"
+                class:nav__locationOption--active={i === locationActive}
+                role="option"
+                aria-selected={i === locationActive}
+                onmousedown={(event) => {
+                  event.preventDefault();
+                  acceptLocation(dest);
+                }}
+              >
+                <span>{dest.label}</span>
+                <span class="nav__locationHref">{dest.href}</span>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </label>
+
       <div class="nav__trailing">
         {#if page.data.user}
           <div class="userMenu">
@@ -329,6 +460,26 @@
               onclick={toggleUserMenu}
             >
               <UserRetroIdenticon seed={page.data.user.id} size={28} />
+            </button>
+            <button
+              class="userMenu__assistant"
+              type="button"
+              aria-label="Assistant"
+              title="Assistant"
+            >
+              <svg
+                class="userMenu__assistantIcon"
+                viewBox="3.5 1.5 17 20"
+                width="18"
+                height="18"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="currentColor"
+                  d="M11 2h2v2.1a6 6 0 0 1 5 5.9v1h2v2h-2v5a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-5H4v-2h2v-1a6 6 0 0 1 5-5.9V2Zm-1.1 9.1a1.35 1.35 0 1 0 0 2.7 1.35 1.35 0 0 0 0-2.7Zm4.2 0a1.35 1.35 0 1 0 0 2.7 1.35 1.35 0 0 0 0-2.7ZM9 16.2h6v1.5H9v-1.5Z"
+                />
+              </svg>
             </button>
 
             {#if userMenuOpen}
@@ -451,6 +602,132 @@
     font-size: 0.95rem;
   }
 
+  .nav__location {
+    position: relative;
+    flex: 1 1 12rem;
+    min-width: 8rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav__locationReadout {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.7rem;
+    pointer-events: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: #6ecf9a;
+  }
+
+  .nav__location--open .nav__locationReadout {
+    color: #d7ffe8;
+  }
+
+  .nav__locationText {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav__locationCaret {
+    flex: 0 0 auto;
+    width: 1.5px;
+    height: 1.05em;
+    margin-left: 1px;
+    background: #b8ffd8;
+    box-shadow: 0 0 4px #39ff88;
+    animation: nav-location-caret 1s steps(1) infinite;
+  }
+
+  @keyframes nav-location-caret {
+    0%,
+    49% {
+      opacity: 1;
+    }
+    50%,
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav__locationCaret {
+      animation: none;
+    }
+  }
+
+  .nav__locationInput {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0.35rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid #1e6b42;
+    background: #07110c;
+    color: transparent;
+    caret-color: transparent;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    text-align: center;
+    cursor: text;
+  }
+
+  .nav__locationInput:focus {
+    outline: 2px solid #39ff88;
+    outline-offset: 2px;
+  }
+
+  .nav__locationList {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    margin: 0;
+    padding: 0.3rem;
+    list-style: none;
+    max-height: 16rem;
+    overflow: auto;
+    background: #07110c;
+    border: 1px solid #1e6b42;
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgb(0 0 0 / 0.35);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+  }
+
+  .nav__locationOption {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    color: #8dffc0;
+    cursor: pointer;
+  }
+
+  .nav__locationOption--active {
+    background: #143222;
+    color: #e8fff2;
+  }
+
+  .nav__locationHref {
+    color: #4d8f68;
+    white-space: nowrap;
+  }
+
   .nav__trailing {
     display: flex;
     flex-wrap: wrap;
@@ -463,9 +740,22 @@
     position: relative;
     display: inline-flex;
     align-items: center;
+    z-index: 2;
+  }
+
+  /* Hit bridge so the pointer can reach the robot in the right margin. */
+  .userMenu::after {
+    content: "";
+    position: absolute;
+    left: 100%;
+    top: -0.35rem;
+    bottom: -0.35rem;
+    width: 2.6rem;
   }
 
   .userMenu__badge {
+    position: relative;
+    z-index: 1;
     appearance: none;
     padding: 0;
     margin: 0;
@@ -485,6 +775,57 @@
   .userMenu__badge:focus {
     outline: 2px solid color-mix(in srgb, currentColor 30%, transparent);
     outline-offset: 2px;
+  }
+
+  /* Mirror of the admin gear: same button and icon size, slides out to the right. */
+  .userMenu__assistant {
+    position: absolute;
+    left: calc(100% + 0.3rem);
+    top: 50%;
+    z-index: 0;
+    box-sizing: border-box;
+    height: 1.94rem;
+    aspect-ratio: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+    background: color-mix(in srgb, Canvas 94%, transparent);
+    color: inherit;
+    line-height: 0;
+    cursor: pointer;
+    opacity: 0;
+    transform: translate(calc(-100% - 0.55rem), -50%);
+    transition:
+      transform 220ms ease 320ms,
+      opacity 180ms ease 320ms,
+      background-color 160ms ease,
+      border-color 160ms ease;
+  }
+
+  .userMenu:hover .userMenu__assistant,
+  .userMenu:focus-within .userMenu__assistant {
+    opacity: 1;
+    transform: translate(0, -50%);
+    transition-delay: 0ms, 0ms, 0ms, 0ms;
+  }
+
+  .userMenu__assistant:hover {
+    background: color-mix(in srgb, currentColor 7%, transparent);
+    border-color: color-mix(in srgb, currentColor 28%, transparent);
+  }
+
+  .userMenu__assistant:focus-visible {
+    outline: 2px solid color-mix(in srgb, currentColor 30%, transparent);
+    outline-offset: 2px;
+  }
+
+  .userMenu__assistantIcon {
+    display: block;
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   .userMenu__panel {
