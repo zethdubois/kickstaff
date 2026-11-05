@@ -116,7 +116,7 @@ As admin:
 | `kickagent` then `<name>` | Inside subscriber palette only |
 | `Ctrl+/` palette | Same as console |
 
-**Success:** klog lines in the console pane (backtick toggles it).
+**Success:** klog lines in the console pane (`[` toggles it).
 
 **Failure:** `unknown command: …`
 

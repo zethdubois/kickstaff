@@ -43,15 +43,25 @@
     return e.ctrlKey || e.metaKey;
   }
 
-  function isConsoleFocusHotkey(e: KeyboardEvent): boolean {
-    return e.code === "Backquote" && !e.ctrlKey && !e.metaKey && !e.altKey;
+  function isTypingTarget(e: KeyboardEvent): boolean {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return false;
+    if (target.isContentEditable) return true;
+    const tag = target.tagName;
+    return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+  }
+
+  function isConsoleToggleHotkey(e: KeyboardEvent): boolean {
+    if (e.key !== "[" || e.altKey) return false;
+    const chord = e.ctrlKey || e.metaKey;
+    if (chord) return true;
+    return !isTypingTarget(e);
   }
 
   onMount(() => {
     function onKey(e: KeyboardEvent) {
       if (e.repeat) return;
-      // Capture phase: win over the focused palette input (else ` would type).
-      if (isConsoleFocusHotkey(e)) {
+      if (isConsoleToggleHotkey(e)) {
         e.preventDefault();
         e.stopPropagation();
         devConsole.toggleConsoleHotkey();
@@ -176,7 +186,7 @@
             autocapitalize="off"
             spellcheck="false"
             onkeydown={(e) => {
-              // Hotkeys (Esc, backtick, Ctrl+/) are handled in document capture.
+              // Hotkeys (Esc, [, Ctrl+/) are handled in document capture.
               handleHistoryKeydown(e, input, (v) => {
                 input = v;
               });
@@ -187,7 +197,7 @@
           <p class="error">{error}</p>
         {/if}
         <p class="hint">
-          ↑/↓ history · Esc to close · [backtick (`) toggles the full console]
+          ↑/↓ history · Esc to close · [ toggles the console
         </p>
       </div>
       {#if transcriptEntries.length > 0}

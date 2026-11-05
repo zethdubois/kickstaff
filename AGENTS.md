@@ -102,7 +102,7 @@ This app is a **Kickdesk subscriber** (local dev cockpit). **First-time setup:**
 - **Repository standards** for Svelte structure and file headers: `[docs/sop-svelte-and-components.md](docs/sop-svelte-and-components.md)`.
 - **Developer / agent guides** live under `[docs/guides/](docs/guides/)` — implementation notes and pointers for components and selected routes (these are **not** end-user FAQs).
 - **Operations handoff (kickagent):** `[docs/upgrade/README.md](docs/upgrade/README.md)` — primers + ETL reference (no bill code in this repo).
-- **Console + command palette** (palette: `Ctrl+/`; toggle console pane: backtick; `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/console.md](docs/guides/console.md)`.
+- **Console + command palette** (palette: `Ctrl+/`; toggle console pane: `[`; toggle Klio: `]`; `klog`, commands, refresh targets, per-user klog persistence): `[docs/guides/console.md](docs/guides/console.md)`.
 - **Host mission (kickagent UI):** `[docs/guides/host-mission.md](docs/guides/host-mission.md)` — kickstaff is a generic manifest consumer; new same-class resources are a reload.
 - **Draft — client data cache:** `[docs/guides/client-data-cache-story.md](docs/guides/client-data-cache-story.md)` — Svelte store / pending edits story for planning; not a build spec until promoted into `now.md`.
 - **kickagent integration** (no npm/git dependency in kickstaff — Phase 2 manifest + ESM): sibling `../kickagent` only to publish/serve artifacts; `[docs/guides/contracts/kickstaff-kickagent-consumer.md](docs/guides/contracts/kickstaff-kickagent-consumer.md)`.

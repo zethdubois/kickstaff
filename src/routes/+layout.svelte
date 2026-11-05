@@ -9,6 +9,8 @@
   import { vanityPathForRootHost } from "$lib/vanityHosts";
   import Palette from "$lib/devConsole/Palette.svelte";
   import Console from "$lib/devConsole/Console.svelte";
+  import KlioPanel from "$lib/klio/KlioPanel.svelte";
+  import { klio } from "$lib/klio/state.svelte";
   import {
     devConsole,
     fetchDbStatus,
@@ -173,6 +175,7 @@
       "--console-width",
       CONSOLE_WIDTH,
     );
+    document.documentElement.style.setProperty("--klio-width", CONSOLE_WIDTH);
   });
 
   $effect(() => {
@@ -279,6 +282,14 @@
       userMenuOpen = false;
     }
 
+    function isTypingTarget(event: KeyboardEvent): boolean {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return false;
+      if (target.isContentEditable) return true;
+      const tag = target.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+    }
+
     function onDocKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         rentalMenuOpen = false;
@@ -286,8 +297,20 @@
       }
     }
 
+    function onLocationHotkey(event: KeyboardEvent) {
+      if (event.repeat || event.altKey || event.shiftKey) return;
+      if (event.code !== "Backquote") return;
+      const chord = event.ctrlKey || event.metaKey;
+      if (!chord && isTypingTarget(event)) return;
+      if (!locationInputEl) return;
+      event.preventDefault();
+      event.stopPropagation();
+      locationInputEl.focus();
+    }
+
     document.addEventListener("pointerdown", onDocPointerDown);
     document.addEventListener("keydown", onDocKeyDown);
+    document.addEventListener("keydown", onLocationHotkey, true);
 
     if (page.data.user?.role === "admin") {
       void hydrateFromServer();
@@ -301,6 +324,7 @@
     return () => {
       document.removeEventListener("pointerdown", onDocPointerDown);
       document.removeEventListener("keydown", onDocKeyDown);
+      document.removeEventListener("keydown", onLocationHotkey, true);
       unregisterRefreshTarget("app.db");
     };
   });
@@ -312,7 +336,11 @@
   <link rel="apple-touch-icon" href="/kam.ico" />
 </svelte:head>
 
-<div class="appShell" class:appShell--console={devConsole.consoleOpen}>
+<div
+  class="appShell"
+  class:appShell--console={devConsole.consoleOpen}
+  class:appShell--klio={klio.open}
+>
 <div class="appColumn">
 {#if showInternalNav}
   <header class="site-header" style:z-index={Z_SITE_HEADER}>
@@ -464,8 +492,10 @@
             <button
               class="userMenu__assistant"
               type="button"
-              aria-label="Assistant"
-              title="Assistant"
+              aria-label="Klio Agent"
+              title="Klio Agent"
+              aria-pressed={klio.open}
+              onclick={() => klio.toggle()}
             >
               <svg
                 class="userMenu__assistantIcon"
@@ -540,22 +570,49 @@
 </div>
 
 <Console />
+<KlioPanel enabled={!!page.data.user && showInternalNav} />
 </div>
 <Palette />
 
 <style>
   /* Column 0 is the console track. Column 1 is header + main. The pane is
      position:fixed in that track; the empty column only reserves the width. */
-  .appShell--console {
+  .appShell--console,
+  .appShell--klio {
     display: grid;
-    grid-template-columns: var(--console-width, min(370px, 90vw)) minmax(0, 1fr);
     align-items: stretch;
     height: 100vh;
     height: 100dvh;
   }
 
-  .appShell--console > .appColumn {
+  .appShell--console:not(.appShell--klio) {
+    grid-template-columns: var(--console-width, min(370px, 90vw)) minmax(0, 1fr);
+  }
+
+  .appShell--console:not(.appShell--klio) > .appColumn {
     grid-column: 2;
+  }
+
+  .appShell--klio:not(.appShell--console) {
+    grid-template-columns: minmax(0, 1fr) var(--klio-width, min(370px, 90vw));
+  }
+
+  .appShell--console.appShell--klio {
+    grid-template-columns:
+      var(--console-width, min(370px, 90vw))
+      minmax(0, 1fr)
+      var(--klio-width, min(370px, 90vw));
+  }
+
+  .appShell--console.appShell--klio > .appColumn {
+    grid-column: 2;
+  }
+
+  /* Klio is a later grid item with position:fixed. This column, header
+     included, has to paint above it or the robot falls through on hover. */
+  .appShell--klio > .appColumn {
+    position: relative;
+    z-index: 5;
   }
 
   /* Header is its own row; main is the only vertical scroller in this column. */
@@ -740,10 +797,13 @@
     position: relative;
     display: inline-flex;
     align-items: center;
-    z-index: 2;
+    /* Stable. A hover rule used to raise this to 40 and drop it again
+       when the pointer moved onto the robot, which put the button
+       back under the Klio panel. */
+    z-index: 40;
   }
 
-  /* Hit bridge so the pointer can reach the robot in the right margin. */
+  /* Hit bridge so the pointer can reach the robot to the right of the icon. */
   .userMenu::after {
     content: "";
     position: absolute;
@@ -777,12 +837,11 @@
     outline-offset: 2px;
   }
 
-  /* Mirror of the admin gear: same button and icon size, slides out to the right. */
+  /* Same size as the admin gear. Slides out to the right of the account icon. */
   .userMenu__assistant {
     position: absolute;
     left: calc(100% + 0.3rem);
     top: 50%;
-    z-index: 0;
     box-sizing: border-box;
     height: 1.94rem;
     aspect-ratio: 1;
@@ -797,6 +856,10 @@
     line-height: 0;
     cursor: pointer;
     opacity: 0;
+    pointer-events: none;
+    /* Above the account icon. Not set again on :hover, so hovering the
+       robot cannot change its stacking. */
+    z-index: 6;
     transform: translate(calc(-100% - 0.55rem), -50%);
     transition:
       transform 220ms ease 320ms,
@@ -806,13 +869,17 @@
   }
 
   .userMenu:hover .userMenu__assistant,
-  .userMenu:focus-within .userMenu__assistant {
+  .userMenu:focus-within .userMenu__assistant,
+  .userMenu__assistant:hover,
+  .userMenu__assistant:focus-visible {
     opacity: 1;
+    pointer-events: auto;
     transform: translate(0, -50%);
     transition-delay: 0ms, 0ms, 0ms, 0ms;
   }
 
-  .userMenu__assistant:hover {
+  .userMenu__assistant:hover,
+  .userMenu__assistant:focus-visible {
     background: color-mix(in srgb, currentColor 7%, transparent);
     border-color: color-mix(in srgb, currentColor 28%, transparent);
   }
@@ -820,6 +887,17 @@
   .userMenu__assistant:focus-visible {
     outline: 2px solid color-mix(in srgb, currentColor 30%, transparent);
     outline-offset: 2px;
+  }
+
+  /* Covers the gap between the account icon and the robot so the pointer
+     never falls through to the Klio panel and collapses the hover. */
+  .userMenu__assistant::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    top: -0.45rem;
+    bottom: -0.45rem;
+    width: 0.55rem;
   }
 
   .userMenu__assistantIcon {

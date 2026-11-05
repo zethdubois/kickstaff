@@ -2,7 +2,7 @@
 
 A lightweight in-app dev console for admins. Two surfaces:
 
-- **Command palette** — modal one-shot command input; **`Ctrl+/`** (or **`Cmd+/`**) to open/close. **backtick** (`` ` ``) toggles the console pane; **`Esc`** closes the palette when it is open. With the pane closed, the palette stays open after a command and shows that command’s output underneath. With the pane open, a successful command closes the palette and the output is in the pane.
+- **Command palette** — modal one-shot command input; **`Ctrl+/`** (or **`Cmd+/`**) to open/close. **`[`** toggles the console pane; **`]`** toggles Klio. **`Ctrl+[`** and **`Ctrl+]`** (or ⌘) do the same while a text field is focused. **`Esc`** closes the palette when it is open. With the pane closed, the palette stays open after a command and shows that command’s output underneath. With the pane open, a successful command closes the palette and the output is in the pane.
 - **Console pane** — full-height left column (default `min(370px, 90vw)`). The site header and page (including `/ops`) sit in the column to its right: header is a fixed row; **`main`** is the vertical scroller (the document scrollbar does not run beside the header). Closing the pane drops the reserved column so the page uses the full width. The close control is on the left of the pane header; scrollback scrolls on the right. Log lines start 5px from the pane's left edge. The header **time** switch (off by default, stored in `kickstaff.consoleUi`) turns on a clock column; with it off, hovering a line still shows that line's time.
 
 Opening the palette and running `console` toggles the pane.
@@ -11,7 +11,12 @@ Opening the palette and running `console` toggles the pane.
 
 ```text
 Ctrl+/   (or Cmd+/)   → open or close palette
-backtick (`)         → toggle the console (open and focus, or close)
+[                    → toggle the console (open and focus, or close)
+]                    → toggle Klio (signed in; see [KlioPanel.md](KlioPanel.md))
+Ctrl+[  (or Cmd+[)   → same console toggle from a text field
+Ctrl+]  (or Cmd+])   → same Klio toggle from a text field
+`                    → focus the header location field
+Ctrl+`  (or Cmd+`)   → same location focus from a text field
 console              → toggle the console pane (command)
 help                 → list commands + refresh targets + hotkeys
 history              → numbered command history (like bash)

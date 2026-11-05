@@ -4,7 +4,7 @@
  * `klog(...)` is the proprietary logger that emits a "klog" entry into the
  * console pane. Use it from anywhere in the client codebase as a
  * dev-time alternative to console.log when you want the output visible in
- * the in-app console pane (Ctrl+/ opens the palette; backtick toggles this pane).
+ * the in-app console pane (Ctrl+/ opens the palette; [ toggles this pane).
  *
  * Entries also persist to the server `klogs` table (per-user, 30-day retention)
  * via a debounced batch POST, and the pane hydrates from that table on mount.
@@ -190,7 +190,7 @@ export const devConsole = {
     this.consoleOpen = !_consoleOpen;
   },
   /**
-   * Backtick. Closes the pane when it is open. Opens it, closes the palette,
+   * `[`. Closes the pane when it is open. Opens it, closes the palette,
    * and focuses the prompt when it is closed.
    */
   toggleConsoleHotkey(): void {

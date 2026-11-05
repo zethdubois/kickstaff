@@ -147,7 +147,7 @@
     </header>
 
     <div class="body" bind:this={bodyEl}>
-      <div class="bodyContent">
+      <div class="bodyContent" class:bodyContent--stamps={showTimestamps}>
         {#if unitsListSchema}
           <KickagentListFilters
             variant="console"
@@ -355,8 +355,13 @@
     display: flex;
     flex-direction: column;
     row-gap: 0.3rem;
-    padding: 0.4rem 0.5rem 0.4rem 5px;
+    /* Collapsed clock column still reserves a slim gutter so the log is not flush. */
+    padding: 0.4rem 0.5rem 0.4rem 10px;
     min-height: 100%;
+  }
+
+  .bodyContent--stamps {
+    padding-left: 5px;
   }
 
   .row {

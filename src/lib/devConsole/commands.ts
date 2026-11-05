@@ -497,7 +497,7 @@ registerCommand("help", (): CommandOutcome => {
     "History: history · !n / !! / !-n / !prefix · history -c · history -d <n> · ↑/↓ recall",
   );
   blocks.push(
-    "Hotkey: Ctrl+/ (⌘+/) — palette · backtick (`) toggles the console",
+    "Hotkey: Ctrl+/ (⌘+/) — palette · [ console · ] Klio · ` focuses location · Ctrl+` (⌘ too) from a text field · Ctrl+[ / Ctrl+] from a text field",
   );
   blocks.push(
     "Database: db status · db tables · db migrations (admin) · db use dev|staging|prod (local dev; each DB needs its own sign-in)",
