@@ -10,6 +10,7 @@ import {
   clearKickagentCommands,
   registerKickagentCommand,
   setLoadedSubscriberMeta,
+  syncKlioNamespace,
   clearLoadedSubscriberMeta,
   listHostCommandNames,
 } from "$lib/devConsole/commands";
@@ -47,6 +48,8 @@ type KickagentManifestJson = {
   commands?: KickagentManifestCommandJson[];
   resources?: ManifestResources;
   api?: { baseUrl?: string };
+  /** True when manifest `klio.commands` includes `ask`. */
+  klioAsk?: boolean;
 };
 
 export type LoadSubscriberResult =
@@ -159,11 +162,18 @@ function parseManifest(raw: unknown): KickagentManifestJson {
     alias: parseAlias(o.alias) ?? "ka",
     commands,
     resources: resources ?? undefined,
+    klioAsk: parseKlioAsk(o.klio),
     api:
       o.api && typeof o.api === "object"
         ? (o.api as { baseUrl?: string })
         : undefined,
   };
+}
+
+function parseKlioAsk(raw: unknown): boolean {
+  if (!raw || typeof raw !== "object") return false;
+  const commands = (raw as { commands?: unknown }).commands;
+  return Array.isArray(commands) && commands.some((c) => c === "ask");
 }
 
 function parseManifestCommands(raw: unknown): KickagentManifestCommandJson[] {
@@ -339,6 +349,7 @@ export async function loadSubscriber(
         version: manifest.version,
         resources: resourceHelpRefs(manifest.resources ?? null),
       });
+      syncKlioNamespace(!!manifest.klioAsk);
       return {
         ok: true,
         id,
@@ -450,6 +461,7 @@ export async function loadSubscriber(
     }
 
     registerManifestServerCommands(manifest.commands ?? [], pluginNames);
+    syncKlioNamespace(!!manifest.klioAsk);
 
     const resourceKeys = listCachedResourceKeys();
     lastApplied.set(id, {

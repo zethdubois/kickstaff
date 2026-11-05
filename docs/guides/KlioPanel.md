@@ -2,7 +2,7 @@
 
 Host chrome for Klio, the clerk published by Kickagent. The panel is a full-height column on the right. It is not a `resources.*` page and not a console command.
 
-**Now:** chrome only. The transcript starts with “Klio is not connected yet.” A sent line stays in the browser and she repeats that sentence. No proxy, no manifest field, no model key.
+**Now:** the panel input is `klio:ask` without typing the verb. The console and palette use the namespace: `klio` enters `[Klio] >`, `klio:ask <message>` and `? <message>` run the same ask. The reply stays in the browser (`Klio is not connected yet.`) until the host proxies `/klio`. No model key.
 
 **Later:** the host proxies a turn to Kickagent `POST /klio`. This page changes when that route exists.
 

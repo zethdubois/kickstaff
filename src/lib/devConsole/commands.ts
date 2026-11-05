@@ -50,6 +50,7 @@ import {
   getManifestResources,
   listCachedResourceKeys,
 } from "$lib/kickagent/manifestResourceCache";
+import { KLIO_NOT_CONNECTED, klio } from "$lib/klio/state.svelte";
 
 export type CommandHandler = (
   args: string[],
@@ -60,6 +61,9 @@ export type CommandResult = { ok: true } | { ok: false; error: string };
 const MAX_ALIAS_CHAIN = 8;
 /** Default subscriber namespace until a manifest load sets another. */
 const DEFAULT_SUBSCRIBER_NS = "kickagent";
+const KLIO_NS = "klio";
+const KLIO_ASK = "klio:ask";
+const KLIO_ASK_HINT = "ask <message>  ·  ? <message>";
 
 type LoadedSubscriberMeta = {
   id: string;
@@ -154,6 +158,7 @@ export function clearKickagentCommands(): void {
   }
   clearLoadedSubscriberMeta();
   devConsole.clearTableOutcome();
+  syncKlioNamespace(false);
 }
 
 export function listCommands(): string[] {
@@ -285,7 +290,41 @@ function logLines(outcome: CommandOutcome | void, source: string): void {
 function promptPrefix(): string {
   const ns = devConsole.activeNamespace;
   if (!ns) return "›";
-  return ns === "kickagent" ? "[KA] >" : `[${ns}] >`;
+  if (ns === "kickagent") return "[KA] >";
+  if (ns === KLIO_NS) return "[Klio] >";
+  return `[${ns}] >`;
+}
+
+function namespaceHasCommands(ns: string): boolean {
+  const prefix = `${ns}:`;
+  return [...commands.keys()].some((key) => key.startsWith(prefix));
+}
+
+/** Leading `?` is `klio:ask`. Empty remainder is a hint, not a call. */
+function klioAskShortcut(
+  line: string,
+): { kind: "hint" } | { kind: "ask"; message: string } | null {
+  if (!line.startsWith("?")) return null;
+  const rest = line.slice(1);
+  const message = rest.startsWith(" ") ? rest.slice(1).trim() : rest.trim();
+  if (!message) return { kind: "hint" };
+  return { kind: "ask", message };
+}
+
+function klioAskCommand(args: string[]): CommandOutcome {
+  const reply = klio.ask(args.join(" "));
+  if (reply == null) return { log: KLIO_ASK_HINT, level: "info" };
+  return { log: reply, level: "info" };
+}
+
+/** Register or drop `klio:ask` from the manifest `klio` block. */
+export function syncKlioNamespace(offered: boolean): void {
+  if (!offered) {
+    commands.delete(KLIO_ASK);
+    if (devConsole.activeNamespace === KLIO_NS) devConsole.activeNamespace = "";
+    return;
+  }
+  registerCommand(KLIO_ASK, klioAskCommand);
 }
 
 /** Echo the submitted command line in the console scrollback (terminal-style). */
@@ -312,8 +351,9 @@ function enterSubscriberPalette(namespace: string): CommandOutcome {
     };
   }
   devConsole.activeNamespace = ns;
+  const label = ns === "kickagent" ? " ([KA])" : ns === KLIO_NS ? " ([Klio])" : "";
   return {
-    log: `palette: ${ns}${ns === "kickagent" ? " ([KA])" : ""}`,
+    log: `palette: ${ns}${label}`,
     level: "info",
   };
 }
@@ -336,6 +376,21 @@ export async function runCommand(input: string): Promise<CommandResult> {
   }
 
   if (!shouldSkipHistoryRecord(commandLine)) recordCommand(commandLine);
+
+  const shortcut = klioAskShortcut(commandLine);
+  if (shortcut) {
+    if (!commands.has(KLIO_ASK)) {
+      const msg = "klio is not loaded — load kickagent";
+      klogError(msg);
+      return { ok: false, error: msg };
+    }
+    const outcome =
+      shortcut.kind === "hint"
+        ? ({ log: KLIO_ASK_HINT, level: "info" } as const)
+        : klioAskCommand([shortcut.message]);
+    logLines(outcome, "command:klio:ask");
+    return { ok: true };
+  }
 
   const [rawToken, ...args] = commandLine.split(/\s+/);
   if (!rawToken) return { ok: false, error: "empty command" };
@@ -373,7 +428,8 @@ export async function runCommand(input: string): Promise<CommandResult> {
     !lw.startsWith(":") &&
     !lw.includes(":") &&
     mergedArgs.length === 0 &&
-    isLoadedNamespace(cmdToken.toLowerCase())
+    (isLoadedNamespace(cmdToken.toLowerCase()) ||
+      namespaceHasCommands(cmdToken.toLowerCase()))
   ) {
     const outcome = enterSubscriberPalette(cmdToken.toLowerCase());
     logLines(outcome, "command:load");
@@ -459,16 +515,17 @@ registerCommand("clear", () => {
 registerCommand("help", (): CommandOutcome => {
   const blocks: string[] = [];
   const ns = devConsole.activeNamespace;
-  const prefix = subscriberPrefix();
   if (ns) {
     blocks.push(
       `${ns} palette: on — bare names are ${ns}: only; use :help, :exit, :clear for host`,
     );
-    const globals = listCommands().filter((c) => !c.startsWith(prefix));
+    const globals = listCommands().filter((c) => !c.includes(":"));
     blocks.push(
       `host commands (use : prefix): ${globals.map((c) => `:${c}`).join(", ")}`,
     );
-    if (listKickagentShortNames().length > 0) {
+    if (ns === KLIO_NS) {
+      blocks.push("ask <message>  ·  ? <message>. A sentence without ask is unknown.");
+    } else if (listKickagentShortNames().length > 0) {
       blocks.push(formatSubscriberCatalog());
     }
   } else {
@@ -480,8 +537,11 @@ registerCommand("help", (): CommandOutcome => {
       blocks.push(formatSubscriberCatalog());
     }
     blocks.push(
-      "Palette: off — enter with kickagent (or alias), leave with :exit. Load: load | load kickagent | load --list.",
+      "Palette: off — enter with kickagent or klio (or alias), leave with :exit. Load: load | load kickagent | load --list.",
     );
+    if (commands.has(KLIO_ASK)) {
+      blocks.push("Klio: klio · klio:ask <message> · ? <message>");
+    }
 
     const als = listCommandAliases();
     if (als.length > 0) {

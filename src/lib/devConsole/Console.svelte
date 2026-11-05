@@ -26,7 +26,11 @@
   let showTimestamps = $state(false);
 
   const promptPrefix = $derived(
-    devConsole.kickagentModeActive ? "[KA] >" : "›",
+    devConsole.activeNamespace === "klio"
+      ? "[Klio] >"
+      : devConsole.kickagentModeActive
+        ? "[KA] >"
+        : "›",
   );
 
   const promptAriaLabel = $derived(
@@ -36,9 +40,11 @@
   );
 
   const placeholder = $derived(
-    devConsole.kickagentModeActive
-      ? "hello · :help · :exit"
-      : "help · history · ↑↓ recall · (`) toggles console",
+    devConsole.activeNamespace === "klio"
+      ? "ask · ? · :exit"
+      : devConsole.kickagentModeActive
+        ? "hello · :help · :exit"
+        : "help · history · ↑↓ recall · (`) toggles console",
   );
 
   const unitsListSchema = $derived(

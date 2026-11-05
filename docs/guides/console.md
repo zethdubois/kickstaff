@@ -13,6 +13,9 @@ Opening the palette and running `console` toggles the pane.
 Ctrl+/   (or Cmd+/)   → open or close palette
 [                    → toggle the console (open and focus, or close)
 ]                    → toggle Klio (signed in; see [KlioPanel.md](KlioPanel.md))
+klio                 → enter the Klio palette ([Klio] >)
+klio:ask <message>   → ask Klio without entering the palette
+? <message>          → same ask, from ›, [KA] >, or [Klio] >
 Ctrl+[  (or Cmd+[)   → same console toggle from a text field
 Ctrl+]  (or Cmd+])   → same Klio toggle from a text field
 `                    → focus the header location field

@@ -23,13 +23,19 @@
   );
 
   const promptPrefix = $derived(
-    devConsole.kickagentModeActive ? "[KA] >" : "›",
+    devConsole.activeNamespace === "klio"
+      ? "[Klio] >"
+      : devConsole.kickagentModeActive
+        ? "[KA] >"
+        : "›",
   );
 
   const placeholder = $derived(
-    devConsole.kickagentModeActive
-      ? "hello · :help · :exit"
-      : "help · console · clear",
+    devConsole.activeNamespace === "klio"
+      ? "ask · ? · :exit"
+      : devConsole.kickagentModeActive
+        ? "hello · :help · :exit"
+        : "help · console · clear",
   );
 
   const formAriaLabel = $derived(

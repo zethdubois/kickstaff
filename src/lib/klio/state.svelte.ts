@@ -44,10 +44,13 @@ export const klio = {
       window.dispatchEvent(new CustomEvent(KLIO_FOCUS_INPUT_EVENT));
     });
   },
-  /** Append the user's line and the only reply she can give today. */
-  send(raw: string): void {
+  /**
+   * `klio:ask`. Empty text is not a turn (returns null).
+   * The reply stays in the browser until the host proxies `/klio`.
+   */
+  ask(raw: string): string | null {
     const text = raw.trim();
-    if (!text) return;
+    if (!text) return null;
     const userId = _nextId++;
     const replyId = _nextId++;
     _lines = [
@@ -55,5 +58,10 @@ export const klio = {
       { id: userId, role: "user", text },
       { id: replyId, role: "klio", text: KLIO_NOT_CONNECTED },
     ];
+    return KLIO_NOT_CONNECTED;
+  },
+  /** Panel input. The verb is implied: this is `klio:ask`. */
+  send(raw: string): void {
+    this.ask(raw);
   },
 };
