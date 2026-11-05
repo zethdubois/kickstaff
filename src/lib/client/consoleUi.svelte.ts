@@ -23,9 +23,6 @@ export const DEFAULT_CONSOLE_UI_PREFS: ConsoleUiPrefs = {
   showTimestamps: false,
 };
 
-/** Separate from `cache` so a missing stored key stays off without a version bump. */
-let _showTimestamps = $state(false);
-
 let cache: ConsoleUiPrefs | null = null;
 
 function isBrowser(): boolean {
@@ -60,6 +57,40 @@ function isValidPrefs(value: unknown): value is ConsoleUiPrefs {
   return true;
 }
 
+function readShowTimestamps(value: object): boolean {
+  const flag = (value as Record<string, unknown>).showTimestamps;
+  return flag === true;
+}
+
+/** Load prefs without touching `$state` (safe at module init / inside `$derived`). */
+function readStoredPrefs(): ConsoleUiPrefs {
+  if (!isBrowser()) return cloneDefaults();
+  try {
+    const raw = window.localStorage.getItem(CONSOLE_UI_STORAGE_KEY);
+    if (!raw) return cloneDefaults();
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isValidPrefs(parsed) || parsed.version !== CONSOLE_UI_VERSION) {
+      return cloneDefaults();
+    }
+    const migrated = migrateAliasExpansions({ ...parsed.commandAliases });
+    const showTimestamps = readShowTimestamps(parsed);
+    const next: ConsoleUiPrefs = {
+      ...parsed,
+      showTimestamps,
+      commandAliases: migrated,
+    };
+    if (JSON.stringify(migrated) !== JSON.stringify(parsed.commandAliases)) {
+      persist(next);
+    }
+    return next;
+  } catch {
+    return cloneDefaults();
+  }
+}
+
+/** Separate from `cache` so a missing stored key stays off without a version bump. */
+let _showTimestamps = $state(readStoredPrefs().showTimestamps);
+
 /** Reserved alias keys (prevent hijacking meta commands). */
 const RESERVED_KEYS = new Set(["alias", "load", "unload"]);
 
@@ -87,55 +118,12 @@ export function normalizeAliasExpansion(value: string): string | null {
 }
 
 export function getConsoleUiPrefs(): ConsoleUiPrefs {
-  if (cache) return cache;
-  if (!isBrowser()) {
-    cache = cloneDefaults();
-    _showTimestamps = false;
-    return cache;
-  }
-  try {
-    const raw = window.localStorage.getItem(CONSOLE_UI_STORAGE_KEY);
-    if (!raw) {
-      cache = cloneDefaults();
-      _showTimestamps = false;
-      return cache;
-    }
-    const parsed = JSON.parse(raw) as unknown;
-    if (
-      !isValidPrefs(parsed) ||
-      parsed.version !== CONSOLE_UI_VERSION
-    ) {
-      cache = cloneDefaults();
-      _showTimestamps = false;
-      return cache;
-    }
-    const migrated = migrateAliasExpansions({ ...parsed.commandAliases });
-    const showTimestamps = readShowTimestamps(parsed);
-    _showTimestamps = showTimestamps;
-    cache = {
-      ...parsed,
-      showTimestamps,
-      commandAliases: migrated,
-    };
-    if (JSON.stringify(migrated) !== JSON.stringify(parsed.commandAliases)) {
-      persist(cache);
-    }
-    return cache;
-  } catch {
-    cache = cloneDefaults();
-    _showTimestamps = false;
-    return cache;
-  }
+  if (!cache) cache = readStoredPrefs();
+  return cache;
 }
 
-function readShowTimestamps(value: object): boolean {
-  const flag = (value as Record<string, unknown>).showTimestamps;
-  return flag === true;
-}
-
-/** Clock column in the console log. Reads the reactive flag; loads prefs on first call. */
+/** Clock column flag. Read-only — safe inside `$derived`. */
 export function getShowTimestamps(): boolean {
-  getConsoleUiPrefs();
   return _showTimestamps;
 }
 
@@ -246,8 +234,8 @@ export function removeCommandAlias(shortcutRaw: string): ConsoleUiPrefs {
 
 export function resetConsoleUiPrefs(): ConsoleUiPrefs {
   const next = cloneDefaults();
-  _showTimestamps = false;
   cache = next;
+  _showTimestamps = false;
   persist(next);
   return next;
 }

@@ -24,7 +24,9 @@
     data.dashboardColumns.filter((col) => col.category.startsWith("Kickagent")),
   );
   const otherColumns = $derived(
-    data.dashboardColumns.filter((col) => !col.category.startsWith("Kickagent")),
+    data.dashboardColumns.filter(
+      (col) => !col.category.startsWith("Kickagent"),
+    ),
   );
 
   async function openHubCommand(commandKey: string) {
@@ -44,7 +46,7 @@
 </script>
 
 <svelte:head>
-  <title>Internal Ops Dashboard</title>
+  <title>Home | Dashboard</title>
 </svelte:head>
 
 <div class="dash">
@@ -80,9 +82,9 @@
   <div class="dash__column">
     <h2
       class="dash__cat"
-      style="color: {categoryForeground(hue)}; border-left: 3px solid {categoryBorder(
+      style="color: {categoryForeground(
         hue,
-      )}; padding-left: 0.5rem;"
+      )}; border-left: 3px solid {categoryBorder(hue)}; padding-left: 0.5rem;"
     >
       {col.category}
     </h2>

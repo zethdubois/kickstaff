@@ -311,8 +311,8 @@ function klioAskShortcut(
   return { kind: "ask", message };
 }
 
-function klioAskCommand(args: string[]): CommandOutcome {
-  const reply = klio.ask(args.join(" "));
+async function klioAskCommand(args: string[]): Promise<CommandOutcome> {
+  const reply = await klio.ask(args.join(" "));
   if (reply == null) return { log: KLIO_ASK_HINT, level: "info" };
   return { log: reply, level: "info" };
 }
@@ -387,7 +387,7 @@ export async function runCommand(input: string): Promise<CommandResult> {
     const outcome =
       shortcut.kind === "hint"
         ? ({ log: KLIO_ASK_HINT, level: "info" } as const)
-        : klioAskCommand([shortcut.message]);
+        : await klioAskCommand([shortcut.message]);
     logLines(outcome, "command:klio:ask");
     return { ok: true };
   }

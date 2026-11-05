@@ -22,8 +22,8 @@
   let bodyEl: HTMLDivElement | undefined = $state();
   let inlineInput = $state("");
   let inlineInputEl: HTMLInputElement | undefined = $state();
-  /** Off until mount so SSR and the first client paint agree. Default is off. */
-  let showTimestamps = $state(false);
+  /** Shared with Klio (`kickstaff.consoleUi.showTimestamps`). Default off. */
+  const showTimestamps = $derived(getShowTimestamps());
 
   const promptPrefix = $derived(
     devConsole.activeNamespace === "klio"
@@ -91,12 +91,10 @@
   }
 
   function toggleTimestamps() {
-    showTimestamps = !showTimestamps;
-    setShowTimestamps(showTimestamps);
+    setShowTimestamps(!showTimestamps);
   }
 
   onMount(() => {
-    showTimestamps = getShowTimestamps();
     resetHistoryNavigation();
     function onFocusConsoleInput() {
       focusStack.focusConsole();
