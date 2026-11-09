@@ -91,6 +91,17 @@ export const klio = {
   close(): void {
     _open = false;
   },
+  /** Clear the transcript and focus the input. No-op while a reply is streaming. */
+  newChat(): void {
+    if (_pending) return;
+    _nextId = 1;
+    _lines = [];
+    if (!_open) _open = true;
+    if (!isBrowser()) return;
+    queueMicrotask(() => {
+      window.dispatchEvent(new CustomEvent(KLIO_FOCUS_INPUT_EVENT));
+    });
+  },
   /** `]` — open and focus, or close. */
   toggle(): void {
     _open = !_open;

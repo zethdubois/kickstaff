@@ -92,6 +92,18 @@
         <span class="title">Klio</span>
         <button
           type="button"
+          class="newChat"
+          aria-label="New chat"
+          title="New chat"
+          disabled={klio.pending}
+          onclick={() => {
+            klio.newChat();
+            input = "";
+            void tick().then(() => inputEl?.focus());
+          }}>+new</button
+        >
+        <button
+          type="button"
           class="stampToggle"
           class:stampToggle--on={showTimestamps}
           aria-pressed={showTimestamps}
@@ -185,9 +197,35 @@
     text-transform: uppercase;
   }
 
-  .stampToggle {
+  .newChat {
     appearance: none;
     margin-left: auto;
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    padding: 0.12rem 0.4rem;
+    border-radius: 4px;
+    background: transparent;
+    color: #9aa3b3;
+    border: 1px solid #2a2f3a;
+    cursor: pointer;
+  }
+
+  .newChat:hover:not(:disabled) {
+    background: #1a1f29;
+    color: #fff;
+    border-color: #3a4254;
+  }
+
+  .newChat:disabled {
+    opacity: 0.45;
+    cursor: wait;
+  }
+
+  .stampToggle {
+    appearance: none;
     font: inherit;
     font-size: 0.58rem;
     font-weight: 700;
