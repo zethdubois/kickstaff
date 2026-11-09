@@ -5,14 +5,26 @@ import type { RequestHandler } from './$types';
 import { getActiveDbTarget } from '$lib/server/dbTarget';
 import { resolveKickagentApiBaseUrl } from '$lib/server/kickagentRemoteRun';
 import {
+	appendLine,
+	findOpenConversation,
+	listLines,
+	openConversation,
+	startNewConversation,
+	type StoredKlioLine
+} from '$lib/server/klioTranscript';
+import {
 	resolveKlioUpstreamUrl,
 	type KlioManifestBlock
 } from '$lib/server/klioUpstream';
 import { resolveOpsDatabase } from '$lib/server/opsDatasets';
+import { takeKlioSseEvents, type KlioSseEvent } from '$lib/klio/sse';
 
 const NOT_CONNECTED = 'Klio is not connected yet.';
 
-type Turn = { role: 'user' | 'klio'; text: string };
+const sseHeaders = {
+	'Content-Type': 'text/event-stream; charset=utf-8',
+	'Cache-Control': 'no-cache'
+};
 
 function asMessage(body: unknown): string {
 	if (!body || typeof body !== 'object') return '';
@@ -20,20 +32,8 @@ function asMessage(body: unknown): string {
 	return typeof message === 'string' ? message.trim() : '';
 }
 
-function asTranscript(body: unknown): Turn[] {
-	if (!body || typeof body !== 'object') return [];
-	const raw = (body as { transcript?: unknown }).transcript;
-	if (!Array.isArray(raw)) return [];
-	const turns: Turn[] = [];
-	for (const item of raw) {
-		if (!item || typeof item !== 'object') continue;
-		const text = (item as { text?: unknown }).text;
-		const role = (item as { role?: unknown }).role;
-		if (typeof text !== 'string' || !text.trim()) continue;
-		if (role !== 'user' && role !== 'klio') continue;
-		turns.push({ role, text });
-	}
-	return turns;
+function isNewChat(body: unknown): boolean {
+	return !!body && typeof body === 'object' && (body as { newChat?: unknown }).newChat === true;
 }
 
 function asContext(body: unknown): unknown {
@@ -41,6 +41,19 @@ function asContext(body: unknown): unknown {
 	const context = (body as { context?: unknown }).context;
 	if (!context || typeof context !== 'object') return undefined;
 	return context;
+}
+
+function applyEvent(event: KlioSseEvent, reply: string): string {
+	if (typeof event.delta === 'string' && event.delta) return reply + event.delta;
+	if (typeof event.error === 'string' && event.error.trim() && !reply) return event.error;
+	return reply;
+}
+
+function consume(buffer: string, reply: string): { buffer: string; reply: string } {
+	const taken = takeKlioSseEvents(buffer);
+	let next = reply;
+	for (const event of taken.events) next = applyEvent(event, next);
+	return { buffer: taken.rest, reply: next };
 }
 
 async function readKlioBlock(): Promise<KlioManifestBlock | null> {
@@ -56,6 +69,63 @@ async function readKlioBlock(): Promise<KlioManifestBlock | null> {
 	}
 }
 
+function sseFromReply(reply: string): string {
+	return `data: ${JSON.stringify({ delta: reply })}\n\ndata: ${JSON.stringify({ done: true })}\n\n`;
+}
+
+async function storeKlioLine(conversationId: string, reply: string): Promise<void> {
+	const text = reply.trim() || NOT_CONNECTED;
+	try {
+		await appendLine(conversationId, 'klio', text);
+	} catch (err) {
+		console.error('[POST /api/klio] store reply', err);
+	}
+}
+
+/** Forward upstream bytes and store the assembled reply when the stream ends. */
+function streamAndStore(
+	source: ReadableStream<Uint8Array>,
+	conversationId: string,
+	status = 200
+): Response {
+	const reader = source.getReader();
+	const decoder = new TextDecoder();
+	let buffer = '';
+	let reply = '';
+	const stream = new ReadableStream<Uint8Array>({
+		async pull(controller) {
+			const { done, value } = await reader.read();
+			if (done) {
+				const flushed = consume(`${buffer}\n\n`, reply);
+				await storeKlioLine(conversationId, flushed.reply);
+				controller.close();
+				return;
+			}
+			controller.enqueue(value);
+			buffer += decoder.decode(value, { stream: true });
+			const taken = consume(buffer, reply);
+			buffer = taken.buffer;
+			reply = taken.reply;
+		}
+	});
+	return new Response(stream, { status, headers: sseHeaders });
+}
+
+async function replyAndStore(conversationId: string, reply: string): Promise<Response> {
+	const text = reply.trim() || NOT_CONNECTED;
+	await storeKlioLine(conversationId, text);
+	return new Response(sseFromReply(text), { headers: sseHeaders });
+}
+
+export const GET: RequestHandler = async ({ locals }) => {
+	if (!locals.user) {
+		return json({ message: 'Sign in to talk to Klio.' }, { status: 401 });
+	}
+	const open = await findOpenConversation(locals.user.id, getActiveDbTarget());
+	const lines: StoredKlioLine[] = open ? await listLines(open.id) : [];
+	return json({ lines });
+};
+
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) {
 		return json({ klio: 'error', reply: 'Sign in to talk to Klio.' }, { status: 401 });
@@ -68,30 +138,36 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		return json({ klio: 'error', reply: 'Invalid JSON' }, { status: 400 });
 	}
 
+	const datasetName = getActiveDbTarget();
+
+	if (isNewChat(body)) {
+		await startNewConversation(locals.user.id, datasetName);
+		return json({ lines: [] });
+	}
+
 	const message = asMessage(body);
 	if (!message) {
 		return json({ klio: 'error', reply: 'message required' }, { status: 400 });
 	}
 
+	const conversation = await openConversation(locals.user.id, datasetName);
+	const prior = await listLines(conversation.id);
+	await appendLine(conversation.id, 'user', message);
+
 	const upstream = resolveKlioUpstreamUrl(await readKlioBlock(), resolveKickagentApiBaseUrl());
 	if (!upstream) {
-		return json({ klio: 'placeholder', reply: NOT_CONNECTED });
+		return replyAndStore(conversation.id, NOT_CONNECTED);
 	}
 
 	let opsDatabase;
 	try {
 		opsDatabase = await resolveOpsDatabase({
 			user: locals.user,
-			datasetName: getActiveDbTarget()
+			datasetName
 		});
 	} catch (err) {
 		const reason = err instanceof Error ? err.message : NOT_CONNECTED;
-		return new Response(sseFromReply(reason), {
-			headers: {
-				'Content-Type': 'text/event-stream; charset=utf-8',
-				'Cache-Control': 'no-cache'
-			}
-		});
+		return replyAndStore(conversation.id, reason);
 	}
 
 	const headers: Record<string, string> = {
@@ -102,18 +178,13 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		env.KICKAGENT_SERVICE_TOKEN?.trim() || process.env.KICKAGENT_SERVICE_TOKEN?.trim();
 	if (token) headers.Authorization = `Bearer ${token}`;
 
-	const sseHeaders = {
-		'Content-Type': 'text/event-stream; charset=utf-8',
-		'Cache-Control': 'no-cache'
-	};
-
 	try {
 		const res = await fetch(upstream, {
 			method: 'POST',
 			headers,
 			body: JSON.stringify({
 				message,
-				transcript: asTranscript(body),
+				transcript: prior.map((line) => ({ role: line.role, text: line.text })),
 				context: asContext(body),
 				stream: true,
 				userId: locals.user.id,
@@ -123,19 +194,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		});
 		const contentType = res.headers.get('content-type') ?? '';
 		if (contentType.includes('text/event-stream') && res.body) {
-			return new Response(res.body, { status: res.status, headers: sseHeaders });
+			return streamAndStore(res.body, conversation.id, res.status);
 		}
 		const payload = (await res.json().catch(() => null)) as { reply?: unknown } | null;
 		const reply =
 			payload && typeof payload.reply === 'string' && payload.reply.trim()
 				? payload.reply.trim()
 				: NOT_CONNECTED;
-		return new Response(sseFromReply(reply), { headers: sseHeaders });
+		return replyAndStore(conversation.id, reply);
 	} catch {
-		return new Response(sseFromReply(NOT_CONNECTED), { headers: sseHeaders });
+		return replyAndStore(conversation.id, NOT_CONNECTED);
 	}
 };
-
-function sseFromReply(reply: string): string {
-	return `data: ${JSON.stringify({ delta: reply })}\n\ndata: ${JSON.stringify({ done: true })}\n\n`;
-}

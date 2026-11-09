@@ -9,7 +9,7 @@ import { takeKlioSseEvents, type KlioSseEvent } from "./sse";
 export type KlioRole = "user" | "klio";
 
 export type KlioLine = {
-  id: number;
+  id: string;
   role: KlioRole;
   text: string;
   /** Epoch ms when the line was appended (panel clock column / hover). */
@@ -23,10 +23,21 @@ export const KLIO_FOCUS_INPUT_EVENT = "klio-focus-input";
 
 let _open = $state(false);
 let _pending = $state(false);
-let _nextId = 2;
+let _nextId = 1;
 let _lines = $state<KlioLine[]>([
-  { id: 1, role: "klio", text: KLIO_NOT_CONNECTED, ts: Date.now() },
+  { id: "local", role: "klio", text: KLIO_NOT_CONNECTED, ts: Date.now() },
 ]);
+
+function isStoredLine(value: unknown): value is KlioLine {
+  if (!value || typeof value !== "object") return false;
+  const row = value as Record<string, unknown>;
+  return (
+    typeof row.id === "string" &&
+    (row.role === "user" || row.role === "klio") &&
+    typeof row.text === "string" &&
+    typeof row.ts === "number"
+  );
+}
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
@@ -91,10 +102,58 @@ export const klio = {
   close(): void {
     _open = false;
   },
-  /** Clear the transcript and focus the input. No-op while a reply is streaming. */
-  newChat(): void {
+  /** Drop the on-screen lines. Does not write a transcript row. */
+  clearTranscript(): void {
+    _lines = [];
+  },
+  /** Load the open thread for the active dataset. Empty store keeps the placeholder. */
+  async hydrate(): Promise<void> {
+    if (!isBrowser()) return;
+    try {
+      const res = await fetch("/api/klio");
+      if (!res.ok) return;
+      const body = (await res.json()) as { lines?: unknown };
+      if (!Array.isArray(body.lines) || body.lines.length === 0) return;
+      const lines = body.lines.filter(isStoredLine);
+      if (lines.length === 0) return;
+      _lines = lines;
+    } catch {
+      /* keep the screen as it is */
+    }
+  },
+  /** Load a saved thread and show it. Returns false when the chat is gone. */
+  async openChat(id: string): Promise<boolean> {
+    if (_pending || !isBrowser()) return false;
+    try {
+      const res = await fetch("/api/klio/chats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) return false;
+      const body = (await res.json()) as { lines?: unknown };
+      const lines = Array.isArray(body.lines) ? body.lines.filter(isStoredLine) : [];
+      _lines = lines;
+      if (!_open) _open = true;
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  /** Close the stored thread, clear the screen, and focus the input. */
+  async newChat(): Promise<void> {
     if (_pending) return;
-    _nextId = 1;
+    if (isBrowser()) {
+      try {
+        await fetch("/api/klio", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newChat: true }),
+        });
+      } catch {
+        /* still clear the screen; the next ask opens a thread */
+      }
+    }
     _lines = [];
     if (!_open) _open = true;
     if (!isBrowser()) return;
@@ -102,10 +161,11 @@ export const klio = {
       window.dispatchEvent(new CustomEvent(KLIO_FOCUS_INPUT_EVENT));
     });
   },
-  /** `]` — open and focus, or close. */
+  /** `]` — open and focus, or close. Opening reloads the stored thread. */
   toggle(): void {
     _open = !_open;
     if (!_open || !isBrowser()) return;
+    void this.hydrate();
     queueMicrotask(() => {
       window.dispatchEvent(new CustomEvent(KLIO_FOCUS_INPUT_EVENT));
     });
@@ -123,8 +183,8 @@ export const klio = {
           !(index === 0 && line.role === "klio" && line.text === KLIO_NOT_CONNECTED),
       )
       .map((line) => ({ role: line.role, text: line.text }));
-    const userId = _nextId++;
-    const replyId = _nextId++;
+    const userId = `local-${_nextId++}`;
+    const replyId = `local-${_nextId++}`;
     const now = Date.now();
     _lines = [
       ..._lines,

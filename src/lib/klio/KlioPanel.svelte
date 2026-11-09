@@ -13,9 +13,16 @@
 
   let { enabled }: { enabled: boolean } = $props();
 
+  type ChatSummary = { id: string; title: string; createdAt: number; open: boolean };
+
   let input = $state("");
   let inputEl = $state<HTMLInputElement | undefined>(undefined);
   let bodyEl = $state<HTMLDivElement | undefined>(undefined);
+  /** Local only. Not written to the transcript. */
+  let notice = $state<string | null>(null);
+  let showChats = $state(false);
+  let chats = $state<ChatSummary[]>([]);
+  let chatsLoading = $state(false);
   /** Shared with the console (`kickstaff.consoleUi.showTimestamps`). */
   const showTimestamps = $derived(getShowTimestamps());
 
@@ -58,7 +65,70 @@
     setShowTimestamps(!showTimestamps);
   }
 
+  function isChatSummary(value: unknown): value is ChatSummary {
+    if (!value || typeof value !== "object") return false;
+    const row = value as Record<string, unknown>;
+    return typeof row.id === "string" && typeof row.title === "string";
+  }
+
+  async function loadChats() {
+    chatsLoading = true;
+    try {
+      const res = await fetch("/api/klio/chats");
+      if (!res.ok) {
+        chats = [];
+        return;
+      }
+      const body = (await res.json()) as { chats?: unknown };
+      chats = Array.isArray(body.chats) ? body.chats.filter(isChatSummary) : [];
+    } catch {
+      chats = [];
+    } finally {
+      chatsLoading = false;
+    }
+  }
+
+  async function toggleChats() {
+    showChats = !showChats;
+    if (showChats) await loadChats();
+  }
+
+  async function startNewChat() {
+    notice = "new chat";
+    showChats = false;
+    input = "";
+    await klio.newChat();
+    void tick().then(() => inputEl?.focus());
+  }
+
+  async function pickChat(id: string) {
+    const ok = await klio.openChat(id);
+    if (!ok) {
+      await loadChats();
+      return;
+    }
+    notice = null;
+    showChats = false;
+    void tick().then(() => inputEl?.focus());
+  }
+
+  async function removeChat(id: string) {
+    const res = await fetch("/api/klio/chats", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) return;
+    const body = (await res.json()) as { wasOpen?: boolean };
+    if (body.wasOpen) {
+      notice = null;
+      klio.clearTranscript();
+    }
+    await loadChats();
+  }
+
   onMount(() => {
+    if (klio.open) void klio.hydrate();
     function onFocus() {
       void tick().then(() => inputEl?.focus());
     }
@@ -74,6 +144,8 @@
     e.preventDefault();
     const text = input;
     input = "";
+    notice = null;
+    showChats = false;
     await klio.send(text);
     void tick().then(() => inputEl?.focus());
   }
@@ -88,33 +160,67 @@
         onclick={() => klio.close()}
         aria-label="Close Klio">×</button
       >
-      <div class="headMain">
-        <span class="title">Klio</span>
+      <span class="title">Klio</span>
+      <div class="headActions">
         <button
           type="button"
-          class="newChat"
+          class="headAction"
           aria-label="New chat"
           title="New chat"
           disabled={klio.pending}
-          onclick={() => {
-            klio.newChat();
-            input = "";
-            void tick().then(() => inputEl?.focus());
-          }}>+new</button
+          onclick={startNewChat}>+new</button
         >
         <button
           type="button"
-          class="stampToggle"
-          class:stampToggle--on={showTimestamps}
-          aria-pressed={showTimestamps}
-          aria-label="Show timestamps"
-          title={showTimestamps ? "Hide timestamps" : "Show timestamps"}
-          onclick={toggleTimestamps}>time</button
+          class="headAction"
+          class:headAction--on={showChats}
+          aria-pressed={showChats}
+          aria-label="Saved chats"
+          title="Saved chats"
+          disabled={klio.pending}
+          onclick={toggleChats}>chats</button
         >
       </div>
+      <button
+        type="button"
+        class="stampToggle"
+        class:stampToggle--on={showTimestamps}
+        aria-pressed={showTimestamps}
+        aria-label="Show timestamps"
+        title={showTimestamps ? "Hide timestamps" : "Show timestamps"}
+        onclick={toggleTimestamps}>time</button
+      >
     </header>
     <div class="body" bind:this={bodyEl}>
+      {#if showChats}
+        <div class="chatList" aria-label="Saved chats">
+          {#if chatsLoading}
+            <p class="status">loading</p>
+          {:else if chats.length === 0}
+            <p class="status">no saved chats</p>
+          {:else}
+            {#each chats as chat (chat.id)}
+              <div class="chatRow">
+                <button
+                  type="button"
+                  class="chatOpen"
+                  onclick={() => pickChat(chat.id)}>{chat.title}</button
+                >
+                <button
+                  type="button"
+                  class="chatDelete"
+                  aria-label="Delete chat"
+                  onclick={() => removeChat(chat.id)}>del</button
+                >
+              </div>
+            {/each}
+          {/if}
+        </div>
+      {:else}
       <div class="bodyContent" class:bodyContent--stamps={showTimestamps}>
+        {#if notice}
+          <p class="status">{notice}</p>
+        {/if}
         {#each klio.lines as line (line.id)}
           <div
             class="row"
@@ -135,6 +241,7 @@
           </div>
         {/each}
       </div>
+      {/if}
     </div>
     <form class="prompt" onsubmit={submit}>
       <input
@@ -174,22 +281,14 @@
   .head {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
     gap: 0.35rem;
     padding: 0.35rem 0.75rem 0.35rem 0.2rem;
     border-bottom: 1px solid #1d2129;
     background: #0f1218;
   }
 
-  .headMain {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1;
-    min-width: 0;
-  }
-
   .title {
+    flex: 0 0 auto;
     font-weight: 600;
     letter-spacing: 0.06em;
     font-size: 0.68rem;
@@ -197,9 +296,17 @@
     text-transform: uppercase;
   }
 
-  .newChat {
+  .headActions {
+    display: flex;
+    flex: 1;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .headAction {
     appearance: none;
-    margin-left: auto;
+    flex: 1;
+    min-width: 0;
     font: inherit;
     font-size: 0.58rem;
     font-weight: 700;
@@ -213,19 +320,91 @@
     cursor: pointer;
   }
 
-  .newChat:hover:not(:disabled) {
+  .headAction:hover:not(:disabled) {
     background: #1a1f29;
     color: #fff;
     border-color: #3a4254;
   }
 
-  .newChat:disabled {
+  .headAction--on {
+    background: #1a2a3d;
+    color: #8ab4f8;
+    border-color: #2a4a6a;
+  }
+
+  .headAction:disabled {
     opacity: 0.45;
     cursor: wait;
   }
 
+  .status {
+    margin: 0;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: lowercase;
+    color: #6a7384;
+  }
+
+  .chatList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.4rem 0.5rem 0.4rem 10px;
+  }
+
+  .chatRow {
+    display: flex;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .chatOpen {
+    appearance: none;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    font: inherit;
+    font-size: 0.68rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 4px;
+    border: 1px solid #2a3548;
+    background: #151a24;
+    color: #d6d8de;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chatOpen:hover {
+    border-color: #3a4a62;
+    background: #1a2230;
+  }
+
+  .chatDelete {
+    appearance: none;
+    flex: 0 0 3.25rem;
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    border-radius: 4px;
+    border: 1px solid #4a3030;
+    background: #241616;
+    color: #e0a0a0;
+    cursor: pointer;
+  }
+
+  .chatDelete:hover {
+    background: #3a1c1c;
+    color: #fff;
+  }
+
   .stampToggle {
     appearance: none;
+    flex: 0 0 auto;
     font: inherit;
     font-size: 0.58rem;
     font-weight: 700;

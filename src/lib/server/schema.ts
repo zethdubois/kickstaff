@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
 	boolean,
 	integer,
@@ -207,9 +208,50 @@ export const opsDatasetGrants = pgTable(
 	})
 );
 
+/**
+ * One open Klio thread per signed-in user and active dataset (product DB).
+ * Closing a thread (`closedAt`) is how `+new` starts another chat.
+ */
+export const klioConversations = pgTable(
+	'klio_conversations',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		datasetName: text('dataset_name').notNull(),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+		closedAt: timestamp('closed_at', { withTimezone: true })
+	},
+	(t) => ({
+		openUserDataset: uniqueIndex('klio_conversations_open_user_dataset')
+			.on(t.userId, t.datasetName)
+			.where(sql`${t.closedAt} is null`)
+	})
+);
+
+/** User and Klio lines for a conversation. Not the ops books. */
+export const klioLines = pgTable(
+	'klio_lines',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		conversationId: uuid('conversation_id')
+			.notNull()
+			.references(() => klioConversations.id, { onDelete: 'cascade' }),
+		role: text('role').notNull(),
+		text: text('text').notNull(),
+		ts: timestamp('ts', { withTimezone: true }).defaultNow().notNull()
+	},
+	(t) => ({
+		conversationTsIdx: index('klio_lines_conversation_ts_idx').on(t.conversationId, t.ts)
+	})
+);
+
 export type User = typeof users.$inferSelect;
 export type RentalLandingLink = typeof rentalLandingLinks.$inferSelect;
 export type DashboardLink = typeof dashboardLinks.$inferSelect;
 export type Klog = typeof klogs.$inferSelect;
 export type OpsDataset = typeof opsDatasets.$inferSelect;
 export type OpsDatasetGrant = typeof opsDatasetGrants.$inferSelect;
+export type KlioConversation = typeof klioConversations.$inferSelect;
+export type KlioLineRow = typeof klioLines.$inferSelect;

@@ -176,6 +176,13 @@
       "when": 1780500000000,
       "tag": "0024_midterm_rentals",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1780600000000,
+      "tag": "0025_klio_transcripts",
+      "breakpoints": true
     }
   ]
 }
