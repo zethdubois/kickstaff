@@ -9,11 +9,14 @@
     getShowTimestamps,
     setShowTimestamps,
   } from "$lib/client/consoleUi.svelte";
+  import { callLine, resultText } from "./plan";
   import { KLIO_FOCUS_INPUT_EVENT, klio } from "./state.svelte";
 
   let { enabled }: { enabled: boolean } = $props();
 
   type ChatSummary = { id: string; title: string; createdAt: number; open: boolean };
+  type SavedPlan = { id: string; title: string; proposedAt: number };
+  type ListRow = { kind: "chat" | "plan"; id: string; title: string; at: number };
 
   let input = $state("");
   let inputEl = $state<HTMLInputElement | undefined>(undefined);
@@ -21,7 +24,7 @@
   /** Local only. Not written to the transcript. */
   let notice = $state<string | null>(null);
   let showChats = $state(false);
-  let chats = $state<ChatSummary[]>([]);
+  let chats = $state<ListRow[]>([]);
   let chatsLoading = $state(false);
   /** Shared with the console (`kickstaff.consoleUi.showTimestamps`). */
   const showTimestamps = $derived(getShowTimestamps());
@@ -34,6 +37,7 @@
     const last = klio.lines.at(-1);
     last?.text;
     klio.lines.length;
+    klio.plan;
     void tick().then(() => {
       bodyEl?.scrollTo({ top: bodyEl.scrollHeight });
     });
@@ -71,6 +75,12 @@
     return typeof row.id === "string" && typeof row.title === "string";
   }
 
+  function isSavedPlan(value: unknown): value is SavedPlan {
+    if (!value || typeof value !== "object") return false;
+    const row = value as Record<string, unknown>;
+    return typeof row.id === "string" && typeof row.title === "string";
+  }
+
   async function loadChats() {
     chatsLoading = true;
     try {
@@ -79,8 +89,24 @@
         chats = [];
         return;
       }
-      const body = (await res.json()) as { chats?: unknown };
-      chats = Array.isArray(body.chats) ? body.chats.filter(isChatSummary) : [];
+      const body = (await res.json()) as { chats?: unknown; plans?: unknown };
+      const threads: ListRow[] = Array.isArray(body.chats)
+        ? body.chats.filter(isChatSummary).map((chat) => ({
+            kind: "chat" as const,
+            id: chat.id,
+            title: chat.title,
+            at: chat.createdAt,
+          }))
+        : [];
+      const plans: ListRow[] = Array.isArray(body.plans)
+        ? body.plans.filter(isSavedPlan).map((plan) => ({
+            kind: "plan" as const,
+            id: plan.id,
+            title: plan.title,
+            at: plan.proposedAt,
+          }))
+        : [];
+      chats = [...threads, ...plans].sort((a, b) => b.at - a.at);
     } catch {
       chats = [];
     } finally {
@@ -99,6 +125,27 @@
     input = "";
     await klio.newChat();
     void tick().then(() => inputEl?.focus());
+  }
+
+  async function pickPlan(id: string) {
+    const ok = await klio.openPlan(id);
+    if (!ok) {
+      await loadChats();
+      return;
+    }
+    notice = null;
+    showChats = false;
+    void tick().then(() => inputEl?.focus());
+  }
+
+  async function removePlan(id: string) {
+    const res = await fetch("/api/klio/plans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, action: "dismiss" }),
+    });
+    if (!res.ok) return;
+    await loadChats();
   }
 
   async function pickChat(id: string) {
@@ -199,18 +246,23 @@
           {:else if chats.length === 0}
             <p class="status">no saved chats</p>
           {:else}
-            {#each chats as chat (chat.id)}
+            {#each chats as chat (`${chat.kind}-${chat.id}`)}
               <div class="chatRow">
                 <button
                   type="button"
                   class="chatOpen"
-                  onclick={() => pickChat(chat.id)}>{chat.title}</button
+                  class:chatOpen--plan={chat.kind === "plan"}
+                  onclick={() =>
+                    chat.kind === "plan" ? pickPlan(chat.id) : pickChat(chat.id)}
+                  >{chat.title}</button
                 >
                 <button
                   type="button"
                   class="chatDelete"
-                  aria-label="Delete chat"
-                  onclick={() => removeChat(chat.id)}>del</button
+                  aria-label={chat.kind === "plan" ? "Remove saved plan" : "Delete chat"}
+                  onclick={() =>
+                    chat.kind === "plan" ? removePlan(chat.id) : removeChat(chat.id)}
+                  >del</button
                 >
               </div>
             {/each}
@@ -240,6 +292,49 @@
             </div>
           </div>
         {/each}
+        {#if klio.plan}
+          <section class="plan" aria-label={klio.plan.title}>
+            <div class="planHead">
+              <span class="planTitle">{klio.plan.title}</span>
+              <time class="planWhen" datetime={new Date(klio.plan.proposedAt).toISOString()}
+                >{new Date(klio.plan.proposedAt).toLocaleString()}</time
+              >
+            </div>
+            <ul class="planCalls">
+              {#each klio.plan.calls as call, i (i)}
+                <li>{callLine(call)}</li>
+              {/each}
+            </ul>
+            {#if klio.plan.status === "executed"}
+              <div class="planLogs">
+                {#each klio.plan.results ?? [] as result, i (i)}
+                  <pre class="planLog">{resultText(result)}</pre>
+                {/each}
+              </div>
+            {:else}
+              <div class="planActions">
+                <button
+                  type="button"
+                  class="planButton planButton--confirm"
+                  disabled={klio.pending || klio.acting}
+                  onclick={() => klio.act("confirm")}>Confirm</button
+                >
+                <button
+                  type="button"
+                  class="planButton"
+                  disabled={klio.pending || klio.acting}
+                  onclick={() => klio.act("save")}>Save</button
+                >
+                <button
+                  type="button"
+                  class="planButton"
+                  disabled={klio.pending || klio.acting}
+                  onclick={() => klio.act("cancel")}>Cancel</button
+                >
+              </div>
+            {/if}
+          </section>
+        {/if}
       </div>
       {/if}
     </div>
@@ -382,6 +477,10 @@
     background: #1a2230;
   }
 
+  .chatOpen--plan {
+    border-left: 3px solid #62d4a3;
+  }
+
   .chatDelete {
     appearance: none;
     flex: 0 0 3.25rem;
@@ -400,6 +499,103 @@
   .chatDelete:hover {
     background: #3a1c1c;
     color: #fff;
+  }
+
+  .plan {
+    margin-top: 0.55rem;
+    padding: 0.45rem 0.55rem;
+    border: 1px solid #1e3a36;
+    border-left: 3px solid #62d4a3;
+    border-radius: 6px;
+    background: #0d1818;
+    color: #d4ebe0;
+  }
+
+  .planHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .planTitle {
+    font-size: 0.68rem;
+    font-weight: 700;
+    min-width: 0;
+  }
+
+  .planWhen {
+    flex: 0 0 auto;
+    font-size: 0.58rem;
+    color: #6a7384;
+  }
+
+  .planCalls {
+    margin: 0.35rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.64rem;
+  }
+
+  .planCalls li {
+    padding: 0.15rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .planActions {
+    display: flex;
+    gap: 0.35rem;
+    margin-top: 0.45rem;
+  }
+
+  .planButton {
+    appearance: none;
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.28rem 0.3rem;
+    border-radius: 4px;
+    border: 1px solid #2a2f3a;
+    background: transparent;
+    color: #9aa3b3;
+    cursor: pointer;
+  }
+
+  .planButton:hover:not(:disabled) {
+    background: #1a1f29;
+    color: #fff;
+  }
+
+  .planButton--confirm {
+    background: #143028;
+    border-color: #1e3a36;
+    color: #d4ebe0;
+  }
+
+  .planButton:disabled {
+    opacity: 0.45;
+    cursor: wait;
+  }
+
+  .planLogs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+  }
+
+  .planLog {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: inherit;
+    font-size: 0.62rem;
+    color: #c5cad3;
   }
 
   .stampToggle {

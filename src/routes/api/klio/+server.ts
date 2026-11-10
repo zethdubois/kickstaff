@@ -4,6 +4,8 @@ import { env as publicEnv } from '$env/dynamic/public';
 import type { RequestHandler } from './$types';
 import { getActiveDbTarget } from '$lib/server/dbTarget';
 import { resolveKickagentApiBaseUrl } from '$lib/server/kickagentRemoteRun';
+import { parseKlioPlan } from '$lib/klio/plan';
+import { actionContext, findPendingPlan, proposePlan } from '$lib/server/klioPlans';
 import {
 	appendLine,
 	findOpenConversation,
@@ -49,11 +51,29 @@ function applyEvent(event: KlioSseEvent, reply: string): string {
 	return reply;
 }
 
-function consume(buffer: string, reply: string): { buffer: string; reply: string } {
+function consume(
+	buffer: string,
+	reply: string,
+	plan: unknown
+): { buffer: string; reply: string; plan: unknown } {
 	const taken = takeKlioSseEvents(buffer);
 	let next = reply;
-	for (const event of taken.events) next = applyEvent(event, next);
-	return { buffer: taken.rest, reply: next };
+	let nextPlan = plan;
+	for (const event of taken.events) {
+		next = applyEvent(event, next);
+		if (event.plan !== undefined) nextPlan = event.plan;
+	}
+	return { buffer: taken.rest, reply: next, plan: nextPlan };
+}
+
+async function storePlan(userId: string, datasetName: string, reply: string, plan: unknown) {
+	const draft = parseKlioPlan(plan, reply);
+	if (!draft) return;
+	try {
+		await proposePlan(userId, datasetName, draft);
+	} catch (err) {
+		console.error('[POST /api/klio] store plan', err);
+	}
 }
 
 async function readKlioBlock(): Promise<KlioManifestBlock | null> {
@@ -86,26 +106,31 @@ async function storeKlioLine(conversationId: string, reply: string): Promise<voi
 function streamAndStore(
 	source: ReadableStream<Uint8Array>,
 	conversationId: string,
+	userId: string,
+	datasetName: string,
 	status = 200
 ): Response {
 	const reader = source.getReader();
 	const decoder = new TextDecoder();
 	let buffer = '';
 	let reply = '';
+	let plan: unknown;
 	const stream = new ReadableStream<Uint8Array>({
 		async pull(controller) {
 			const { done, value } = await reader.read();
 			if (done) {
-				const flushed = consume(`${buffer}\n\n`, reply);
+				const flushed = consume(`${buffer}\n\n`, reply, plan);
 				await storeKlioLine(conversationId, flushed.reply);
+				await storePlan(userId, datasetName, flushed.reply, flushed.plan);
 				controller.close();
 				return;
 			}
 			controller.enqueue(value);
 			buffer += decoder.decode(value, { stream: true });
-			const taken = consume(buffer, reply);
+			const taken = consume(buffer, reply, plan);
 			buffer = taken.buffer;
 			reply = taken.reply;
+			plan = taken.plan;
 		}
 	});
 	return new Response(stream, { status, headers: sseHeaders });
@@ -121,9 +146,11 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.user) {
 		return json({ message: 'Sign in to talk to Klio.' }, { status: 401 });
 	}
-	const open = await findOpenConversation(locals.user.id, getActiveDbTarget());
+	const datasetName = getActiveDbTarget();
+	const open = await findOpenConversation(locals.user.id, datasetName);
 	const lines: StoredKlioLine[] = open ? await listLines(open.id) : [];
-	return json({ lines });
+	const plan = await findPendingPlan(locals.user.id, datasetName);
+	return json({ lines, plan });
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
@@ -186,6 +213,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				message,
 				transcript: prior.map((line) => ({ role: line.role, text: line.text })),
 				context: asContext(body),
+				action: await actionContext(locals.user.id, datasetName),
 				stream: true,
 				userId: locals.user.id,
 				userEmail: locals.user.email,
@@ -194,13 +222,17 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		});
 		const contentType = res.headers.get('content-type') ?? '';
 		if (contentType.includes('text/event-stream') && res.body) {
-			return streamAndStore(res.body, conversation.id, res.status);
+			return streamAndStore(res.body, conversation.id, locals.user.id, datasetName, res.status);
 		}
-		const payload = (await res.json().catch(() => null)) as { reply?: unknown } | null;
+		const payload = (await res.json().catch(() => null)) as {
+			reply?: unknown;
+			plan?: unknown;
+		} | null;
 		const reply =
 			payload && typeof payload.reply === 'string' && payload.reply.trim()
 				? payload.reply.trim()
 				: NOT_CONNECTED;
+		await storePlan(locals.user.id, datasetName, reply, payload?.plan);
 		return replyAndStore(conversation.id, reply);
 	} catch {
 		return replyAndStore(conversation.id, NOT_CONNECTED);

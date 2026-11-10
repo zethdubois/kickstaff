@@ -4,6 +4,7 @@
  */
 
 import { pageLocation } from "$lib/client/pageLocation.svelte";
+import { isKlioActionCard, type KlioActionCard } from "./plan";
 import { takeKlioSseEvents, type KlioSseEvent } from "./sse";
 
 export type KlioRole = "user" | "klio";
@@ -23,6 +24,8 @@ export const KLIO_FOCUS_INPUT_EVENT = "klio-focus-input";
 
 let _open = $state(false);
 let _pending = $state(false);
+let _acting = $state(false);
+let _plan = $state<KlioActionCard | null>(null);
 let _nextId = 1;
 let _lines = $state<KlioLine[]>([
   { id: "local", role: "klio", text: KLIO_NOT_CONNECTED, ts: Date.now() },
@@ -41,6 +44,26 @@ function isStoredLine(value: unknown): value is KlioLine {
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
+}
+
+function applyServerPlan(value: unknown): void {
+  if (isKlioActionCard(value)) {
+    _plan = value;
+    return;
+  }
+  if (_plan?.status !== "executed") _plan = null;
+}
+
+async function refreshPlan(): Promise<void> {
+  if (!isBrowser()) return;
+  try {
+    const res = await fetch("/api/klio");
+    if (!res.ok) return;
+    const body = (await res.json()) as { plan?: unknown };
+    applyServerPlan(body.plan);
+  } catch {
+    /* keep the card that is already on screen */
+  }
 }
 
 function applyKlioEvent(event: KlioSseEvent, reply: string): string {
@@ -99,6 +122,12 @@ export const klio = {
   get pending(): boolean {
     return _pending;
   },
+  get acting(): boolean {
+    return _acting;
+  },
+  get plan(): KlioActionCard | null {
+    return _plan;
+  },
   close(): void {
     _open = false;
   },
@@ -112,7 +141,8 @@ export const klio = {
     try {
       const res = await fetch("/api/klio");
       if (!res.ok) return;
-      const body = (await res.json()) as { lines?: unknown };
+      const body = (await res.json()) as { lines?: unknown; plan?: unknown };
+      applyServerPlan(body.plan);
       if (!Array.isArray(body.lines) || body.lines.length === 0) return;
       const lines = body.lines.filter(isStoredLine);
       if (lines.length === 0) return;
@@ -138,6 +168,50 @@ export const klio = {
       return true;
     } catch {
       return false;
+    }
+  },
+  /** Put a saved plan back on the card. Any other pending plan is saved. */
+  async openPlan(id: string): Promise<boolean> {
+    if (_pending || _acting || !isBrowser()) return false;
+    _acting = true;
+    try {
+      const res = await fetch("/api/klio/plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "open" }),
+      });
+      if (!res.ok) return false;
+      const body = (await res.json()) as { plan?: unknown };
+      _plan = isKlioActionCard(body.plan) ? body.plan : null;
+      if (!_open) _open = true;
+      return _plan != null;
+    } catch {
+      return false;
+    } finally {
+      _acting = false;
+    }
+  },
+  /**
+   * Confirm, Save, or Cancel the card. The host loads the stored calls.
+   * Save and Cancel clear the card. Confirm leaves the logs on it.
+   */
+  async act(action: "confirm" | "save" | "cancel"): Promise<void> {
+    if (!_plan || _plan.status !== "pending" || _acting || !isBrowser()) return;
+    const id = _plan.id;
+    _acting = true;
+    try {
+      const res = await fetch("/api/klio/plans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action }),
+      });
+      if (!res.ok) return;
+      const body = (await res.json()) as { plan?: unknown };
+      _plan = isKlioActionCard(body.plan) ? body.plan : null;
+    } catch {
+      /* leave the card so the user can try again */
+    } finally {
+      _acting = false;
     }
   },
   /** Close the stored thread, clear the screen, and focus the input. */
@@ -177,6 +251,7 @@ export const klio = {
   async ask(raw: string): Promise<string | null> {
     const text = raw.trim();
     if (!text || _pending) return null;
+    if (_plan?.status === "executed") _plan = null;
     const transcript = _lines
       .filter(
         (line, index) =>
@@ -214,6 +289,7 @@ export const klio = {
     } finally {
       _pending = false;
     }
+    await refreshPlan();
     if (!reply.trim()) reply = KLIO_NOT_CONNECTED;
     _lines = _lines.map((line) =>
       line.id === replyId ? { ...line, text: reply } : line,

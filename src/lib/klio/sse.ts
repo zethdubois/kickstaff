@@ -3,6 +3,8 @@ export type KlioSseEvent = {
 	delta?: string;
 	error?: string;
 	done?: boolean;
+	/** Present when she proposed a write. The host stores it; the browser does not run it. */
+	plan?: unknown;
 };
 
 /** Split a text/event-stream buffer. `rest` is an incomplete trailing event. */

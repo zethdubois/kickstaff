@@ -1,7 +1,9 @@
 import { sql } from 'drizzle-orm';
+import type { KlioPlanCall } from '$lib/klio/plan';
 import {
 	boolean,
 	integer,
+	jsonb,
 	pgTable,
 	primaryKey,
 	text,
@@ -247,6 +249,34 @@ export const klioLines = pgTable(
 	})
 );
 
+/**
+ * One Klio proposal. The card, the saved list, and the executed history are this table.
+ * At most one `pending` row per user and dataset.
+ */
+export const klioPlans = pgTable(
+	'klio_plans',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		datasetName: text('dataset_name').notNull(),
+		title: text('title').notNull(),
+		summary: text('summary').notNull(),
+		calls: jsonb('calls').$type<KlioPlanCall[]>().notNull(),
+		proposedAt: timestamp('proposed_at', { withTimezone: true }).defaultNow().notNull(),
+		executedAt: timestamp('executed_at', { withTimezone: true }),
+		status: text('status').notNull(),
+		results: jsonb('results').$type<unknown[] | null>()
+	},
+	(t) => ({
+		pendingUserDataset: uniqueIndex('klio_plans_pending_user_dataset')
+			.on(t.userId, t.datasetName)
+			.where(sql`${t.status} = 'pending'`),
+		userDatasetIdx: index('klio_plans_user_dataset_idx').on(t.userId, t.datasetName, t.proposedAt)
+	})
+);
+
 export type User = typeof users.$inferSelect;
 export type RentalLandingLink = typeof rentalLandingLinks.$inferSelect;
 export type DashboardLink = typeof dashboardLinks.$inferSelect;
@@ -255,3 +285,4 @@ export type OpsDataset = typeof opsDatasets.$inferSelect;
 export type OpsDatasetGrant = typeof opsDatasetGrants.$inferSelect;
 export type KlioConversation = typeof klioConversations.$inferSelect;
 export type KlioLineRow = typeof klioLines.$inferSelect;
+export type KlioPlanRow = typeof klioPlans.$inferSelect;

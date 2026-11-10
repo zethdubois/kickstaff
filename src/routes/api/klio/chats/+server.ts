@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getActiveDbTarget } from '$lib/server/dbTarget';
+import { listSavedPlans } from '$lib/server/klioPlans';
 import {
 	activateConversation,
 	deleteConversation,
@@ -17,8 +18,10 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (!locals.user) {
 		return json({ message: 'Sign in to talk to Klio.' }, { status: 401 });
 	}
-	const chats = await listChats(locals.user.id, getActiveDbTarget());
-	return json({ chats });
+	const datasetName = getActiveDbTarget();
+	const chats = await listChats(locals.user.id, datasetName);
+	const plans = await listSavedPlans(locals.user.id, datasetName);
+	return json({ chats, plans });
 };
 
 export const POST: RequestHandler = async ({ request, locals }) => {
