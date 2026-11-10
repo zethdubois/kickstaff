@@ -1,3 +1,4 @@
+import { noteOpsWrite } from '$lib/client/noteOpsWrite';
 import { echoKickagentCommand } from '$lib/devConsole/state.svelte';
 import type { CommandOutcome } from './contracts';
 
@@ -22,5 +23,7 @@ export async function runManifestCommand(
 		throw new Error(payload.message ?? `kickagent run failed (${res.status})`);
 	}
 
-	return payload.outcome ?? {};
+	const outcome = payload.outcome ?? {};
+	noteOpsWrite(command, args, outcome);
+	return outcome;
 }

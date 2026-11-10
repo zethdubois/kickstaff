@@ -29,6 +29,7 @@ import {
   klogWithSource,
   type KlogLevel,
 } from "./state.svelte";
+import { noteOpsWrite } from "$lib/client/noteOpsWrite";
 import type { CommandOutcome } from "$lib/kickagent/contracts";
 
 export type { CommandOutcome };
@@ -456,6 +457,8 @@ export async function runCommand(input: string): Promise<CommandResult> {
     klogWithSource("error", source, `${resolved}: ${msg}`);
     return { ok: false, error: msg };
   }
+
+  noteOpsWrite(resolved, mergedArgs, outcome ?? undefined);
 
   const refreshTargets = outcome?.refresh ?? [];
   for (const target of refreshTargets) {

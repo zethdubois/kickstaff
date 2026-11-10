@@ -4,6 +4,7 @@
  */
 
 import { pageLocation } from "$lib/client/pageLocation.svelte";
+import { noteOpsWrite } from "$lib/client/noteOpsWrite";
 import { echoKickagentCommand } from "$lib/devConsole/state.svelte";
 import { isKlioActionCard, type KlioActionCard, type KlioPlanCall } from "./plan";
 import { takeKlioSseEvents, type KlioSseEvent } from "./sse";
@@ -76,6 +77,12 @@ function asRanCall(value: unknown): KlioPlanCall | null {
   if (typeof command !== "string" || !command.trim()) return null;
   if (!Array.isArray(args) || args.some((arg) => typeof arg !== "string")) return null;
   return { command, args };
+}
+
+function outcomeLevel(result: unknown): { level?: string } | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const level = (result as { level?: unknown }).level;
+  return typeof level === "string" ? { level } : undefined;
 }
 
 /** Query commands Klio ran while answering. Proposed writes wait for Confirm. */
@@ -240,8 +247,11 @@ export const klio = {
       const card = isKlioActionCard(body.plan) ? body.plan : null;
       if (action === "confirm") {
         const ran = card?.results?.length ?? 0;
-        for (const call of calls.slice(0, ran)) {
+        for (let i = 0; i < ran; i++) {
+          const call = calls[i];
+          if (!call) continue;
           echoKickagentCommand(call.command, call.args);
+          noteOpsWrite(call.command, call.args, outcomeLevel(card?.results?.[i]));
         }
       }
       _plan = card;

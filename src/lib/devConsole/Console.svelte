@@ -19,9 +19,10 @@
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
   import StoreTree from "./StoreTree.svelte";
+  import WritesLog from "./WritesLog.svelte";
 
   let bodyEl: HTMLDivElement | undefined = $state();
-  let view = $state<"console" | "stores">("console");
+  let view = $state<"console" | "stores" | "writes">("console");
   let inlineInput = $state("");
   let inlineInputEl: HTMLInputElement | undefined = $state();
   /** Shared with Klio (`kickstaff.consoleUi.showTimestamps`). Default off. */
@@ -96,8 +97,12 @@
     setShowTimestamps(!showTimestamps);
   }
 
-  function toggleView() {
+  function toggleStores() {
     view = view === "stores" ? "console" : "stores";
+  }
+
+  function toggleWrites() {
+    view = view === "writes" ? "console" : "writes";
   }
 
   onMount(() => {
@@ -148,11 +153,20 @@
           <button
             type="button"
             class="stampToggle"
+            class:stampToggle--on={view === "writes"}
+            aria-pressed={view === "writes"}
+            aria-label={view === "writes" ? "Show console" : "Show writes"}
+            title={view === "writes" ? "Show console" : "Show writes"}
+            onclick={toggleWrites}>{view === "writes" ? "console" : "writes"}</button
+          >
+          <button
+            type="button"
+            class="stampToggle"
             class:stampToggle--on={view === "stores"}
             aria-pressed={view === "stores"}
             aria-label={view === "stores" ? "Show console" : "Show stores"}
             title={view === "stores" ? "Show console" : "Show stores"}
-            onclick={toggleView}>{view === "stores" ? "console" : "stores"}</button
+            onclick={toggleStores}>{view === "stores" ? "console" : "stores"}</button
           >
           <button
             type="button"
@@ -170,6 +184,8 @@
     <div class="body" bind:this={bodyEl}>
       {#if view === "stores"}
         <StoreTree />
+      {:else if view === "writes"}
+        <WritesLog />
       {:else}
       <div class="bodyContent" class:bodyContent--stamps={showTimestamps}>
         {#if unitsListSchema}

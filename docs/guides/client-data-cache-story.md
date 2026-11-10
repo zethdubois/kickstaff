@@ -1,6 +1,6 @@
 # Draft story: client data cache (Svelte stores)
 
-**Status:** Slice A is in the client. Ops lists (`/ops/[resource]`, `/ops/units`) keep one in-memory snapshot per resource, dataset, and server args (`src/lib/client/opsListCache.svelte.ts`). Column filters and sort are derived and do not refetch. Include flags, Refresh, and a database switch still load from Kickagent. Pending edits, row versions, and SSE (slices B–D) are not built.
+**Status:** Slice A is in the client. Ops lists (`/ops/[resource]`, `/ops/units`) keep one in-memory snapshot per resource, dataset, and server args (`src/lib/client/opsListCache.svelte.ts`). Column filters and sort are derived and do not refetch. Include flags, Refresh, and a database switch still load from Kickagent. A cached detail is dropped when a write command names that record, or when a refreshed list row disagrees with it. Pending edits, row versions, and SSE (slices B–D) are not built.
 
 **Audience:** Kickstaff agents and developers. Read this, then propose a plan (phases in `plan.md` / checklist in `now.md`). Do not implement from this file alone.
 

@@ -31,7 +31,7 @@ Keep ≤7 active bullets.
 
 ## Done recently
 
-- Ops list snapshots live in a browser store (`opsListCache`) so `/ops/gl`, `/ops/sites`, and `/ops/units` redraw from memory.
+- Ops list snapshots live in a browser store (`opsListCache`) so `/ops/gl`, `/ops/sites`, and `/ops/units` redraw from memory. A cached detail is dropped when a later write or a refreshed list row disagrees with it.
 - Ops datasets table + `/admin/datasets` + `opsDatabase` inject on kickagent run (spawn rewrite bridge remains).
 - Frontend guide pointer in [AGENTS.md](../AGENTS.md); subscriber brief links the contract instead of duplicating it.
 - List-detail host for `resources.gl`; KAM console chrome; host mission doc.

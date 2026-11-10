@@ -23,7 +23,7 @@
   import type { ManifestListDetailResource } from "./manifestResourceCache";
   import type { ResourceTableModel } from "./outcomeToTableModel";
   import { runManifestCommand } from "./runManifestCommand";
-  import { putOpsDetail, readOpsDetail } from "$lib/client/opsListCache.svelte";
+  import { opsDetailEpoch, putOpsDetail, readOpsDetail } from "$lib/client/opsListCache.svelte";
 
   type Props = {
     model: ResourceTableModel;
@@ -83,6 +83,8 @@
   const ARROW_LOAD_DELAY_MS = 150;
   let loadTimer: ReturnType<typeof setTimeout> | undefined;
 
+  /** Last detail-store generation applied for each resource. */
+  let detailEpochSeen: Record<string, number> = {};
   let selectedId = $state<string | null>(null);
   let detailRecord = $state<Record<string, unknown> | null>(null);
   let detailLoading = $state(false);
@@ -334,6 +336,28 @@
     if (!selectedId) return;
     const stillThere = model.rows.some((row) => rowId(row) === selectedId);
     if (!stillThere) clearSelection();
+  });
+
+  // A write or a newer list row drops or replaces the cached detail. Follow it.
+  $effect(() => {
+    const name = resourceName;
+    if (!name) return;
+    const epoch = opsDetailEpoch(name);
+    if (detailEpochSeen[name] === epoch) return;
+    const first = detailEpochSeen[name] === undefined;
+    detailEpochSeen[name] = epoch;
+    if (first) return;
+    const id = untrack(() => selectedId);
+    const ds = untrack(() => dataset);
+    if (!id || !ds) return;
+    const cached = readOpsDetail(name, ds, id);
+    if (cached) {
+      detailRecord = cached;
+      detailError = null;
+      detailLoading = false;
+      return;
+    }
+    void loadDetail(id);
   });
 
   $effect(() => {
