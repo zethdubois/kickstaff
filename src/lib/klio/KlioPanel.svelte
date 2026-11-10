@@ -24,6 +24,7 @@
   /** Local only. Not written to the transcript. */
   let notice = $state<string | null>(null);
   let showChats = $state(false);
+  let reasoningOpen = $state<Record<string, boolean>>({});
   let chats = $state<ListRow[]>([]);
   let chatsLoading = $state(false);
   /** Shared with the console (`kickstaff.consoleUi.showTimestamps`). */
@@ -112,6 +113,17 @@
     } finally {
       chatsLoading = false;
     }
+  }
+
+  function toggleReasoning(id: string) {
+    reasoningOpen = { ...reasoningOpen, [id]: !reasoningOpen[id] };
+  }
+
+  async function saveAction() {
+    const ok = await klio.act("save");
+    if (!ok) return;
+    showChats = true;
+    await loadChats();
   }
 
   async function toggleChats() {
@@ -222,10 +234,10 @@
           class="headAction"
           class:headAction--on={showChats}
           aria-pressed={showChats}
-          aria-label="Saved chats"
-          title="Saved chats"
+          aria-label={showChats ? "Current chat" : "Chats and saved actions"}
+          title={showChats ? "Current chat" : "Chats and saved actions"}
           disabled={klio.pending}
-          onclick={toggleChats}>chats</button
+          onclick={toggleChats}>{showChats ? "current chat" : "chats/actions"}</button
         >
       </div>
       <button
@@ -240,22 +252,36 @@
     </header>
     <div class="body" bind:this={bodyEl}>
       {#if showChats}
-        <div class="chatList" aria-label="Saved chats">
+        <div
+          class="chatList"
+          class:chatList--stamps={showTimestamps}
+          aria-label="Chats and saved actions"
+        >
           {#if chatsLoading}
             <p class="status">loading</p>
           {:else if chats.length === 0}
-            <p class="status">no saved chats</p>
+            <p class="status">no chats or actions</p>
           {:else}
             {#each chats as chat (`${chat.kind}-${chat.id}`)}
-              <div class="chatRow">
+              <div
+                class="chatRow"
+                class:chatRow--stamps={showTimestamps}
+                title={fmtTs(chat.at)}
+              >
+                {#if showTimestamps}
+                  <span class="ts">{fmtTs(chat.at)}</span>
+                {/if}
                 <button
                   type="button"
                   class="chatOpen"
-                  class:chatOpen--plan={chat.kind === "plan"}
                   onclick={() =>
                     chat.kind === "plan" ? pickPlan(chat.id) : pickChat(chat.id)}
-                  >{chat.title}</button
                 >
+                  {#if chat.kind === "plan"}
+                    <span class="actionMark" aria-hidden="true">A</span>
+                  {/if}
+                  <span class="chatTitle">{chat.title}</span>
+                </button>
                 <button
                   type="button"
                   class="chatDelete"
@@ -288,7 +314,22 @@
               class:bubble--klio={line.role === "klio"}
               aria-label={line.role === "user" ? "You" : "Klio"}
             >
-              <pre class="text">{line.text}</pre>
+              {#if line.role === "klio" && line.reasoning?.length}
+                <button
+                  type="button"
+                  class="reason"
+                  class:reason--on={reasoningOpen[line.id]}
+                  aria-pressed={!!reasoningOpen[line.id]}
+                  aria-label={reasoningOpen[line.id] ? "Show reply" : "Show reasoning"}
+                  title={reasoningOpen[line.id] ? "Show reply" : "Show reasoning"}
+                  onclick={() => toggleReasoning(line.id)}>R</button
+                >
+              {/if}
+              <pre class="text" class:text--reason={!!line.reasoning?.length}
+                >{reasoningOpen[line.id] && line.reasoning
+                  ? line.reasoning.join("\n\n")
+                  : line.text}</pre
+              >
             </div>
           </div>
         {/each}
@@ -323,7 +364,7 @@
                   type="button"
                   class="planButton"
                   disabled={klio.pending || klio.acting}
-                  onclick={() => klio.act("save")}>Save</button
+                  onclick={saveAction}>Save</button
                 >
                 <button
                   type="button"
@@ -448,14 +489,29 @@
     padding: 0.4rem 0.5rem 0.4rem 10px;
   }
 
+  .chatList--stamps {
+    padding-left: 5px;
+  }
+
   .chatRow {
     display: flex;
     gap: 0.35rem;
     min-width: 0;
+    align-items: stretch;
+  }
+
+  .chatRow--stamps {
+    display: grid;
+    grid-template-columns: 8ch 1fr auto;
+    column-gap: 0.5rem;
+    align-items: center;
   }
 
   .chatOpen {
     appearance: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     flex: 1;
     min-width: 0;
     text-align: left;
@@ -467,18 +523,34 @@
     background: #151a24;
     color: #d6d8de;
     cursor: pointer;
+  }
+
+  .chatTitle {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
+  .actionMark {
+    flex: 0 0 auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 2px;
+    border: 1px solid #5a4580;
+    background: #1c1430;
+    color: #e4dcf2;
+  }
+
   .chatOpen:hover {
     border-color: #3a4a62;
     background: #1a2230;
-  }
-
-  .chatOpen--plan {
-    border-left: 3px solid #62d4a3;
   }
 
   .chatDelete {
@@ -504,11 +576,11 @@
   .plan {
     margin-top: 0.55rem;
     padding: 0.45rem 0.55rem;
-    border: 1px solid #1e3a36;
-    border-left: 3px solid #62d4a3;
-    border-radius: 6px;
-    background: #0d1818;
-    color: #d4ebe0;
+    border: 1px solid #2a2440;
+    border-top: 3px solid #7c5cbf;
+    border-radius: 0;
+    background: #120e18;
+    color: #e4dcf2;
   }
 
   .planHead {
@@ -690,11 +762,42 @@
   }
 
   .bubble {
+    position: relative;
     min-width: 0;
     padding: 0.4rem 0.55rem;
     border-radius: 6px;
     border: 1px solid transparent;
     border-left-width: 3px;
+  }
+
+  .reason {
+    position: absolute;
+    top: 0.28rem;
+    right: 0.28rem;
+    appearance: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    padding: 0;
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
+    border-radius: 2px;
+    border: 1px solid #3a4254;
+    background: #12161c;
+    color: #9aa3b3;
+    cursor: pointer;
+  }
+
+  .reason--on,
+  .reason:hover {
+    border-color: #7c5cbf;
+    color: #e4dcf2;
+    background: #1c1430;
+  }
+
+  .text--reason {
+    padding-right: 1.35rem;
   }
 
   /* Cool slate — your turns. */

@@ -6,6 +6,7 @@ export {
   klogWarn,
   klogError,
   klogWithSource,
+  echoKickagentCommand,
   hydrateFromServer,
   fetchDbStatus,
   type DbStatus,

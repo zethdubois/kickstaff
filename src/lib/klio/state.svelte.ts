@@ -4,7 +4,8 @@
  */
 
 import { pageLocation } from "$lib/client/pageLocation.svelte";
-import { isKlioActionCard, type KlioActionCard } from "./plan";
+import { echoKickagentCommand } from "$lib/devConsole/state.svelte";
+import { isKlioActionCard, type KlioActionCard, type KlioPlanCall } from "./plan";
 import { takeKlioSseEvents, type KlioSseEvent } from "./sse";
 
 export type KlioRole = "user" | "klio";
@@ -15,6 +16,8 @@ export type KlioLine = {
   text: string;
   /** Epoch ms when the line was appended (panel clock column / hover). */
   ts: number;
+  /** Tool-round sentences for this reply. Not stored, and not part of `text`. */
+  reasoning?: string[];
 };
 
 export const KLIO_NOT_CONNECTED = "Klio is not connected yet.";
@@ -66,7 +69,27 @@ async function refreshPlan(): Promise<void> {
   }
 }
 
-function applyKlioEvent(event: KlioSseEvent, reply: string): string {
+function asRanCall(value: unknown): KlioPlanCall | null {
+  if (!value || typeof value !== "object") return null;
+  const command = (value as { command?: unknown }).command;
+  const args = (value as { args?: unknown }).args;
+  if (typeof command !== "string" || !command.trim()) return null;
+  if (!Array.isArray(args) || args.some((arg) => typeof arg !== "string")) return null;
+  return { command, args };
+}
+
+/** Query commands Klio ran while answering. Proposed writes wait for Confirm. */
+function echoRan(value: unknown): void {
+  if (!Array.isArray(value)) return;
+  for (const item of value) {
+    const call = asRanCall(item);
+    if (call) echoKickagentCommand(call.command, call.args);
+  }
+}
+
+function applyKlioEvent(event: KlioSseEvent, reply: string, notes: string[]): string {
+  if (event.ran !== undefined) echoRan(event.ran);
+  if (typeof event.reasoning === "string" && event.reasoning.trim()) notes.push(event.reasoning.trim());
   if (typeof event.delta === "string" && event.delta) return reply + event.delta;
   if (typeof event.error === "string" && event.error.trim() && !reply) return event.error;
   return reply;
@@ -76,6 +99,7 @@ function applyKlioEvent(event: KlioSseEvent, reply: string): string {
 async function readKlioStream(
   res: Response,
   onText: (text: string) => void,
+  onReasoning: (notes: string[]) => void,
 ): Promise<string> {
   if (!res.body) {
     const payload = (await res.json().catch(() => null)) as { reply?: unknown } | null;
@@ -85,6 +109,7 @@ async function readKlioStream(
   const decoder = new TextDecoder();
   let buffer = "";
   let reply = "";
+  const notes: string[] = [];
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
@@ -92,7 +117,9 @@ async function readKlioStream(
     const taken = takeKlioSseEvents(buffer);
     buffer = taken.rest;
     for (const event of taken.events) {
-      const next = applyKlioEvent(event, reply);
+      const before = notes.length;
+      const next = applyKlioEvent(event, reply, notes);
+      if (notes.length !== before) onReasoning([...notes]);
       if (next !== reply) {
         reply = next;
         onText(reply);
@@ -102,7 +129,9 @@ async function readKlioStream(
   if (buffer.trim()) {
     const taken = takeKlioSseEvents(`${buffer}\n\n`);
     for (const event of taken.events) {
-      const next = applyKlioEvent(event, reply);
+      const before = notes.length;
+      const next = applyKlioEvent(event, reply, notes);
+      if (notes.length !== before) onReasoning([...notes]);
       if (next !== reply) {
         reply = next;
         onText(reply);
@@ -195,9 +224,10 @@ export const klio = {
    * Confirm, Save, or Cancel the card. The host loads the stored calls.
    * Save and Cancel clear the card. Confirm leaves the logs on it.
    */
-  async act(action: "confirm" | "save" | "cancel"): Promise<void> {
-    if (!_plan || _plan.status !== "pending" || _acting || !isBrowser()) return;
+  async act(action: "confirm" | "save" | "cancel"): Promise<boolean> {
+    if (!_plan || _plan.status !== "pending" || _acting || !isBrowser()) return false;
     const id = _plan.id;
+    const calls = _plan.calls;
     _acting = true;
     try {
       const res = await fetch("/api/klio/plans", {
@@ -205,11 +235,20 @@ export const klio = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, action }),
       });
-      if (!res.ok) return;
+      if (!res.ok) return false;
       const body = (await res.json()) as { plan?: unknown };
-      _plan = isKlioActionCard(body.plan) ? body.plan : null;
+      const card = isKlioActionCard(body.plan) ? body.plan : null;
+      if (action === "confirm") {
+        const ran = card?.results?.length ?? 0;
+        for (const call of calls.slice(0, ran)) {
+          echoKickagentCommand(call.command, call.args);
+        }
+      }
+      _plan = card;
+      return true;
     } catch {
       /* leave the card so the user can try again */
+      return false;
     } finally {
       _acting = false;
     }
@@ -279,11 +318,19 @@ export const klio = {
           context: { page: pageLocation.label },
         }),
       });
-      reply = await readKlioStream(res, (next) => {
-        _lines = _lines.map((line) =>
-          line.id === replyId ? { ...line, text: next } : line,
-        );
-      });
+      reply = await readKlioStream(
+        res,
+        (next) => {
+          _lines = _lines.map((line) =>
+            line.id === replyId ? { ...line, text: next } : line,
+          );
+        },
+        (notes) => {
+          _lines = _lines.map((line) =>
+            line.id === replyId ? { ...line, reasoning: notes } : line,
+          );
+        },
+      );
     } catch {
       reply = KLIO_NOT_CONNECTED;
     } finally {

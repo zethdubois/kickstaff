@@ -16,6 +16,6 @@ Dashboard command card with `command_key` `kickagent:units-list` → **Open unit
 
 ## Data flow
 
-`onMount` → `runManifestCommand('units-list', [])` → `outcomeToTableModel` → table state.
+First visit runs `units-list`. The rows stay in the in-memory ops list cache for this dataset, so the next visit paints without another command until Refresh, a filter run, or `db use`.
 
 Filter submit → same with built flag args.

@@ -6,10 +6,17 @@
   import { invalidateAll } from "$app/navigation";
   import { onMount, untrack } from "svelte";
   import {
+    patchOpsListRow,
+    peekOpsList,
+    putOpsList,
+    readOpsList,
+  } from "$lib/client/opsListCache.svelte";
+  import {
     clearListPrefs,
     getListPrefs,
     saveListPrefs,
   } from "$lib/client/uiSettings.svelte";
+  import { devConsole } from "$lib/devConsole/state.svelte";
   import OpsResourceNav from "$lib/kickagent/OpsResourceNav.svelte";
   import KickagentListDetailSplitView from "$lib/kickagent/KickagentListDetailSplitView.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
@@ -55,8 +62,8 @@
   let reloadingManifest = $state(false);
   let error = $state<string | null>(null);
   let notice = $state<string | null>(null);
-  let table = $state<ResourceTableModel | null>(null);
-  let autoLoaded = $state(false);
+  /** Last server-args key we already tried, so a miss does not refetch in a loop. */
+  let fetchedKey = $state<string | null>(null);
 
   // Saved in the browser (uiSettings.listPrefs[resource]); empty = defaults.
   const prefsKey = $derived(resourceName);
@@ -70,6 +77,14 @@
 
   const hasPrefs = $derived(
     !isEmptyListPrefs(normalizeListPrefs({ filterValues, columnFilters, sort })),
+  );
+
+  const datasetName = $derived(devConsole.dbStatus?.target ?? null);
+  const serverArgs = $derived(
+    schema ? buildListFilterArgs(presenceFilters(schema.filters), filterValues) : [],
+  );
+  const table = $derived(
+    schema && datasetName ? peekOpsList(resourceName, datasetName) : null,
   );
 
   const displayModel = $derived<ResourceTableModel | null>(
@@ -104,10 +119,9 @@
     filterValues = { ...saved.filterValues };
     columnFilters = { ...saved.columnFilters };
     sort = saved.sort;
-    table = null;
     notice = null;
     error = data.manifest.error && !getListDetailResource(name) ? data.manifest.error : null;
-    autoLoaded = false;
+    fetchedKey = null;
     prefsBoundTo = name;
     prefsReady = true;
   });
@@ -140,17 +154,19 @@
         `${pageTitle} list schema not loaded. Reload the kickagent manifest.`;
       return;
     }
+    const dataset = datasetName;
+    if (!dataset) return;
     loading = true;
     error = null;
     notice = null;
+    const name = resourceName;
     try {
       const outcome = await runManifestCommand(listSchema.command, args);
       const model = outcomeToTableModel(outcome, listSchema);
       if (model) {
-        table = model;
+        putOpsList(name, dataset, args, model);
         return;
       }
-      table = null;
       if (!outcome.data && !outcome.presentationRef) {
         notice = outcomeLogText(outcome) ?? "No rows found.";
         return;
@@ -160,7 +176,6 @@
         outcomeLogText(outcome) ??
         "No table data in response.";
     } catch (caught) {
-      table = null;
       error = caught instanceof Error ? caught.message : String(caught);
     } finally {
       loading = false;
@@ -181,7 +196,7 @@
         return;
       }
       await invalidateAll();
-      autoLoaded = false;
+      fetchedKey = null;
     } catch (caught) {
       error = caught instanceof Error ? caught.message : String(caught);
     } finally {
@@ -190,23 +205,20 @@
   }
 
   function onRecordUpdated(record: Record<string, unknown>) {
-    if (!table) return;
-    const key = table.primaryKey;
-    const id = record[key];
-    table = {
-      ...table,
-      rows: table.rows.map((row) =>
-        row[key] === id ? { ...row, ...record } : row,
-      ),
-    };
+    if (!datasetName) return;
+    patchOpsListRow(resourceName, datasetName, record);
   }
 
   $effect(() => {
-    if (!schema || !prefsReady || autoLoaded || prefsBoundTo !== resourceName) return;
-    autoLoaded = true;
-    void runList(
-      untrack(() => buildListFilterArgs(presenceFilters(schema.filters), filterValues)),
-    );
+    const name = resourceName;
+    const dataset = datasetName;
+    if (!schema || !dataset || !prefsReady || prefsBoundTo !== name) return;
+    const args = untrack(() => serverArgs);
+    if (readOpsList(name, dataset, args)) return;
+    const key = `${name}\0${dataset}\0${args.join("\u0000")}`;
+    if (fetchedKey === key) return;
+    fetchedKey = key;
+    void runList(args);
   });
 </script>
 
@@ -274,6 +286,8 @@
       <KickagentListDetailSplitView
         model={displayModel}
         {resource}
+        resourceName={resourceName}
+        dataset={datasetName}
         title={pageTitle}
         {onRecordUpdated}
         bind:sort

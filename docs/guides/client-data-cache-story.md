@@ -1,6 +1,6 @@
 # Draft story: client data cache (Svelte stores)
 
-**Status:** Draft for planning — not a final spec. Not this week’s `now.md` queue unless the human promotes it.
+**Status:** Slice A is in the client. Ops lists (`/ops/[resource]`, `/ops/units`) keep one in-memory snapshot per resource, dataset, and server args (`src/lib/client/opsListCache.svelte.ts`). Column filters and sort are derived and do not refetch. Include flags, Refresh, and a database switch still load from Kickagent. Pending edits, row versions, and SSE (slices B–D) are not built.
 
 **Audience:** Kickstaff agents and developers. Read this, then propose a plan (phases in `plan.md` / checklist in `now.md`). Do not implement from this file alone.
 

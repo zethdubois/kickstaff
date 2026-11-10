@@ -26,4 +26,4 @@ Dashboard **Kickagent Resources**: one link per resource (`/ops/<name>`). The ca
 
 ## Data flow
 
-`gl-list` → `outcomeToTableModel` (`gl.list`) → row select → `gl-show --id` → save → `gl-update` with identity + changed editable flags.
+`gl-list` → `outcomeToTableModel` (`gl.list`) → row select → `gl-show --id` → save → `gl-update` with identity + changed editable flags. The list snapshot and each opened detail record are kept in memory (`opsListCache`). A detail that was opened once for this dataset paints from that record and does not call `gl-show` again. The list is keyed by resource, active dataset, and the server args. Coming back to the same list paints that snapshot. Column quick filters and sort read it and do not call Kickagent. Include checkboxes and Refresh still run the list, because they change which rows the server returns. The table stays mounted while that runs; the new rows replace the ones on screen. A save patches the cached row. `db use` clears the cache. Pending edits are not stored.

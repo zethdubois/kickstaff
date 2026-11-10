@@ -5,6 +5,8 @@
   import { browser } from "$app/environment";
   import { invalidateAll } from "$app/navigation";
   import { onMount } from "svelte";
+  import { peekOpsList, putOpsList, readOpsList } from "$lib/client/opsListCache.svelte";
+  import { devConsole } from "$lib/devConsole/state.svelte";
   import OpsResourceNav from "$lib/kickagent/OpsResourceNav.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import KickagentUnitsSplitView from "$lib/kickagent/KickagentUnitsSplitView.svelte";
@@ -17,7 +19,6 @@
   import {
     outcomeToTableModel,
     tableOutcomeMissingHint,
-    type ResourceTableModel,
   } from "$lib/kickagent/outcomeToTableModel";
   import { runManifestCommand } from "$lib/kickagent/runManifestCommand";
   import { usePageLocation } from "$lib/client/pageLocation.svelte";
@@ -40,15 +41,17 @@
   let loading = $state(false);
   let reloadingManifest = $state(false);
   let error = $state<string | null>(null);
-  let table = $state<ResourceTableModel | null>(null);
+  let serverArgs = $state<string[]>([]);
+  let fetchedKey = $state<string | null>(null);
+
+  const datasetName = $derived(devConsole.dbStatus?.target ?? null);
+  const table = $derived(datasetName ? peekOpsList("units", datasetName) : null);
 
   function syncServerSchemaToClientCache(): void {
     if (!browser || !data.manifest.resources) return;
     if (getUnitsListSchema()) return;
     setManifestResourceCache(data.manifest.resources);
   }
-
-  let autoLoaded = $state(false);
 
   onMount(() => {
     syncServerSchemaToClientCache();
@@ -63,21 +66,22 @@
         "Manifest resources.units.list is not loaded. Reload the kickagent manifest.";
       return;
     }
+    const dataset = datasetName;
+    if (!dataset) return;
     loading = true;
     error = null;
+    serverArgs = args;
     try {
       const outcome = await runManifestCommand(listSchema.command, args);
       const model = outcomeToTableModel(outcome, listSchema);
       if (model) {
-        table = model;
+        putOpsList("units", dataset, args, model);
       } else {
-        table = null;
         error =
           tableOutcomeMissingHint(outcome, listSchema) ??
           "No table data in response.";
       }
     } catch (e) {
-      table = null;
       error = e instanceof Error ? e.message : String(e);
     } finally {
       loading = false;
@@ -98,7 +102,7 @@
         return;
       }
       await invalidateAll();
-      autoLoaded = false;
+      fetchedKey = null;
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     } finally {
@@ -107,8 +111,11 @@
   }
 
   $effect(() => {
-    if (!schema || autoLoaded) return;
-    autoLoaded = true;
+    const dataset = datasetName;
+    if (!schema || !dataset) return;
+    if (readOpsList("units", dataset, [])) return;
+    if (fetchedKey === dataset) return;
+    fetchedKey = dataset;
     void runList([]);
   });
 </script>

@@ -5,6 +5,10 @@ export type KlioSseEvent = {
 	done?: boolean;
 	/** Present when she proposed a write. The host stores it; the browser does not run it. */
 	plan?: unknown;
+	/** Query commands she ran during this turn. Writes stay on `plan` until Confirm. */
+	ran?: unknown;
+	/** One sentence from a tool round. Not part of the reply. */
+	reasoning?: string;
 };
 
 /** Split a text/event-stream buffer. `rest` is an incomplete trailing event. */

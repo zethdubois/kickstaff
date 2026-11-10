@@ -27,12 +27,10 @@ export const KLIO_PLAN_COMMANDS = [
 
 const PLAN_COMMANDS = new Set<string>(KLIO_PLAN_COMMANDS);
 
-export function planTitle(title: string | undefined, summary: string): string {
+/** Card heading. Kickagent sets this from the calls. The reply is not a heading. */
+export function planTitle(title: string | undefined): string {
 	const named = title?.trim().replace(/\s+/g, ' ');
-	if (named) return named;
-	const flat = summary.trim().replace(/\s+/g, ' ');
-	const sentence = flat.match(/^.*?[.!?](?=\s|$)/);
-	return (sentence?.[0] ?? flat).trim() || 'plan';
+	return named || 'plan';
 }
 
 export function callLine(call: KlioPlanCall): string {
@@ -80,7 +78,7 @@ export function parseKlioPlan(
 		typeof summaryField === 'string' && summaryField.trim() ? summaryField.trim() : reply.trim();
 	if (!summary) return null;
 	const titleField = (value as { title?: unknown }).title;
-	const title = planTitle(typeof titleField === 'string' ? titleField : undefined, summary);
+	const title = planTitle(typeof titleField === 'string' ? titleField : undefined);
 	return { title, summary, calls };
 }
 

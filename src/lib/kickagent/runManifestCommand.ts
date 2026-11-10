@@ -1,3 +1,4 @@
+import { echoKickagentCommand } from '$lib/devConsole/state.svelte';
 import type { CommandOutcome } from './contracts';
 
 /** Run a kickagent catalog command via the admin API (server-side execution). */
@@ -5,6 +6,7 @@ export async function runManifestCommand(
 	command: string,
 	args: string[] = []
 ): Promise<CommandOutcome> {
+	echoKickagentCommand(command, args);
 	const res = await fetch('/api/kickagent/run', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

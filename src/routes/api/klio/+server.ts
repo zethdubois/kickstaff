@@ -89,8 +89,21 @@ async function readKlioBlock(): Promise<KlioManifestBlock | null> {
 	}
 }
 
-function sseFromReply(reply: string): string {
-	return `data: ${JSON.stringify({ delta: reply })}\n\ndata: ${JSON.stringify({ done: true })}\n\n`;
+function sseFromReply(reply: string, ran?: unknown, reasoning?: unknown): string {
+	const parts: string[] = [];
+	if (Array.isArray(reasoning)) {
+		for (const line of reasoning) {
+			if (typeof line === 'string' && line.trim()) {
+				parts.push(`data: ${JSON.stringify({ reasoning: line })}\n\n`);
+			}
+		}
+	}
+	parts.push(`data: ${JSON.stringify({ delta: reply })}\n\n`);
+	if (Array.isArray(ran) && ran.length > 0) {
+		parts.push(`data: ${JSON.stringify({ ran })}\n\n`);
+	}
+	parts.push(`data: ${JSON.stringify({ done: true })}\n\n`);
+	return parts.join('');
 }
 
 async function storeKlioLine(conversationId: string, reply: string): Promise<void> {
@@ -136,10 +149,15 @@ function streamAndStore(
 	return new Response(stream, { status, headers: sseHeaders });
 }
 
-async function replyAndStore(conversationId: string, reply: string): Promise<Response> {
+async function replyAndStore(
+	conversationId: string,
+	reply: string,
+	ran?: unknown,
+	reasoning?: unknown
+): Promise<Response> {
 	const text = reply.trim() || NOT_CONNECTED;
 	await storeKlioLine(conversationId, text);
-	return new Response(sseFromReply(text), { headers: sseHeaders });
+	return new Response(sseFromReply(text, ran, reasoning), { headers: sseHeaders });
 }
 
 export const GET: RequestHandler = async ({ locals }) => {
@@ -227,13 +245,15 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		const payload = (await res.json().catch(() => null)) as {
 			reply?: unknown;
 			plan?: unknown;
+			ran?: unknown;
+			reasoning?: unknown;
 		} | null;
 		const reply =
 			payload && typeof payload.reply === 'string' && payload.reply.trim()
 				? payload.reply.trim()
 				: NOT_CONNECTED;
 		await storePlan(locals.user.id, datasetName, reply, payload?.plan);
-		return replyAndStore(conversation.id, reply);
+		return replyAndStore(conversation.id, reply, payload?.ran, payload?.reasoning);
 	} catch {
 		return replyAndStore(conversation.id, NOT_CONNECTED);
 	}

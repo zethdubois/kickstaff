@@ -18,8 +18,10 @@
   } from "$lib/client/consoleUi.svelte";
   import KickagentListFilters from "$lib/kickagent/KickagentListFilters.svelte";
   import { getUnitsListSchema } from "$lib/kickagent/manifestResourceCache";
+  import StoreTree from "./StoreTree.svelte";
 
   let bodyEl: HTMLDivElement | undefined = $state();
+  let view = $state<"console" | "stores">("console");
   let inlineInput = $state("");
   let inlineInputEl: HTMLInputElement | undefined = $state();
   /** Shared with Klio (`kickstaff.consoleUi.showTimestamps`). Default off. */
@@ -94,6 +96,10 @@
     setShowTimestamps(!showTimestamps);
   }
 
+  function toggleView() {
+    view = view === "stores" ? "console" : "stores";
+  }
+
   onMount(() => {
     resetHistoryNavigation();
     function onFocusConsoleInput() {
@@ -138,19 +144,33 @@
             {devConsole.dbStatus.target}
           </span>
         {/if}
-        <button
-          type="button"
-          class="stampToggle"
-          class:stampToggle--on={showTimestamps}
-          aria-pressed={showTimestamps}
-          aria-label="Show timestamps"
-          title={showTimestamps ? "Hide timestamps" : "Show timestamps"}
-          onclick={toggleTimestamps}>time</button
-        >
+        <div class="headTools">
+          <button
+            type="button"
+            class="stampToggle"
+            class:stampToggle--on={view === "stores"}
+            aria-pressed={view === "stores"}
+            aria-label={view === "stores" ? "Show console" : "Show stores"}
+            title={view === "stores" ? "Show console" : "Show stores"}
+            onclick={toggleView}>{view === "stores" ? "console" : "stores"}</button
+          >
+          <button
+            type="button"
+            class="stampToggle"
+            class:stampToggle--on={showTimestamps}
+            aria-pressed={showTimestamps}
+            aria-label="Show timestamps"
+            title={showTimestamps ? "Hide timestamps" : "Show timestamps"}
+            onclick={toggleTimestamps}>time</button
+          >
+        </div>
       </div>
     </header>
 
     <div class="body" bind:this={bodyEl}>
+      {#if view === "stores"}
+        <StoreTree />
+      {:else}
       <div class="bodyContent" class:bodyContent--stamps={showTimestamps}>
         {#if unitsListSchema}
           <KickagentListFilters
@@ -188,8 +208,10 @@
           </p>
         {/each}
       </div>
+      {/if}
     </div>
 
+    {#if view === "console"}
     <form
       class="prompt"
       class:prompt--kickagent={devConsole.kickagentModeActive}
@@ -216,6 +238,7 @@
         }}
       />
     </form>
+    {/if}
   </aside>
 {/if}
 
@@ -295,9 +318,15 @@
     border-color: #6a4020;
   }
 
+  .headTools {
+    margin-left: auto;
+    display: flex;
+    gap: 0.35rem;
+    flex: 0 0 auto;
+  }
+
   .stampToggle {
     appearance: none;
-    margin-left: auto;
     font: inherit;
     font-size: 0.58rem;
     font-weight: 700;

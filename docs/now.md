@@ -31,6 +31,7 @@ Keep ≤7 active bullets.
 
 ## Done recently
 
+- Ops list snapshots live in a browser store (`opsListCache`) so `/ops/gl`, `/ops/sites`, and `/ops/units` redraw from memory.
 - Ops datasets table + `/admin/datasets` + `opsDatabase` inject on kickagent run (spawn rewrite bridge remains).
 - Frontend guide pointer in [AGENTS.md](../AGENTS.md); subscriber brief links the contract instead of duplicating it.
 - List-detail host for `resources.gl`; KAM console chrome; host mission doc.
@@ -51,7 +52,7 @@ Keep ≤7 active bullets.
 Low-priority. Not this week’s queue.
 
 - [x] Smoke `/ops/gl` and `/ops/sites` against the current manifest after `load kickagent` (2026-11-03: both list and open detail; sites has no save)
-- [ ] Review draft [client-data-cache-story.md](guides/client-data-cache-story.md) and propose a plan when the human asks (Svelte store / pending edits; do not block Story A)
+- [x] Ops list rows stay in a memory store so a return visit paints without another command (2026-11-09). Column filters and sort read that store. Pending edits are still out — [client-data-cache-story.md](guides/client-data-cache-story.md) slices B–D.
 - [ ] Keep `/ops/units` on thin v1 until kickagent lifts units to list-detail
 - [ ] `kam:history` — collapse consecutive duplicates
 - [ ] After units are list-detail: drop thin v1 parser path

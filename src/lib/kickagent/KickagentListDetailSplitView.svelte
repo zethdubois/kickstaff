@@ -23,10 +23,15 @@
   import type { ManifestListDetailResource } from "./manifestResourceCache";
   import type { ResourceTableModel } from "./outcomeToTableModel";
   import { runManifestCommand } from "./runManifestCommand";
+  import { putOpsDetail, readOpsDetail } from "$lib/client/opsListCache.svelte";
 
   type Props = {
     model: ResourceTableModel;
     resource: ManifestListDetailResource;
+    /** Manifest resource key (`gl`). Detail records are cached under this name. */
+    resourceName?: string;
+    /** Active dataset. A cache hit is only used for this dataset. */
+    dataset?: string | null;
     title?: string;
     variant?: "console" | "page";
     onRecordUpdated?: (record: Record<string, unknown>) => void;
@@ -41,6 +46,8 @@
   let {
     model,
     resource,
+    resourceName = "",
+    dataset = null,
     title = "Results",
     variant = "page",
     onRecordUpdated,
@@ -213,6 +220,18 @@
     void recenterAfterLayout(id, options.keyboard ? "auto" : "smooth");
 
     if (options.keyboard) {
+      const cached = cachedDetail(id);
+      if (cached) {
+        detailLoadGen += 1;
+        detailRecord = cached;
+        detailLoading = false;
+        detailError = null;
+        await tick();
+        scrollEl
+          ?.querySelector<HTMLElement>(`tr[data-row-id="${CSS.escape(id)}"]`)
+          ?.focus({ preventScroll: true });
+        return;
+      }
       // Holding the arrow key must not fire one detail request per row.
       detailLoadGen += 1;
       detailLoading = true;
@@ -230,8 +249,27 @@
     await loadDetail(id);
   }
 
+  function cachedDetail(id: string): Record<string, unknown> | null {
+    if (!resourceName || !dataset) return null;
+    return readOpsDetail(resourceName, dataset, id);
+  }
+
+  function rememberDetail(id: string, record: Record<string, unknown>) {
+    if (!resourceName || !dataset) return;
+    putOpsDetail(resourceName, dataset, id, record);
+  }
+
   async function loadDetail(id: string) {
     const gen = ++detailLoadGen;
+    const cached = cachedDetail(id);
+    if (cached) {
+      if (gen !== detailLoadGen) return;
+      detailRecord = cached;
+      detailError = null;
+      detailLoading = false;
+      void recenterAfterLayout(id);
+      return;
+    }
     detailLoading = true;
     detailError = null;
     try {
@@ -244,6 +282,7 @@
       if (record) {
         detailRecord = record;
         detailError = null;
+        rememberDetail(id, record);
       } else {
         detailRecord = null;
         detailError = recordOutcomeMessage(outcome, resource.detail.recordKey);
@@ -280,6 +319,8 @@
         return;
       }
       detailRecord = record;
+      const savedId = String(record[model.primaryKey] ?? current[model.primaryKey] ?? "");
+      if (savedId) rememberDetail(savedId, record);
       onRecordUpdated?.(record);
       return "Saved.";
     } catch (caught) {

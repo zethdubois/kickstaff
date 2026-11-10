@@ -24,6 +24,7 @@
     registerRefreshTarget,
     unregisterRefreshTarget,
   } from "$lib/devConsole/refresh";
+  import { clearOpsListCache } from "$lib/client/opsListCache.svelte";
   import { browser } from "$app/environment";
   import { registerKickagentCatalogCommands } from "$lib/kickagent/registerCatalogCommands";
   import {
@@ -317,6 +318,7 @@
     }
 
     registerRefreshTarget("app.db", async () => {
+      clearOpsListCache();
       await fetchDbStatus();
       await invalidateAll();
     });

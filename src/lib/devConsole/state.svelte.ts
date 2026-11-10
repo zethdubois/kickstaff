@@ -242,6 +242,16 @@ export function klogWithSource(
   push(level, args, { source });
 }
 
+/**
+ * A kickagent command the page or Klio sent. Same shape as a typed host line
+ * (`› gl-show --id …`). Typed console commands already echo in `runCommand`.
+ */
+export function echoKickagentCommand(command: string, args: readonly string[] = []): void {
+  const line = [command, ...args].filter((part) => part.length > 0).join(" ");
+  if (!line) return;
+  klogWithSource("log", "host:prompt", `› ${line}`);
+}
+
 /** One timestamp shared by every line of a single command result. */
 export function klogAt(
   level: KlogLevel,
